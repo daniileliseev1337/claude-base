@@ -15,6 +15,8 @@
 | `sessions/` | Per-session reports: каждая закончившаяся сессия складывает сюда `<дата>_<тема>/` с `report.md`, `harvested/`, `artifacts/`. |
 | `harvested/` | Каталог внешних инструментов (notes-only). Каждая запись — независимая оценка какого-то репо или библиотеки с GitHub. |
 | `_sandbox/` | **Локальная** изолированная папка для тестов внешних инструментов. **В .gitignore**, не пушится. |
+| `scripts/` | Auto-sync скрипты: `auto-pull.ps1` (SessionStart hook), `auto-push.ps1` (SessionEnd hook). Подробности — в `scripts/README.md`. |
+| `settings.json` | Конфигурация Claude Code hooks (SessionStart/SessionEnd → auto-sync). Глобальная, едина для всех ПК пользователя. Локальные настройки — в `settings.local.json` (gitignored). |
 
 ## Архитектура
 
@@ -41,6 +43,17 @@ cd claude-lite-instaler
 ```powershell
 git clone https://github.com/daniileliseev1337/claude-base $env:USERPROFILE\.claude
 ```
+
+## Auto-sync между ПК
+
+После установки Claude Code автоматически синхронизирует `~/.claude/` с GitHub:
+
+- **На старте сессии (SessionStart hook):** `auto-pull.ps1` делает `git pull --rebase --autostash`. Подтягивается всё, что добавили на других ПК.
+- **На завершении сессии (SessionEnd hook):** `auto-push.ps1` коммитит изменения в whitelist-путях (`agents/`, `skills/`, `memory/`, `sessions/`, `harvested/`, `CLAUDE.md`) и пушит на origin.
+
+**Whitelist защищает** от случайного push'а `credentials`, `history.jsonl`, `plugins/`, `projects/`, `_sandbox/`. Эти пути **никогда** не коммитятся автоматически.
+
+Лог: `~/.claude/auto-sync.log`. При конфликте rebase — скрипт абортит, ничего не теряет, ждёт ручного резолва.
 
 ## Дисциплина расширения
 

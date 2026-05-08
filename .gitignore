@@ -22,6 +22,11 @@
 # Корневые файлы базы
 !CLAUDE.md
 !README.md
+!settings.json
+
+# Auto-sync скрипты (запускаются Claude Code как hooks)
+!scripts/
+!scripts/**
 
 # Структура агентов / скиллов / команд (рекурсивно)
 !agents/
@@ -68,6 +73,9 @@ _sandbox/*
 
 # Локальные настройки конкретного ПК
 **/settings.local.json
+
+# Auto-sync лог (per-PC, append-only, не должен лететь в git)
+**/auto-sync.log
 
 # Бинарные мусор-файлы
 **/__pycache__/

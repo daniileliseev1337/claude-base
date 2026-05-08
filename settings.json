@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "%USERPROFILE%\\.claude\\scripts\\auto-pull.ps1",
+            "shell": "powershell",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "%USERPROFILE%\\.claude\\scripts\\auto-push.ps1",
+            "shell": "powershell",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
