@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "%USERPROFILE%\\.claude\\scripts\\auto-pull.ps1",
+            "command": "$HOME\\.claude\\scripts\\auto-pull.ps1",
             "shell": "powershell",
             "timeout": 30
           }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "%USERPROFILE%\\.claude\\scripts\\auto-pull.ps1",
+            "command": "$HOME\\.claude\\scripts\\auto-pull.ps1",
             "shell": "powershell",
             "timeout": 30
           }
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "%USERPROFILE%\\.claude\\scripts\\auto-push.ps1",
+            "command": "$HOME\\.claude\\scripts\\auto-push.ps1",
             "shell": "powershell",
             "timeout": 60
           }
