@@ -91,6 +91,7 @@ try {
     Write-SyncLog "commit ok"
 
     # Pull before push to handle remote-changed-since-last-pull
+    Write-SyncLog "pulling before push..."
     $pullOut = & git pull --rebase --autostash 2>&1
     $pullExit = $LASTEXITCODE
 
@@ -100,8 +101,10 @@ try {
         # Local commit stays in place; user resolves on next manual sync
         exit 0
     }
+    Write-SyncLog "pull before push ok"
 
     # Push
+    Write-SyncLog "pushing to origin/main..."
     $pushOut = & git push origin main 2>&1
     $pushExit = $LASTEXITCODE
     $pushOut | Out-String | Add-Content -Path $logFile
