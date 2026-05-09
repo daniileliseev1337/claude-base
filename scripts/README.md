@@ -15,7 +15,7 @@ Auto-sync скрипты для синхронизации `~/.claude/` с git-�
 - `skills/`
 - `commands/`
 - `memory/`
-- `sessions/`
+- `session-reports/`
 - `harvested/`
 - `CLAUDE.md`
 - `README.md`
@@ -37,7 +37,7 @@ Auto-sync скрипты для синхронизации `~/.claude/` с git-�
 [2026-05-09 12:30:15] auto-pull: start
 [2026-05-09 12:30:16] auto-pull: ok
 [2026-05-09 14:45:02] auto-push: start
-[2026-05-09 14:45:02] auto-push: managed changes in: memory, sessions
+[2026-05-09 14:45:02] auto-push: managed changes in: memory, session-reports
 [2026-05-09 14:45:03] auto-push: commit ok
 [2026-05-09 14:45:05] auto-push: pushed to origin/main
 ```

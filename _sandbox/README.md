@@ -19,4 +19,4 @@
 
 ## Что попадает в git
 
-Только **отчёт о тесте** (в `sessions/<...>/report.md` или `harvested/<...>.md`). Сами файлы из `_sandbox/` — нет.
+Только **отчёт о тесте** (в `session-reports/<...>/report.md` или `harvested/<...>.md`). Сами файлы из `_sandbox/` — нет.

@@ -42,9 +42,12 @@
 !memory/
 !memory/**
 
-# Per-session отчёты
-!sessions/
-!sessions/**
+# Per-session отчёты (НАШИ — обезличенные разборы реальных задач)
+# ВАЖНО: имя session-reports/, не sessions/. ~/.claude/sessions/ Claude
+# Code использует для своих transient JSON-файлов состояния сессии —
+# их в git тащить нельзя.
+!session-reports/
+!session-reports/**
 
 # Каталог harvest (notes-only)
 !harvested/
@@ -76,6 +79,13 @@ _sandbox/*
 
 # Auto-sync лог (per-PC, append-only, не должен лететь в git)
 **/auto-sync.log
+
+# Claude Code transient session state (создаётся самим Claude Code)
+# в ~/.claude/sessions/ — конфликтует с нашим прежним sessions/.
+# Сейчас наша папка переименована в session-reports/, но на всякий
+# случай явно игнорируем sessions/ если она появится.
+sessions/
+**/sessions/
 
 # Бинарные мусор-файлы
 **/__pycache__/

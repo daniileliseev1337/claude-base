@@ -23,6 +23,19 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\auto-push.ps1\"",
+            "shell": "powershell",
+            "timeout": 60
+          }
+        ]
+      }
     ]
   }
 }

@@ -8,7 +8,7 @@ Checks git status of WHITELIST paths. If there are changes -- commits and
 pushes to origin/main. Logs to ~/.claude/auto-sync.log.
 
 Whitelist (managed paths -- only these are auto-committed):
-    agents/, skills/, commands/, memory/, sessions/, harvested/,
+    agents/, skills/, commands/, memory/, session-reports/, harvested/,
     CLAUDE.md, README.md
 
 Anything outside the whitelist is NEVER auto-committed -- protects against
@@ -27,12 +27,16 @@ $claudeDir = Join-Path $env:USERPROFILE '.claude'
 $logFile   = Join-Path $claudeDir 'auto-sync.log'
 
 # Whitelist of managed paths. Files OUTSIDE these are NEVER auto-committed.
+# IMPORTANT: 'sessions' is intentionally NOT in this list -- Claude Code
+# itself uses ~/.claude/sessions/ for transient JSON session state. Our
+# per-session reports go to session-reports/ (different name to avoid
+# collision).
 $Managed = @(
     'agents',
     'skills',
     'commands',
     'memory',
-    'sessions',
+    'session-reports',
     'harvested',
     'CLAUDE.md',
     'README.md'
