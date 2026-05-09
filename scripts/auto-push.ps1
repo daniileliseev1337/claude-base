@@ -90,20 +90,12 @@ try {
 
     Write-SyncLog "commit ok"
 
-    # Pull before push to handle remote-changed-since-last-pull
-    Write-SyncLog "pulling before push..."
-    $pullOut = & git pull --rebase --autostash 2>&1
-    $pullExit = $LASTEXITCODE
-
-    if ($pullExit -ne 0) {
-        Write-SyncLog "pull conflict before push, aborting rebase, push skipped"
-        & git rebase --abort 2>&1 | Out-Null
-        # Local commit stays in place; user resolves on next manual sync
-        exit 0
-    }
-    Write-SyncLog "pull before push ok"
-
-    # Push
+    # Push directly without pull-before-push.
+    # Empirically, `git pull --rebase --autostash` hangs in Claude Code
+    # SessionEnd hook context (process times out without finishing).
+    # If push gets rejected (remote moved), we accept that the local
+    # commit stays ahead -- the next SessionStart auto-pull will do a
+    # rebase and the next SessionEnd will retry push. Eventually consistent.
     Write-SyncLog "pushing to origin/main..."
     $pushOut = & git push origin main 2>&1
     $pushExit = $LASTEXITCODE
@@ -112,7 +104,7 @@ try {
     if ($pushExit -eq 0) {
         Write-SyncLog "pushed to origin/main"
     } else {
-        Write-SyncLog "push FAILED (exit=$pushExit) -- check log for details"
+        Write-SyncLog "push FAILED (exit=$pushExit) -- commit stays ahead, will retry next cycle"
     }
 } catch {
     Write-SyncLog "exception: $_"
