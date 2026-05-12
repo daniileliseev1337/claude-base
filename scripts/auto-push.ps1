@@ -97,7 +97,7 @@ try {
     # commit stays ahead -- the next SessionStart auto-pull will do a
     # rebase and the next SessionEnd will retry push. Eventually consistent.
     Write-SyncLog "pushing to origin/main..."
-    $pushOut = & git push origin main 2>&1
+    $pushOut = & git -c http.proxy="" -c https.proxy="" push origin main 2>&1
     $pushExit = $LASTEXITCODE
     $pushOut | Out-String | Add-Content -Path $logFile
 

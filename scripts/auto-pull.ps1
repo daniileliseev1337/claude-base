@@ -30,7 +30,7 @@ Push-Location $claudeDir
 try {
     Write-SyncLog "start"
 
-    $output = & git pull --rebase --autostash 2>&1
+    $output = & git -c http.proxy="" -c https.proxy="" pull --rebase --autostash 2>&1
     $exit = $LASTEXITCODE
 
     $output | Out-String | Add-Content -Path $logFile
