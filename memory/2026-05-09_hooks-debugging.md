@@ -335,5 +335,61 @@ aborted`, хотя обычный HTTPS GET проходит. Лекарство
 
 **Урок 9 для следующих раз** — не маскировать сетевую ошибку под
 merge-конфликт. Любой `if (exit_code != 0) { print "merge conflict";
-}` после `git pull` — потенциальная ловушка диагностики. Перехватывать
-stderr, классифицировать по паттернам.
+}` после `git pull` — потенциальная ловушка диагностики. Лучше дать
+git'у писать в консоль естественно + общая подсказка про две главные
+причины (network vs merge), чем хитрить с захватом stderr (см. урок 10).
+
+### Дополнение от 2026-05-12 (через 30 минут) — седьмая ловушка (PS 5.1 `2>&1`)
+
+Сразу после правки в Apply-ClaudeMd (коммит `b81a5d4`) — повторный
+прогон на рабочем ПК упал с `NativeCommandError`. Причина — наша
+**собственная** правка:
+
+```powershell
+$pullOutput = & git -c http.proxy="" -c https.proxy="" pull --rebase --autostash 2>&1 | Out-String
+```
+
+Идея была хорошая — захватить stderr git'а в строку для regex-
+классификации Network/Merge/Unknown. Реализация — кривая для
+Windows PowerShell 5.1.
+
+**Что происходит:** PowerShell 5.1 при `2>&1` на native exe (git/npm/
+etc) оборачивает **каждую stderr-строку** в `ErrorRecord`
+(`NativeCommandError` / `RemoteException`). git fetch при успешной
+загрузке пишет в stderr нормальные progress-строки (`From
+https://...`, `Counting objects:`, и т.п.). PowerShell это считает
+ошибками. Под `$ErrorActionPreference = 'Stop'` (стандарт для
+Apply-ClaudeMd) — первая stderr-строка прерывает скрипт даже когда
+git вернул exit 0.
+
+**Почему в hooks (auto-pull/auto-push) это не падает:** там
+`$ErrorActionPreference = 'SilentlyContinue'` — NativeCommandError
+проглатывается, скрипт продолжает.
+
+**Фикс (коммит `5290252` в claude-lite-instaler):**
+
+Убрать `2>&1 | Out-String`. Запускать git напрямую — stderr течёт
+в консоль естественно (пользователь видит реальный git output).
+Скрипт проверяет только `$LASTEXITCODE`. Сообщения об ошибке —
+общие («see git output above + возможные причины»), без regex-
+классификации.
+
+### Урок 10 для следующих раз
+
+**`2>&1` на native exec в Windows PowerShell 5.1 — ловушка.** Под
+`ErrorActionPreference = 'Stop'` падает на любой stderr-line даже
+при успешном exit code. Альтернативы:
+
+1. **Не использовать `2>&1`** — просто запустить exec, проверить
+   `$LASTEXITCODE`. Stderr идёт в консоль нативно. **Самый простой
+   и робастный путь.**
+2. Если **обязательно** нужно захватить stderr — обернуть в
+   `cmd /c "... 2>&1"`. cmd собирает stderr в строку до того, как
+   PowerShell успеет обернуть в ErrorRecord. Но кавычки сложно
+   эскейпить, особенно если в команде есть свои `""`.
+3. Локально установить `$ErrorActionPreference = 'Continue'` в блоке
+   `try` вокруг exec — менее надёжно (зависит от версии PS).
+
+Под PowerShell 7+ эта проблема не воспроизводится (там нативные
+команды не оборачиваются в ErrorRecord), но мы целимся в стандартный
+Windows PowerShell 5.1, который идёт из коробки.
