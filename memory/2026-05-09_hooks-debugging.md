@@ -218,3 +218,122 @@ git pull --rebase --autostash    ← работает в SessionStart, не за
 
 Все правки задокументированы в commit-истории `claude-base` от
 `78800b4` до `5100e74` (commits с префиксом `fix(...)`).
+
+---
+
+## Дополнение от 2026-05-12 — ловушка 6 (корпоративный прокси режет HTTP CONNECT)
+
+> Появилась через 3 дня после первичной настройки, когда систему
+> попробовали запустить на рабочем ПК за корп-прокси. Не часть
+> первичных 5 ловушек, но напрямую ломает те же `auto-pull.ps1` /
+> `auto-push.ps1`, поэтому фиксируется здесь.
+
+### Симптом
+
+На ПК с активным корп-прокси (например `scuf-meta.ru:10894`)
+`Set-Proxy.ps1` корректно ставит прокси в env-vars текущей сессии,
+smoke-test проходит (`HTTPS request through proxy ... OK (HTTP 200)`),
+`claude: OK`, `uvx: OK`. Но **любой git-вызов** через тот же прокси
+падает:
+
+```
+fatal: unable to access 'https://github.com/.../claude-base.git/':
+Proxy CONNECT aborted
+```
+
+В частности:
+- `Apply-ClaudeMd.ps1` Stage 7 падает на `git pull`.
+- `auto-pull.ps1` при SessionStart молча отваливается (в `auto-sync.log`
+  — `FAILED (exit=128)`).
+- `auto-push.ps1` при SessionEnd не доносит коммит до GitHub.
+
+Дополнительная путаница: **`Apply-ClaudeMd.ps1` маскирует сетевую
+ошибку под merge-конфликт.** На любой `exit != 0` от `git pull` он
+выводит «Likely a conflict in the USER EXTENSIONS section of CLAUDE.md»
+и предлагает резолвить вручную через `git rebase --continue`. Это
+сбивало с толку — реальный stderr git'а в логи не попадал.
+
+### Причина
+
+Корп-прокси (Cisco/Forcepoint/Microsoft Forefront/Squid с DLP-политикой)
+часто настроены **пропускать обычные HTTPS-запросы** (GET, POST к
+веб-сайтам), но **блокировать метод HTTP CONNECT** — именно он
+используется для туннелирования произвольного TLS через прокси, и
+именно его использует git/curl при `https://github.com/...`. Политика
+безопасности обычно объясняется так: GET — это документы, CONNECT —
+это «открытый туннель куда угодно», DLP не может его инспектировать.
+
+Тогда же: **Claude сам нуждается в прокси** для `api.anthropic.com` —
+без прокси из корп-сети наружу не выйдет вообще. То есть «просто
+отключить прокси» — не вариант, ломает Claude.
+
+### Фикс
+
+Локально для команды git обнулить прокси через
+`-c http.proxy="" -c https.proxy=""`. Эта опция git перебивает
+`HTTP_PROXY`/`HTTPS_PROXY` env-vars и `git config http.proxy` **только
+для одной вызванной команды**. Env-vars родительского процесса не
+трогаются — Claude продолжает ходить к Anthropic API через прокси, а
+git идёт мимо прокси прямо в GitHub (если прямой выход разрешён
+сетью без прокси, что обычно так на корп-ПК — там блокируют
+**неавторизованный** трафик, но не сам факт исходящих соединений).
+
+В `~/.claude/scripts/auto-pull.ps1`:
+```powershell
+$output = & git -c http.proxy="" -c https.proxy="" pull --rebase --autostash 2>&1
+```
+
+В `~/.claude/scripts/auto-push.ps1`:
+```powershell
+$pushOut = & git -c http.proxy="" -c https.proxy="" push origin main 2>&1
+```
+
+В `Apply-ClaudeMd.ps1` — три места (CASE 1 fresh clone, CASE 2 pull,
+CASE 4 migration clone). В CASE 2 параллельно заменена шаблонная
+ошибка про USER EXTENSIONS на разбор stderr git'а с тремя ветками:
+`Network/proxy error` (matches `Proxy CONNECT aborted|Could not resolve
+host|Failed to connect|unable to access`), `Merge conflict` (matches
+`CONFLICT|merge conflict|could not apply`), `Unknown`. Реальный git
+output выводится в лог.
+
+### Когда применять
+
+- **Если корп-прокси пропускает HTTPS GET и режет CONNECT** — фикс
+  обязателен.
+- **Если прямой выход в GitHub разрешён без прокси** (домашний ПК,
+  персональная сеть) — фикс безвреден: `-c http.proxy=""` просто
+  игнорирует пустую строку, git идёт стандартным путём.
+- **Если корп-прокси режет всю сеть наружу полностью** (нет прямого
+  выхода к GitHub даже без прокси) — фикс **не поможет**, нужен
+  Вариант A: скачивание ZIP вручную через тот же прокси (HTTPS GET
+  пройдёт), без auto-sync. Так сделано на ПК Apoliakov.
+
+Поэтому `-c http.proxy=""` кладётся в скрипты **по умолчанию** — не
+делает хуже ни в одном из сценариев.
+
+### Подтверждение в боевых условиях
+
+На рабочем ПК с прокси `scuf-meta.ru:10894 (user: danzombi)` после
+правки `Apply-ClaudeMd.ps1` Stage 7 прошёл с `[OK] ~/.claude/ updated
+from claude-base`. Это значит `git pull` через `-c http.proxy=""`
+обошёл CONNECT-блокировку при включённом прокси.
+
+### Коммиты
+
+- `claude-base@8efec4b` — `auto-pull.ps1` + `auto-push.ps1` (2 строки).
+- `claude-lite-instaler@b81a5d4` — `Apply-ClaudeMd.ps1` (3 правки
+  прокси + классификация ошибок pull).
+
+### Урок 8 для следующих раз
+
+**Корп-прокси и git** — если прокси режет HTTP CONNECT (типично для
+DLP-настроенных корп-прокси), git/curl ломается на `Proxy CONNECT
+aborted`, хотя обычный HTTPS GET проходит. Лекарство —
+`git -c http.proxy="" -c https.proxy=""` в нужных командах. Env-vars
+родителя не трогать — другие приложения (Claude к API Anthropic) от
+прокси зависят.
+
+**Урок 9 для следующих раз** — не маскировать сетевую ошибку под
+merge-конфликт. Любой `if (exit_code != 0) { print "merge conflict";
+}` после `git pull` — потенциальная ловушка диагностики. Перехватывать
+stderr, классифицировать по паттернам.
