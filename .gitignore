@@ -53,6 +53,11 @@
 !harvested/
 !harvested/**
 
+# Шаблоны оформления документов (DOCX — стили ГОСТ 7.32 + plain-clean)
+# Бинарные, но небольшие (~140-220 KB каждый); общие на все ПК
+!formatting-templates/
+!formatting-templates/**
+
 # _sandbox/ есть в репо как папка с README, но содержимое НЕ пушится
 !_sandbox/
 !_sandbox/README.md

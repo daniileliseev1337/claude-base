@@ -38,6 +38,7 @@ $Managed = @(
     'memory',
     'session-reports',
     'harvested',
+    'formatting-templates',
     'CLAUDE.md',
     'README.md'
 )
