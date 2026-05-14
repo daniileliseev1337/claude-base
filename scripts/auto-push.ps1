@@ -56,7 +56,7 @@ Push-Location $claudeDir
 try {
     Write-SyncLog "start"
 
-    # Find managed paths with changes
+    # Find managed paths with changes in working tree
     $changedPaths = @()
     foreach ($path in $Managed) {
         if (-not (Test-Path $path)) { continue }
@@ -65,38 +65,52 @@ try {
     }
 
     if ($changedPaths.Count -eq 0) {
-        Write-SyncLog "no managed changes"
-        exit 0
+        # No working tree changes -- but maybe local commits are ahead origin.
+        # Scenario: user (or Claude in chat) did `git commit` manually but
+        # `git push` failed (network, missing PAT, etc). Working tree is clean,
+        # the previous hook logic exited without push, and these commits
+        # would never reach origin on their own.
+        #
+        # Quick fetch to refresh origin/main ref (safe in hook context --
+        # unlike `git pull --rebase` which hangs, fetch is read-only).
+        & git -c http.proxy="" -c https.proxy="" fetch --quiet origin main 2>&1 | Out-Null
+        $aheadOut = & git rev-list --count origin/main..HEAD 2>$null
+        $aheadCount = if ($aheadOut) { [int]$aheadOut } else { 0 }
+
+        if ($aheadCount -eq 0) {
+            Write-SyncLog "no managed changes, no commits ahead origin"
+            exit 0
+        }
+        Write-SyncLog "no working tree changes, but $aheadCount commit(s) ahead -- proceeding to push"
+    } else {
+        Write-SyncLog "managed changes in: $($changedPaths -join ', ')"
+
+        # Stage changes
+        foreach ($path in $changedPaths) {
+            & git add -- $path 2>&1 | Out-Null
+        }
+
+        # Commit (skip if nothing was actually staged after add)
+        $hostname = $env:COMPUTERNAME
+        $msg = "auto-sync: session $(Get-Date -Format 'yyyy-MM-dd HH:mm') from $hostname"
+        $commitOut = & git commit -m $msg 2>&1
+        $commitExit = $LASTEXITCODE
+
+        $commitOut | Out-String | Add-Content -Path $logFile
+
+        if ($commitExit -ne 0) {
+            Write-SyncLog "commit returned exit=$commitExit (likely nothing to commit)"
+            exit 0
+        }
+
+        Write-SyncLog "commit ok"
     }
 
-    Write-SyncLog "managed changes in: $($changedPaths -join ', ')"
-
-    # Stage changes
-    foreach ($path in $changedPaths) {
-        & git add -- $path 2>&1 | Out-Null
-    }
-
-    # Commit (skip if nothing was actually staged after add)
-    $hostname = $env:COMPUTERNAME
-    $msg = "auto-sync: session $(Get-Date -Format 'yyyy-MM-dd HH:mm') from $hostname"
-    $commitOut = & git commit -m $msg 2>&1
-    $commitExit = $LASTEXITCODE
-
-    $commitOut | Out-String | Add-Content -Path $logFile
-
-    if ($commitExit -ne 0) {
-        Write-SyncLog "commit returned exit=$commitExit (likely nothing to commit)"
-        exit 0
-    }
-
-    Write-SyncLog "commit ok"
-
-    # Push directly without pull-before-push.
+    # Push (shared path: covers both fresh-commit-from-staging and ahead-origin cases)
     # Empirically, `git pull --rebase --autostash` hangs in Claude Code
-    # SessionEnd hook context (process times out without finishing).
-    # If push gets rejected (remote moved), we accept that the local
-    # commit stays ahead -- the next SessionStart auto-pull will do a
-    # rebase and the next SessionEnd will retry push. Eventually consistent.
+    # SessionEnd hook context, so we never pre-pull. If push gets rejected
+    # (remote moved), local commit stays ahead -- next SessionStart auto-pull
+    # rebases, next SessionEnd retries push. Eventually consistent.
     Write-SyncLog "pushing to origin/main..."
     $pushOut = & git -c http.proxy="" -c https.proxy="" push origin main 2>&1
     $pushExit = $LASTEXITCODE
