@@ -58,6 +58,13 @@
 !formatting-templates/
 !formatting-templates/**
 
+# Отдельный Python-проект apartment-tracker (трекер-анализатор поиска
+# квартиры). Хранится тут в одной ветке для удобства разработки через
+# Claude Code Web; пользователь может вынести в отдельный репо через
+# `git subtree split --prefix=apartment-tracker`.
+!apartment-tracker/
+!apartment-tracker/**
+
 # _sandbox/ есть в репо как папка с README, но содержимое НЕ пушится
 !_sandbox/
 !_sandbox/README.md
@@ -74,6 +81,8 @@ _sandbox/*
 **/credentials.json
 **/.env
 **/.env.*
+# .env.example — это шаблон без секретов, его публиковать можно
+!**/.env.example
 
 # История чатов / runtime — критично
 **/history.jsonl
