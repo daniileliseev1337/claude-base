@@ -51,7 +51,50 @@
 
 ---
 
-## Инцидент: auto-push заблокирован корп-прокси (для разбора Даниилом)
+## Инцидент: auto-push не доходит до origin/main (для разбора Даниилом)
+
+> **Update после повторных тестов:** первоначальная гипотеза «прокси аборитит CONNECT» **оказалась ложной**. Реальная причина — **wrong GitHub account в credential manager**. Прокси на этой машине вообще не нужен для git, а тот, что был выставлен в env, мешал. Полная цепочка ниже.
+
+### Раунд 1 — с прокси (env HTTP_PROXY/HTTPS_PROXY активны)
+
+```
+fatal: unable to access 'https://github.com/daniileliseev1337/claude-base.git/':
+  Proxy CONNECT aborted
+```
+
+Логичный вывод: «прокси режет git». Был ложным.
+
+### Раунд 2 — без прокси (env очищены в подпроцессе, `git -c http.proxy= -c https.proxy=`)
+
+```
+remote: Permission to daniileliseev1337/claude-base.git denied to fessenkoim-arch.
+fatal: unable to access 'https://github.com/daniileliseev1337/claude-base.git/':
+  The requested URL returned error: 403
+```
+
+То есть на этой машине **прокси для git не нужен** — без него сеть до GitHub доходит мгновенно. Проблема в **аутентификации**: Windows Credential Manager отдаёт токен личного аккаунта `fessenkoim-arch`, у которого нет push-прав в `daniileliseev1337/claude-base`.
+
+### Что нужно для нормальной работы auto-sync на машине `NB-HP-LQ6G`
+
+1. **Снять proxy-env для git** (или для всей сессии Claude Code) — env-vars `HTTP_PROXY`/`HTTPS_PROXY` на корп-прокси `scuf-meta.ru:10894` ломают git push, хотя сам git может ходить напрямую. Варианты:
+   - `git config --global http.proxy ""` + удалить env в `Start-Claude.bat`/PROFILE.
+   - Или в hook `auto-push.ps1` явно очищать `$env:HTTP_PROXY`/`$env:HTTPS_PROXY` перед `git push`.
+2. **Дать `fessenkoim-arch` push-доступ в репо** `daniileliseev1337/claude-base` (Daniil → Settings → Collaborators).
+   - **Либо** переписать credential на токен с правом push в репо.
+3. **Hook `auto-push.ps1` должен логировать failure**. Сейчас при ошибке push строки `auto-push: failed: <reason>` в `auto-sync.log` нет — лог обрывается на `pushing to origin/main...`. Это та же ловушка 8 из коммита `79a8561`.
+
+### Что я (Claude) сделал и НЕ сделал
+
+- ✓ Локально закоммитил harvest-материалы (`8a6acb3`) и обновление report.md (`e84f8f7`).
+- ✗ Не запушил на `origin/main` — auth: `fessenkoim-arch` без прав.
+- ✓ Пароль прокси, переданный пользователем для проверки, **не записан** ни в один файл (заменён плейсхолдером `[СЕКРЕТ — не записан]`).
+- ⚠ Пароль прокси промелькнул в открытом виде в PowerShell-output этой сессии. Локальный transcript Claude Code этот вывод хранит, но `~/.claude/projects/*/history/` по правилам never-committed в claude-base.
+
+### Открытые вопросы для Даниила
+
+- Дать ли `fessenkoim-arch` push-доступ или переключить машину `NB-HP-LQ6G` на отдельный сервисный аккаунт?
+- Обновить `auto-push.ps1`: добавить failure-логирование + явный `Remove-Item Env:HTTP_PROXY,Env:HTTPS_PROXY` перед `git push`.
+- Проверить, не нужен ли прокси на этой машине вообще — раз без него сеть работает, может env-vars выставлены ошибочно при установке.
 
 ### Симптомы
 
