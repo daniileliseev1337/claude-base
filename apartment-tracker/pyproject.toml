@@ -20,6 +20,7 @@ dependencies = [
     "cloudscraper>=1.2.71",
     "rich>=13.0",
     "click>=8.1",
+    "python-telegram-bot[job-queue]>=21.0",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +31,7 @@ dev = [
 
 [project.scripts]
 apartment-tracker = "apartment_tracker.cli:main"
+apartment-bot = "apartment_tracker.bot:main"
 
 [tool.setuptools.packages.find]
 include = ["apartment_tracker*"]

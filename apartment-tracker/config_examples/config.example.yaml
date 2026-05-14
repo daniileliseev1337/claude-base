@@ -75,6 +75,10 @@ telegram:
   bot_token_env: TELEGRAM_BOT_TOKEN
   chat_id_env: TELEGRAM_CHAT_ID
 
+  # Как часто бот сам прогоняет включённые фильтры (секунды).
+  # 3600 = раз в час. 0 = отключить (только ручной /scrape).
+  scrape_interval_seconds: 3600
+
   notify_on:
     new_listing: true
     price_drop: true            # уведомлять при снижении цены
