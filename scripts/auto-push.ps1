@@ -56,6 +56,19 @@ Push-Location $claudeDir
 try {
     Write-SyncLog "start"
 
+    # Defense-in-depth: disable interactive credential prompt and clear
+    # proxy env-vars at the top of the hook -- applies to BOTH fetch
+    # (in the ahead-origin check below) and push (later). See traps
+    # 14 (hook hangs on prompt) and 15 (proxy env breaks git push)
+    # in memory/2026-05-09_hooks-debugging.md.
+    $env:GIT_TERMINAL_PROMPT = '0'
+    Remove-Item Env:HTTP_PROXY  -ErrorAction SilentlyContinue
+    Remove-Item Env:HTTPS_PROXY -ErrorAction SilentlyContinue
+    Remove-Item Env:http_proxy  -ErrorAction SilentlyContinue
+    Remove-Item Env:https_proxy -ErrorAction SilentlyContinue
+    Remove-Item Env:ALL_PROXY   -ErrorAction SilentlyContinue
+    Remove-Item Env:all_proxy   -ErrorAction SilentlyContinue
+
     # Find managed paths with changes in working tree
     $changedPaths = @()
     foreach ($path in $Managed) {
@@ -111,6 +124,10 @@ try {
     # SessionEnd hook context, so we never pre-pull. If push gets rejected
     # (remote moved), local commit stays ahead -- next SessionStart auto-pull
     # rebases, next SessionEnd retries push. Eventually consistent.
+
+    # GIT_TERMINAL_PROMPT=0 and proxy env-cleanup applied at hook start
+    # (traps 14, 15) -- still in effect for this push.
+
     Write-SyncLog "pushing to origin/main..."
     $pushOut = & git -c http.proxy="" -c https.proxy="" push origin main 2>&1
     $pushExit = $LASTEXITCODE
@@ -120,6 +137,28 @@ try {
         Write-SyncLog "pushed to origin/main"
     } else {
         Write-SyncLog "push FAILED (exit=$pushExit) -- commit stays ahead, will retry next cycle"
+
+        # Smart diagnostic: parse `denied to <user>` to distinguish trap 12a
+        # (expired/wrong-scope PAT for repo owner) from 12b (wrong account
+        # entirely -- collaborator missing). See memory/2026-05-09_hooks-debugging.md.
+        $pushText = ($pushOut | Out-String)
+        if ($pushText -match 'denied to (?<user>[\w.-]+)') {
+            $deniedUser = $Matches['user']
+            # Extract repo owner from origin URL
+            $originUrl = & git remote get-url origin 2>$null
+            if ($originUrl -match 'github\.com[:/](?<owner>[\w.-]+)/') {
+                $repoOwner = $Matches['owner']
+                if ($deniedUser -eq $repoOwner) {
+                    Write-SyncLog "diagnose: 403 denied to '$deniedUser' (owner) -- likely expired PAT or insufficient scope (trap 12a). Run: cmdkey /delete:LegacyGeneric:target=git:https://github.com  then re-push."
+                } else {
+                    Write-SyncLog "diagnose: 403 denied to '$deniedUser' (not owner '$repoOwner') -- WRONG ACCOUNT or missing collaborator (trap 12b). Owner must add '$deniedUser' as collaborator in repo Settings."
+                }
+            }
+        } elseif ($pushText -match 'Proxy CONNECT aborted') {
+            Write-SyncLog "diagnose: proxy CONNECT aborted -- corp proxy blocking git. Check whether HTTP_PROXY env is needed for git on this machine (often NOT). See trap 6, 15."
+        } elseif ($pushText -match 'could not read Username') {
+            Write-SyncLog "diagnose: GIT_TERMINAL_PROMPT=0 prevented interactive auth -- means credentials missing. Run `git push origin main` manually once to trigger Credential Manager flow."
+        }
     }
 } catch {
     Write-SyncLog "exception: $_"
