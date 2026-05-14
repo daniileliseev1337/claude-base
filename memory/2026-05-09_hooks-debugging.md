@@ -504,38 +504,192 @@ git rev-list --left-right --count HEAD...origin/main
 # Правое > 0 -- origin ahead, нужно pull
 ```
 
-### Урок 12 — иногда дело не в hook'е, а в аутентификации
+### Урок 12 — 403 при push имеет ДВА разных корня
 
-Параллельная находка дня: на рабочем ПК hook не мог запушить **даже
-после фикса** -- получал `HTTP 403 Permission denied`. Причина не в
-скрипте: **PAT в Git Credential Manager истёк / имел недостаточный
-scope** для write-операций на private (или даже public) репо.
+> **ИСПРАВЛЕНО 2026-05-14 после session-report Ivan Fesenko**
+> (`session-reports/2026-05-14_harvest-markitdown-document-loader/`).
+> Первоначальная запись утверждала только «PAT истёк» — это лишь
+> один из двух сценариев. Реальная картина сложнее, и **различить
+> сценарии можно по тексту error message от GitHub**.
 
-Симптом:
+Когда `git push` падает с `HTTP 403 Permission denied` — **сначала
+смотреть на сообщение `denied to <user>`**, потом действовать:
+
+#### Сценарий 12a — `denied to <owner-of-repo>` = истёкший / неподходящий PAT
+
 ```
 remote: Permission to daniileliseev1337/claude-base.git denied to daniileliseev1337.
-fatal: unable to access ... The requested URL returned error: 403
+                                                                ^^^^^^^^^^^^^^^^^^
+                                                                владелец репо
 ```
 
-При этом `git pull` работает (анонимный fetch на public репо), `git
-push` -- падает на auth.
+PAT в Credential Manager либо **истёк** (token expired), либо имеет
+**недостаточный scope** для write-операций. Аккаунт правильный,
+просто прав не хватает.
 
 **Лечение:**
 ```powershell
 cmdkey /delete:LegacyGeneric:target=git:https://github.com
 cd $env:USERPROFILE\.claude
 git push origin main
-# открывается окно Git Credential Manager
 # -> Sign in to GitHub через браузер
-# -> Credential Manager создаёт свежий PAT с правильным scope
-# -> push проходит
+# -> новый PAT с правильным scope
 ```
 
-Это разовое действие на ПК, дальше токен сохранён и hook работает
-молча.
+Подтверждено на рабочем ПК Deliseev (Daniil, R-090226727A) 2026-05-14.
 
-**Превентивная мера для следующих сотрудников при установке
-системы**: добавить в `Install.ps1` шаг «Stage 8: первичная
-аутентификация GitHub» с явным push'ем в `~/.claude/` -- чтобы PAT
-сохранился сразу при установке, а не лопнул при первом hook-вызове
-через месяц. (Отдельная задача для claude-lite-instaler.)
+#### Сценарий 12b — `denied to <другой-user>` = WRONG ACCOUNT
+
+```
+remote: Permission to daniileliseev1337/claude-base.git denied to fessenkoim-arch.
+                                                                ^^^^^^^^^^^^^^^^
+                                                                ЛИЧНЫЙ аккаунт
+                                                                сотрудника, не owner
+```
+
+PAT валидный, scope нормальный, но **Credential Manager отдаёт
+токен другого GitHub-аккаунта** (например, личный аккаунт
+сотрудника), у которого **нет push-доступа** к чужому репо.
+
+**Лечение — не в Credential Manager, а в правах репо:**
+1. Owner репо (Daniil) добавляет аккаунт сотрудника как collaborator
+   в Settings → Collaborators
+2. Сотрудник принимает приглашение на GitHub
+3. `git push` начинает проходить с тем же PAT
+
+Подтверждено на NB-HP-LQ6G (Ivan Fesenko, `fessenkoim-arch`)
+2026-05-14 -- после collaborator-приглашения push сразу прошёл.
+
+#### Как НЕ ошибиться
+
+**Первое что смотреть в 403:** `denied to <user>` — этот `<user>`
+**равен** или **не равен** владельцу репо.
+- Равен → 12a (PAT/scope)
+- Не равен → 12b (collaborator missing) или wrong-account-cache
+
+В моей первой записи (commit `79a8561`) этого различения не было —
+читатель шёл по 12a даже когда был 12b. Этот фикс устраняет
+дезинформацию.
+
+#### Превентивные меры
+
+- **При установке системы у нового сотрудника** добавить в Install.ps1
+  «Stage 8: первичная аутентификация GitHub» с явным push'ем — чтобы
+  и PAT сохранился, и сразу проявился сценарий 12b (если account
+  wrong / collaborator не дан).
+- **Для owner'а репо:** перед началом работы сотрудника добавлять
+  его GitHub-аккаунт в collaborators **заранее**, чтобы первое
+  закрытие сессии не давало 403.
+
+### Урок 13 — диагностика push-ошибок по слоям, снизу вверх
+
+> Из `memory-snapshot-NB-HP-LQ6G/git-push-diagnostic-order.md` от
+> Ivan Fesenko (2026-05-14). Методический урок широкого применения.
+
+**Симптом:** `git push` падает. В окружении есть **несколько
+подозрительных вещей** (прокси, странный credential helper, env-vars,
+PAT). Велик соблазн атрибутировать ошибку **первой** замеченной
+проблеме.
+
+**Что я (Claude) сделал неправильно:**
+- Увидел `Proxy CONNECT aborted`
+- Сразу сделал вывод: «прокси режет git»
+- Записал это в report.md как причину
+- Полез искать решение прокси
+
+**Что было на самом деле:**
+- Прокси действительно мешал (был один из слоёв)
+- НО реальная причина — `403 Permission denied` от GitHub на чужой
+  аккаунт
+- Прокси-ошибка **маскировала** auth-ошибку: без сети auth-запрос
+  даже не доходит до сервера, в логе видно только сетевую
+- Пока я не «снял прокси-слой», auth-ошибки было не видно
+
+**Правильный порядок диагностики:**
+
+1. **Раунд 1 — текущее окружение как есть.** Записать точный текст
+   ошибки (включая код, hostname, ВСЕ упомянутые имена пользователей
+   из remote-ответа). **Не делать выводов.**
+2. **Раунд 2 — снять подозрительный слой 1** (обычно прокси,
+   как наиболее «шумный»):
+   ```powershell
+   Remove-Item Env:HTTP_PROXY,Env:HTTPS_PROXY,Env:http_proxy,Env:https_proxy,Env:ALL_PROXY -ErrorAction SilentlyContinue
+   git -c http.proxy="" -c https.proxy="" push origin main
+   ```
+   Записать новый текст ошибки.
+3. **Раунд 3 — снять слой 2** (credentials, если нужно):
+   ```powershell
+   cmdkey /delete:LegacyGeneric:target=git:https://github.com
+   git push origin main   # запросит логин
+   ```
+   Записать новый текст ошибки.
+4. **Только когда видна цепочка от верхнего слоя до корня** —
+   фиксировать в session-report.
+
+**Главный принцип:** «**Корень обычно на самом нижнем слое**, до
+которого надо честно дойти. Сетевые ошибки часто маскируют auth.
+Auth-ошибки часто маскируют права в репо. Нельзя останавливаться на
+первой видимой.»
+
+### Урок 14 — auto-push.ps1 молчит при push-failure (TODO для будущей правки)
+
+> Из того же session-report Ivan'а — открытый вопрос на доработку
+> hook'а.
+
+**Симптом:** при неудачном push в `auto-sync.log` есть запись
+`auto-push: pushing to origin/main...`, но **нет** завершающей
+строки `auto-push: pushed to origin/main` ИЛИ
+`auto-push: push FAILED (exit=<code>)`. Лог обрывается без
+финального результата.
+
+Это значит **диагностика по логу невозможна** — мы видим что push
+запускался, но не видим что произошло. На NB-HP-LQ6G три цикла push
+прошли в тишине, пока Ivan не зашёл руками.
+
+**Что нужно поправить в `~/.claude/scripts/auto-push.ps1`:**
+
+1. **Перехватывать stderr правильно.** Сейчас `$pushOut = & git ... 2>&1`
+   собирает stderr/stdout, но из-за PS 5.1 ловушки (7-я) может
+   обрываться. Использовать `cmd /c "git push 2>&1"` или явный
+   `--porcelain` режим push'а.
+2. **Логировать exit code в финале.** Даже если stderr пуст, обязательно:
+   ```powershell
+   if ($pushExit -eq 0) {
+       Write-SyncLog "pushed to origin/main"
+   } else {
+       Write-SyncLog "push FAILED (exit=$pushExit). Last output:"
+       $pushOut | Out-String | Add-Content $logFile
+   }
+   ```
+3. **Опционально:** при первом FAILED проверить `denied to <user>` в
+   pushOut и подсказать в логе — это 12a (PAT) или 12b (wrong
+   account)?
+
+**Не делал прямо сейчас** — это требует тестирования (как симулировать
+push fail в hook context?), плюс пока не вытащил из живого ответа на
+RUNNING/MISSING строки. Записываю как TODO для следующей правки.
+
+### Урок 15 — claude-lite-instaler не везде кладёт proxy-хелперы
+
+> Из того же session-report Ivan'а.
+
+На NB-HP-LQ6G **отсутствуют** файлы:
+- `Set-Proxy.ps1`
+- `Start-Claude.bat`
+- `Start-Claude.ahk`
+
+Хотя CLAUDE.md секция «Прокси» их упоминает как стандартные хелперы.
+Возможно установщик отрабатывал в режиме без прокси-хелперов (если
+прокси не требовался на момент установки), либо они должны быть
+optional.
+
+**TODO для claude-lite-instaler:** прояснить — эти файлы always or
+optional? Если always — добавить их в Stage 0 / Stage 1. Если
+optional — добавить документацию когда они нужны и как поставить
+позже без переустановки.
+
+**Также:** на NB-HP-LQ6G прокси в env-vars был выставлен **системно**
+(не через `Set-Proxy.ps1`), но git его наследовал и ломался. Это
+говорит что для git нужно **отдельное** отношение — env-vars прокси
+полезны для uvx и Claude Code WebFetch, но **вредны** для native
+git. См. сценарий очистки env в Уроке 13, раунд 2.
