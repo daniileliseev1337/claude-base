@@ -393,3 +393,149 @@ git вернул exit 0.
 Под PowerShell 7+ эта проблема не воспроизводится (там нативные
 команды не оборачиваются в ErrorRecord), но мы целимся в стандартный
 Windows PowerShell 5.1, который идёт из коробки.
+
+---
+
+## Дополнение от 2026-05-14 — восьмая ловушка (auto-push не догоняет ahead-origin коммиты)
+
+> Обнаружено в первый день работы по новой политике «каждая сессия пишет
+> session-report». Рабочий ПК (`R-090226727A`) накопил 2 локальных
+> коммита, hook их видел и каждый раз выходил с `no managed changes`.
+
+### Симптом
+
+На рабочем ПК в `~/.claude/auto-sync.log`:
+```
+[2026-05-14 11:29:39] auto-push: start
+[2026-05-14 11:29:39] auto-push: no managed changes
+[2026-05-14 11:35:47] auto-push: start
+[2026-05-14 11:35:47] auto-push: no managed changes
+```
+
+Hook отрабатывает на каждом SessionEnd, но **никогда** не пушит. При
+этом `git log` показывает 2 коммита локально **ahead origin/main**:
+```
+92aaac8 (HEAD) auto-sync: session 2026-05-14 11:28 from R-090226727A
+01cc78f         auto-sync: session 2026-05-13 17:55 from R-090226727A
+0874823 (origin/main) ...
+```
+
+То есть коммиты сделаны (Claude в чате выполнил `git commit`), но
+push никогда не прошёл — и hook их **не догоняет**.
+
+### Причина
+
+В `auto-push.ps1` логика была:
+```powershell
+foreach ($path in $Managed) {
+    $status = & git status --porcelain -- $path
+    if ($status) { $changedPaths += $path }
+}
+if ($changedPaths.Count -eq 0) {
+    Write-SyncLog "no managed changes"
+    exit 0     # <-- выход БЕЗ push
+}
+# ниже -- stage + commit + push
+```
+
+Проверка только **working tree** через `git status --porcelain`. Если
+все изменения уже закоммичены (working tree чист), переменная
+`$changedPaths` пуста, hook выходит до push'а.
+
+**Сценарий приводящий к проблеме:**
+- Пользователь или Claude в чате вручную выполнил `git commit` (например,
+  чтобы зафиксировать session-report).
+- `git push` упал (сеть, прокси CONNECT до фикса, истёкший PAT, и т.п.)
+  или вообще не делался.
+- Working tree становится чистым, hook видит «нет изменений» и выходит.
+- Локальные коммиты остаются `ahead origin/main` навсегда — hook их
+  не пушит на последующих SessionEnd, потому что повторно не выполняет
+  push без новых изменений в working tree.
+
+Комментарий в коде утверждал «next SessionEnd will retry push» — это
+было **неверно**: retry происходил только при новых working-tree
+изменениях, не при уже закоммиченных-но-не-запушенных.
+
+### Фикс (коммит `fcb350f` в claude-base)
+
+В `auto-push.ps1` добавлена проверка ahead-origin:
+
+```powershell
+if ($changedPaths.Count -eq 0) {
+    # No working tree changes -- check if local commits are ahead of origin.
+    # Quick fetch (safe in hook context -- unlike git pull --rebase).
+    & git -c http.proxy="" -c https.proxy="" fetch --quiet origin main 2>&1 | Out-Null
+    $aheadOut = & git rev-list --count origin/main..HEAD 2>$null
+    $aheadCount = if ($aheadOut) { [int]$aheadOut } else { 0 }
+
+    if ($aheadCount -eq 0) {
+        Write-SyncLog "no managed changes, no commits ahead origin"
+        exit 0
+    }
+    Write-SyncLog "no working tree changes, but $aheadCount commit(s) ahead -- proceeding to push"
+}
+# ... иначе stage + commit как раньше ...
+
+# Push -- общий блок для обоих сценариев (fresh-commit-from-staging
+# или ahead-only push)
+```
+
+Также: блок push вынесен в **shared path** -- общий для обоих
+сценариев, не дублируется внутри ветки «есть managed changes».
+
+`git fetch --quiet` безопасен в hook-context (в отличие от
+`git pull --rebase --autostash` который зависал -- 5-я ловушка):
+fetch только обновляет refs, не делает merge/rebase, не блокируется
+на интерактивный prompt.
+
+### Урок 11 для следующих раз
+
+**Hook должен догонять не только working tree changes, но и
+ahead-origin коммиты.** Иначе при любой неудачной push-попытке (сеть
+/ прокси / истекший PAT / interrupt) локальные коммиты «зависают» и
+никогда не доедут до origin.
+
+Проверочные команды для диагностики (если коммиты «зависли»):
+```powershell
+cd $env:USERPROFILE\.claude
+git fetch origin
+git rev-list --left-right --count HEAD...origin/main
+# Левое число > 0 -- локально ahead, нужно push
+# Правое > 0 -- origin ahead, нужно pull
+```
+
+### Урок 12 — иногда дело не в hook'е, а в аутентификации
+
+Параллельная находка дня: на рабочем ПК hook не мог запушить **даже
+после фикса** -- получал `HTTP 403 Permission denied`. Причина не в
+скрипте: **PAT в Git Credential Manager истёк / имел недостаточный
+scope** для write-операций на private (или даже public) репо.
+
+Симптом:
+```
+remote: Permission to daniileliseev1337/claude-base.git denied to daniileliseev1337.
+fatal: unable to access ... The requested URL returned error: 403
+```
+
+При этом `git pull` работает (анонимный fetch на public репо), `git
+push` -- падает на auth.
+
+**Лечение:**
+```powershell
+cmdkey /delete:LegacyGeneric:target=git:https://github.com
+cd $env:USERPROFILE\.claude
+git push origin main
+# открывается окно Git Credential Manager
+# -> Sign in to GitHub через браузер
+# -> Credential Manager создаёт свежий PAT с правильным scope
+# -> push проходит
+```
+
+Это разовое действие на ПК, дальше токен сохранён и hook работает
+молча.
+
+**Превентивная мера для следующих сотрудников при установке
+системы**: добавить в `Install.ps1` шаг «Stage 8: первичная
+аутентификация GitHub» с явным push'ем в `~/.claude/` -- чтобы PAT
+сохранился сразу при установке, а не лопнул при первом hook-вызове
+через месяц. (Отдельная задача для claude-lite-instaler.)
