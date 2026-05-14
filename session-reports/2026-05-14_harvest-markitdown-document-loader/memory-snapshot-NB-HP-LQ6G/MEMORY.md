@@ -1,0 +1,3 @@
+- [Прокси на NB-HP-LQ6G не нужен для git](nb-hp-lq6g-proxy-not-needed.md) — корп-прокси scuf-meta.ru обрывает CONNECT от git, но сам git выходит напрямую; env HTTP_PROXY/HTTPS_PROXY надо очищать
+- [GitHub-аккаунт fessenkoim-arch](fessenkoim-arch-github.md) — машина NB-HP-LQ6G пушит в claude-base под этим личным аккаунтом, добавлен collaborator'ом 2026-05-14
+- [Диагностика git push: сначала auth, потом сеть](git-push-diagnostic-order.md) — урок сессии 2026-05-14, чтобы не повторять ложную атрибуцию «всё на прокси»
