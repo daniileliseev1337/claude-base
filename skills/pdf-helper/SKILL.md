@@ -33,7 +33,8 @@ description: |
 | Слияние/разделение, перекомпоновка | Python `pypdf` | Простой API, не теряет аннотации |
 | Заполнение AcroForm | Python `pypdf.PdfWriter.update_page_form_field_values()` | XFA-формы — отдельная история, обычно не поддерживается |
 | Аннотации (облачка, маркеры) | Python `pikepdf` (низкоуровневые объекты PDF) | Удалять `/AP` после смены цвета — иначе старый рендер останется |
-| Сравнение двух версий PDF | `pdftoppm` + perceptual hash, или сравнение текста через `markitdown` | Бинарный diff бесполезен |
+| Сравнение двух версий PDF | `diff-pdf.exe` (визуальный) или текст через `pdf-mcp` + `difflib` | Бинарный diff бесполезен |
+| Редактирование (merge/split/delete/rotate/extract/replace/watermark) | MCP `pdf-edit` | На pikepdf/pypdf/reportlab, см. ниже |
 
 **Правило**: всегда сначала смотри, есть ли подходящий MCP в `claude mcp list`. Если есть — через него. Если нужна более тонкая операция — Python.
 
@@ -116,11 +117,44 @@ pdf.save("output.pdf")
 
 После любой существенной правки PDF (удалили страницы, добавили аннотации, изменили формы) — спавнить subagent `pdf-reviewer` с задачей «проверь итоговый PDF на сохранность структуры». Агент сам проверит количество страниц, метаданные, целостность аннотаций, выдаст отчёт.
 
+## Визуальный diff двух PDF через diff-pdf
+
+Бинарь `diff-pdf.exe v0.5.3` лежит в `~/.claude/bin/diff-pdf/diff-pdf.exe` (portable, не требует админа). Подсвечивает отличающиеся места попиксельно.
+
+```powershell
+# Просто отчёт о различиях (exit code 0 — идентичны, 1 — отличаются):
+& "$HOME\.claude\bin\diff-pdf\diff-pdf.exe" v1.pdf v2.pdf
+
+# С визуальным выходом в PDF (наложение красным):
+& "$HOME\.claude\bin\diff-pdf\diff-pdf.exe" --output-diff=diff.pdf v1.pdf v2.pdf
+```
+
+Лицензия GPL-2.0 — допустимо как **внешний бинарь** через subprocess, **код не копировать** в наши инструменты.
+
+## pdf-edit MCP (наш собственный)
+
+Свой минимальный MCP-сервер: `~/.claude/mcp-servers/pdf-edit/pdf_edit_mcp.py` (PEP 723 single-file на FastMCP + pikepdf/pypdf/reportlab). 8 операций:
+
+| Tool | Что делает |
+|------|------------|
+| `merge_pdfs` | Объединить список PDF в один |
+| `split_pdf` | Разбить PDF постранично в папку |
+| `delete_pages` | Удалить указанные страницы (1-based) |
+| `rotate_pages` | Повернуть страницы на 90/180/270° (пустой список = все) |
+| `extract_range` | Извлечь диапазон страниц [start..end] |
+| `replace_page` | Заменить страницу из другого PDF |
+| `watermark_text` | Текстовый водяной знак (диагональ, opacity) |
+| `watermark_image` | PNG/JPG водяной знак по центру |
+
+Запуск: `claude mcp list` должен показать `pdf-edit: ... ✓ Connected`. Если нет — `claude mcp add pdf-edit -s user -- uv run --script C:\Users\Apoliakov\.claude\mcp-servers\pdf-edit\pdf_edit_mcp.py`.
+
 ## MCP-роутинг (повтор для удобства)
 
 | Задача | MCP server | Скилл fallback |
 |--------|------------|----------------|
 | Чтение текста | markitdown | pdfminer |
 | Чтение таблиц | pdf-mcp | pdfplumber |
-| Редактирование | (нет MCP) | pikepdf + pypdf |
-| Аннотации | (нет MCP) | pikepdf низкоуровневый |
+| Редактирование (merge/split/rotate/watermark) | **pdf-edit** | pikepdf + pypdf напрямую |
+| AcroForm заполнение | (пока нет в pdf-edit) | pypdf.update_page_form_field_values |
+| Аннотации (перекрашивание) | (пока нет в pdf-edit) | pikepdf низкоуровневый |
+| Визуальный diff | (нет MCP) | `diff-pdf.exe` portable |
