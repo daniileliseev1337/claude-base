@@ -39,12 +39,12 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # === Constants ===
-$ClaudeDir   = "$env:USERPROFILE\.claude"
-$Manifest    = "$ClaudeDir\mcp-manifest.json"
-$LocalState  = "$ClaudeDir\.local-state"
-$MarkerFile  = "$LocalState\setup-extras.applied"
-$LogFile     = "$ClaudeDir\auto-sync.log"
-$Py312Path   = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
+$ClaudeDir    = "$env:USERPROFILE\.claude"
+$ManifestPath = "$ClaudeDir\mcp-manifest.json"
+$LocalState   = "$ClaudeDir\.local-state"
+$MarkerFile   = "$LocalState\setup-extras.applied"
+$LogFile      = "$ClaudeDir\auto-sync.log"
+$Py312Path    = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
 
 # === Helpers ===
 function Write-Step { param($m) Write-Host "==> $m" -ForegroundColor Cyan }
@@ -55,13 +55,13 @@ function Write-Err  { param($m) Write-Host "  [ERR]  $m" -ForegroundColor Red }
 function Log        { param($m) "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] setup-extras: $m" | Add-Content -Path $LogFile -ErrorAction SilentlyContinue }
 
 # === Pre-flight ===
-if (-not (Test-Path $Manifest)) {
-    Write-Err "Manifest not found: $Manifest"
+if (-not (Test-Path $ManifestPath)) {
+    Write-Err "Manifest not found: $ManifestPath"
     Write-Err "Run 'git pull' in ~/.claude/ to fetch manifest first."
     exit 1
 }
 
-$manifest = Get-Content $Manifest -Raw | ConvertFrom-Json
+$manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
 
 $pyPkgs    = @($manifest.python_user_packages)
 $mcpSrvs   = @($manifest.mcp_servers)
@@ -70,7 +70,7 @@ $totalMcp  = $mcpSrvs.Count
 
 Write-Host ""
 Write-Host "=== claude-base extras setup ===" -ForegroundColor White
-Write-Host "Manifest path:  $Manifest" -ForegroundColor Gray
+Write-Host "Manifest path:  $ManifestPath" -ForegroundColor Gray
 Write-Host "Python pkgs in manifest: $totalPy" -ForegroundColor Gray
 Write-Host "MCP servers in manifest: $totalMcp" -ForegroundColor Gray
 Write-Host ""
@@ -100,7 +100,7 @@ New-Item -ItemType Directory -Path $LocalState -Force -ErrorAction SilentlyConti
 if (-not $SkipPython) {
     Write-Step "Step 1: Python 3.12 (for paddlepaddle/matplotlib stack)"
     if (Test-Path $Py312Path) {
-        $v = & $Py312Path --version 2>&1
+        $v = & $Py312Path --version 2>$null
         Write-OK "Python 3.12 already installed: $v at $Py312Path"
     } else {
         if ($DryRun) {
@@ -121,7 +121,7 @@ if (-not $SkipPython) {
                 Write-Err "winget reported success but Python 3.12 not found at $Py312Path"
                 exit 1
             }
-            Write-OK "Python 3.12 installed: $(& $Py312Path --version 2>&1)"
+            Write-OK "Python 3.12 installed: $(& $Py312Path --version 2>$null)"
             Log "Python 3.12 installed"
         }
     }
@@ -139,7 +139,9 @@ if (Test-Path $Py312Path) {
         # pip-name and import-name may differ (e.g. paddlepaddle -> paddle).
         # If import_name is given in manifest, use it for the spec-check.
         $importName = if ($p.import_name) { $p.import_name } else { $name }
-        $check = & $Py312Path -c "import importlib.util; print('OK' if importlib.util.find_spec('$importName') else 'MISSING')" 2>&1 | Out-String
+        # 2>$null drops stderr to avoid PS 5.1 NativeCommandError wrapping
+        # (memory/2026-05-09_hooks-debugging.md Урок 10).
+        $check = & $Py312Path -c "import importlib.util; print('OK' if importlib.util.find_spec('$importName') else 'MISSING')" 2>$null | Out-String
         if ($check -match 'OK') {
             $installedPy += $name
             Write-Skip "$name (import: $importName) -- already installed"
@@ -151,7 +153,13 @@ if (Test-Path $Py312Path) {
     if ($pendingPy.Count -gt 0 -and -not $DryRun) {
         Write-Host ""
         Write-Host "  Installing pending: $($pendingPy -join ', ')"
-        & $Py312Path -m pip install --user $pendingPy 2>&1 | Out-Null
+        # IMPORTANT: NO 2>&1. pip writes lots of stderr (progress, warnings).
+        # Under $ErrorActionPreference='Stop' (set at top), 2>&1 wraps each
+        # stderr line in NativeCommandError and aborts the script mid-install.
+        # Let pip output flow to console natively; rely on $LASTEXITCODE for
+        # success/failure decision. (memory/2026-05-09_hooks-debugging.md
+        # Урок 10 -- мы повторили эту ошибку при первом написании setup-extras.)
+        & $Py312Path -m pip install --user $pendingPy
         if ($LASTEXITCODE -eq 0) {
             Write-OK "All Python packages installed"
             Log "Python packages installed: $($pendingPy -join ',')"
@@ -172,7 +180,7 @@ if (Test-Path $Py312Path) {
 
 # === Step 3: MCP servers ===
 Write-Step "Step 3: MCP-серверы ($totalMcp total)"
-$registeredMcp = (& claude mcp list 2>&1 | Out-String)
+$registeredMcp = (& claude mcp list 2>$null | Out-String)
 
 foreach ($srv in $mcpSrvs) {
     $name = $srv.name
@@ -202,7 +210,7 @@ foreach ($srv in $mcpSrvs) {
     if ($srv.method -eq 'uvx') {
         # Just register -- uvx will fetch package on first use
         $regArgs = @('mcp', 'add', $name) + $srv.register_args
-        & claude $regArgs 2>&1 | Out-Null
+        & claude $regArgs 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-OK "$name registered"
             Log "MCP registered: $name (uvx)"
@@ -237,7 +245,8 @@ foreach ($srv in $mcpSrvs) {
             Write-Host "    Running uv sync (creates venv with deps)..."
             Push-Location $installDir
             try {
-                & uv sync 2>&1 | Out-Null
+                # NO 2>&1 -- uv sync prints lots of progress; let it flow to console.
+                & uv sync
                 if ($LASTEXITCODE -ne 0) {
                     Write-Err "uv sync failed for $name (exit=$LASTEXITCODE)"
                     Log "MCP install FAILED: $name (uv sync)"
@@ -254,7 +263,7 @@ foreach ($srv in $mcpSrvs) {
         $regArgs = @('mcp', 'add', $name) + ($regArgsRaw | ForEach-Object {
             $_ -replace '\{install_dir\}', $installDir
         })
-        & claude $regArgs 2>&1 | Out-Null
+        & claude $regArgs 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-OK "$name registered"
             Log "MCP registered: $name (github-zip-uv)"
@@ -272,7 +281,7 @@ foreach ($srv in $mcpSrvs) {
 
 # === Step 4: Marker ===
 if (-not $DryRun) {
-    $manifestHash = (Get-FileHash $Manifest -Algorithm SHA256).Hash
+    $manifestHash = (Get-FileHash $ManifestPath -Algorithm SHA256).Hash
     @{
         applied_at = (Get-Date).ToString("o")
         manifest_hash = $manifestHash
