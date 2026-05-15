@@ -1,0 +1,126 @@
+{
+  "$schema_version": 1,
+  "$schema_doc": "Manifest of MCP servers and Python user-packages used across the team. Read by scripts/setup-extras.ps1 to install/register missing items on the local machine. Read by scripts/auto-pull.ps1 to notify user about pending diff between manifest and local state. WHEN ADDING A NEW MCP SERVER OR PACKAGE: edit this file, commit + push -- auto-sync will distribute it. Other PCs will see notification 'extras-diff: N pending' in auto-sync.log and the user can run setup-extras.ps1 to apply.",
+  "$last_updated": "2026-05-15",
+
+  "python_user_packages": [
+    {
+      "name": "matplotlib",
+      "purpose": "Network/structure diagrams (handoff 2026-05-15)",
+      "min_python": "3.10",
+      "max_python": "3.12"
+    },
+    {
+      "name": "networkx",
+      "purpose": "Graph layout for structure diagrams",
+      "min_python": "3.10",
+      "max_python": "3.12"
+    },
+    {
+      "name": "ezdxf",
+      "purpose": "DXF generation and reading (AutoCAD interop without GUI)",
+      "min_python": "3.10",
+      "max_python": "3.12"
+    },
+    {
+      "name": "pypdfium2",
+      "purpose": "PDF rendering without 2000x2000 limit of pdf-mcp",
+      "min_python": "3.10",
+      "max_python": "3.12"
+    },
+    {
+      "name": "pdfplumber",
+      "purpose": "Table extraction from vector PDFs",
+      "min_python": "3.10",
+      "max_python": "3.12"
+    },
+    {
+      "name": "paddleocr",
+      "purpose": "OCR for scanned/raster PDFs (Russian + English, no Tesseract)",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 200,
+      "post_install_note": "First use downloads ~500MB models to ~/.paddlex/official_models/"
+    },
+    {
+      "name": "paddlepaddle",
+      "import_name": "paddle",
+      "purpose": "PaddleOCR backend (DL framework). pip-name=paddlepaddle, import-name=paddle",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 105
+    }
+  ],
+
+  "mcp_servers": [
+    {
+      "name": "markitdown",
+      "purpose": "Universal office-doc → markdown conversion",
+      "method": "uvx",
+      "install_args": ["markitdown-mcp"],
+      "register_args": ["-s", "user", "--", "uvx", "markitdown-mcp"]
+    },
+    {
+      "name": "document-loader",
+      "purpose": "Office docs + PNG-rendering of slides (AWS Labs)",
+      "method": "uvx",
+      "install_args": ["awslabs.document-loader-mcp-server@latest"],
+      "register_args": ["-s", "user", "--", "uvx", "awslabs.document-loader-mcp-server@latest"]
+    },
+    {
+      "name": "word",
+      "purpose": "DOCX read/edit (direct)",
+      "method": "uvx",
+      "install_args": ["--from", "office-word-mcp-server", "word_mcp_server"],
+      "register_args": ["-s", "user", "--", "uvx", "--from", "office-word-mcp-server", "word_mcp_server"]
+    },
+    {
+      "name": "excel",
+      "purpose": "XLSX cell manipulation, formulas, charts",
+      "method": "uvx",
+      "install_args": ["excel-mcp-server", "stdio"],
+      "register_args": ["-s", "user", "--", "uvx", "excel-mcp-server", "stdio"]
+    },
+    {
+      "name": "pdf-mcp",
+      "purpose": "PDF tables/text extraction, page rendering (cached)",
+      "method": "uvx",
+      "install_args": ["pdf-mcp"],
+      "register_args": ["-s", "user", "--", "uvx", "pdf-mcp"]
+    },
+    {
+      "name": "sequential-thinking",
+      "purpose": "Meta-cognition for complex multi-step tasks",
+      "method": "uvx",
+      "install_args": ["sequential-thinking-mcp"],
+      "register_args": ["-s", "user", "--", "uvx", "sequential-thinking-mcp"]
+    },
+    {
+      "name": "fetch",
+      "purpose": "Fetch arbitrary URLs (HTML/text)",
+      "method": "uvx",
+      "install_args": ["mcp-server-fetch"],
+      "register_args": ["-s", "user", "--", "uvx", "mcp-server-fetch"]
+    },
+    {
+      "name": "time",
+      "purpose": "Current time, timezones, date math",
+      "method": "uvx",
+      "install_args": ["mcp-server-time"],
+      "register_args": ["-s", "user", "--", "uvx", "mcp-server-time"]
+    },
+    {
+      "name": "autocad-mcp",
+      "purpose": "AutoCAD integration (LT + headless ezdxf), 8 tools after restart",
+      "method": "github-zip-uv",
+      "source_url": "https://github.com/puran-water/autocad-mcp/archive/refs/heads/main.zip",
+      "extracted_name": "autocad-mcp-main",
+      "install_dir": "$env:USERPROFILE\\.claude\\mcp-servers\\autocad-mcp",
+      "register_env": {"AUTOCAD_MCP_BACKEND": "auto"},
+      "register_args": ["-s", "user", "-e", "AUTOCAD_MCP_BACKEND=auto", "--", "{install_dir}\\.venv\\Scripts\\python.exe", "-m", "autocad_mcp"],
+      "post_install_note": "If AutoCAD installed: in AutoCAD run APPLOAD and load '{install_dir}\\lisp-code\\mcp_dispatch.lsp'. Then restart Claude Code to see 8 new tools.",
+      "size_mb": 150,
+      "requires_internet": true
+    }
+  ]
+}

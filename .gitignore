@@ -23,6 +23,7 @@
 !CLAUDE.md
 !README.md
 !settings.json
+!mcp-manifest.json
 
 # Auto-sync скрипты (запускаются Claude Code как hooks)
 !scripts/
@@ -84,6 +85,12 @@ _sandbox/*
 
 # Auto-sync лог (per-PC, append-only, не должен лететь в git)
 **/auto-sync.log
+
+# Per-machine local state (markers что setup-extras применён, etc.)
+# Содержимое отслеживает локальное состояние конкретного ПК,
+# не должно попадать в общую базу.
+.local-state/
+**/.local-state/
 
 # Claude Code transient session state (создаётся самим Claude Code)
 # в ~/.claude/sessions/ — конфликтует с нашим прежним sessions/.
