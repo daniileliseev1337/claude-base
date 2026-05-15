@@ -36,7 +36,7 @@ description: |
 
 ## Типовые задачи
 
-### Найти расхождения между двумя файлами
+### Найти расхождения между двумя файлами (pandas — табличный diff)
 
 ```python
 import pandas as pd
@@ -55,6 +55,101 @@ for col in [c for c in df1.columns if c != "ID"]:
         print(f"\n=== {col} ===")
         print(diff[["ID", f"{col}_v1", f"{col}_v2"]])
 ```
+
+### Cell-by-cell diff с подсветкой в новом xlsx
+
+Когда нужно **визуально** показать что изменилось — итерация по совпадающим листам, цветовая подсветка изменённых ячеек, добавленных строк, удалённых строк. Структура листов считается одинаковой.
+
+```python
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+from copy import copy
+
+YELLOW = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")  # изменилось
+GREEN  = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # добавилось (есть в v2, нет в v1)
+RED    = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")  # удалилось (есть в v1, нет в v2)
+
+def cell_diff(v1_path: str, v2_path: str, out_path: str) -> dict:
+    """
+    Открывает v2 как базу (он "новый"), сравнивает с v1, заливает изменённые ячейки.
+    Возвращает счётчики по типам различий.
+    """
+    wb1 = load_workbook(v1_path, data_only=False)
+    wb2 = load_workbook(v2_path, data_only=False)
+    stats = {"changed": 0, "added": 0, "removed": 0, "sheets_only_in_v2": [], "sheets_only_in_v1": []}
+
+    for name in wb2.sheetnames:
+        if name not in wb1.sheetnames:
+            stats["sheets_only_in_v2"].append(name)
+            continue
+        ws1, ws2 = wb1[name], wb2[name]
+        max_row = max(ws1.max_row, ws2.max_row)
+        max_col = max(ws1.max_column, ws2.max_column)
+        for r in range(1, max_row + 1):
+            for c in range(1, max_col + 1):
+                v1 = ws1.cell(r, c).value
+                v2 = ws2.cell(r, c).value
+                if v1 == v2:
+                    continue
+                target = ws2.cell(r, c)
+                if v1 is None and v2 is not None:
+                    target.fill = GREEN
+                    stats["added"] += 1
+                elif v1 is not None and v2 is None:
+                    target.fill = RED
+                    target.value = f"[DELETED] was: {v1}"
+                    stats["removed"] += 1
+                else:
+                    target.fill = YELLOW
+                    stats["changed"] += 1
+
+    for name in wb1.sheetnames:
+        if name not in wb2.sheetnames:
+            stats["sheets_only_in_v1"].append(name)
+
+    wb2.save(out_path)
+    return stats
+```
+
+**Применение:**
+```python
+stats = cell_diff("v1.xlsx", "v2.xlsx", "diff_highlighted.xlsx")
+print(stats)  # {'changed': 12, 'added': 3, 'removed': 1, ...}
+```
+
+### Formula-level diff (формулы vs значения)
+
+Когда расхождение в **самой формуле**, а не в её значении — стандартный `data_only=True` это скроет. Сравниваем формулы как текст, отдельно от cached-значений.
+
+```python
+from openpyxl import load_workbook
+
+def formula_diff(v1_path: str, v2_path: str) -> list:
+    """
+    Возвращает список расхождений в формулах: [(sheet, A1, formula_v1, formula_v2), ...].
+    Только те ячейки, где хотя бы в одном из файлов есть формула.
+    """
+    wb1 = load_workbook(v1_path, data_only=False)
+    wb2 = load_workbook(v2_path, data_only=False)
+    out = []
+    for name in set(wb1.sheetnames) & set(wb2.sheetnames):
+        ws1, ws2 = wb1[name], wb2[name]
+        for row in ws2.iter_rows():
+            for cell in row:
+                f2 = cell.value if isinstance(cell.value, str) and cell.value.startswith("=") else None
+                f1_val = ws1.cell(cell.row, cell.column).value
+                f1 = f1_val if isinstance(f1_val, str) and f1_val.startswith("=") else None
+                if f1 != f2 and (f1 or f2):
+                    out.append((name, cell.coordinate, f1, f2))
+    return out
+
+for sheet, coord, f1, f2 in formula_diff("v1.xlsx", "v2.xlsx"):
+    print(f"{sheet}!{coord}:")
+    print(f"  v1: {f1}")
+    print(f"  v2: {f2}")
+```
+
+**Ловушка:** если ячейка в v1 содержит формулу `=SUM(A1:A10)` со значением `55`, а в v2 — просто число `55` (формула удалена, оставлено значение) — `formula_diff` это поймает (`f1` есть, `f2` нет). Это и есть нужное поведение: пользователь часто хочет знать, где формула "захардкожена" в значение.
 
 ### Валидация формул — найти #REF! / #DIV/0! / #NAME?
 
