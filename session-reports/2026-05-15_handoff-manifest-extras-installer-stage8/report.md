@@ -436,7 +436,27 @@ Plus локально (вне репо): `C:\Users\Даниил\Desktop\HANDOFF_
 
 ### Открытые после этой сессии
 
-Только **одна** queued — Урок 15 реализация. См. HANDOFF.md.
+**Нет.** Пользователь сказал «делаем в этой сессии» — взялись за
+Урок 15 implementation сразу же:
+
+10. **Урок 15 реализация — DONE.** Клонирован local
+    `~/Desktop/claude-lite-instaler/`, добавил блок persist-proxy-helpers
+    после Stage 1 в `Install.ps1` (+60 строк): копирует 5 хелперов
+    (`Set-Proxy.ps1/cmd`, `Start-Claude.ps1/bat/ahk`) в `~/.claude/bin/`
+    и создаёт ярлык в Пуске «Claude (with proxy)». Verified standalone
+    на DANIILPC (5 файлов скопированы, ярлык 1905 B). Commit `3562631`
+    в claude-lite-instaler. CLAUDE.md «Прокси» секция обновлена в
+    claude-base. Урок 15 в `memory/2026-05-09_hooks-debugging.md`
+    отмечен CLOSED. Memory note `2026-05-18_lesson-15-...` дополнен
+    post-mortem секцией.
+
+### Cyrillic + PowerShell gotcha (новый мини-урок)
+
+Verification script для Урока 15 первой попыткой написал с Cyrillic
+литералами. При запуске через `powershell -File temp.ps1`, PS читал
+файл как codepage 866 → Cyrillic мангнулся → ParserError. Решение:
+для ad-hoc verification scripts писать **ASCII-only** или
+сохранять с UTF-8 BOM.
 
 ### Auto-sync статус (продолжения)
 

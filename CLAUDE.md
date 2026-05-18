@@ -230,11 +230,14 @@ Claude Code автоматически ведёт память на каждый
 
 ## Прокси (если за корп-прокси)
 
-Перед запуском `claude` или открытием VS Code: убедиться что прокси выставлен в текущей PowerShell-сессии. claude-lite-instaler кладёт хелперы:
+Перед запуском `claude` или открытием VS Code: убедиться что прокси выставлен в текущей PowerShell-сессии. claude-lite-instaler копирует хелперы в **`~/.claude/bin/`** (per-machine, не в git) и ярлык в Пуске:
 
-- `Set-Proxy.ps1` — поставить env-vars в текущем окне
-- `Start-Claude.bat` — двойной клик: прокси + выбор CLI/VSCode + claude
-- `Start-Claude.ahk` — глобальная горячая клавиша Ctrl+Alt+C (требует AutoHotkey v2)
+- `~/.claude/bin/Set-Proxy.ps1` — поставить env-vars в текущем окне (`& "$HOME\.claude\bin\Set-Proxy.ps1"`)
+- `~/.claude/bin/Start-Claude.bat` — двойной клик: прокси + выбор CLI/VSCode + claude
+- `~/.claude/bin/Start-Claude.ahk` — глобальная горячая клавиша Ctrl+Alt+C (требует AutoHotkey v2)
+- **Пуск → «Claude (with proxy)»** — одним кликом запустить (ярлык на `Start-Claude.bat`)
+
+Хелперы persistent: если installer-папка удалена, доступ к ним сохраняется. Урок 15 закрыт коммитом `3562631` в claude-lite-instaler (2026-05-18).
 
 Прокси-конфиг (host:port + login) хранится в `~/.claude-proxy.json` (без пароля). Пароль спрашивается каждую сессию.
 

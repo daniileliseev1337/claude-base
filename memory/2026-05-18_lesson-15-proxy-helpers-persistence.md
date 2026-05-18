@@ -2,7 +2,11 @@
 
 **Дата фиксации проблемы:** 2026-05-09 (в hooks-debugging.md как TODO)
 **Дата дизайна решения:** 2026-05-18
-**Статус:** RESOLUTION DESIGNED — queued для следующей сессии с claude-lite-instaler
+**Дата реализации:** 2026-05-18 (та же сессия, продолжили после
+закрытия первой партии хвостов)
+**Статус:** **CLOSED.** Реализовано коммитом `3562631` в
+`claude-lite-instaler`. Verified локально на DANIILPC. CLAUDE.md
+«Прокси» обновлена.
 
 ## Проблема
 
@@ -145,6 +149,45 @@ Or use Start Menu -> "Claude (with proxy)" for one-click launch.
 - git commit + push в claude-lite-instaler
 
 ETA: 15-20 минут в одну сессию.
+
+## Реализация (2026-05-18, post-mortem)
+
+Заняло ~15 минут. Шаги:
+
+1. Pull последнего `1ad2b3e` в local clone `~/Desktop/claude-lite-instaler/`.
+2. Edit `Install.ps1`: вставил ~60 строк после Stage 1 (Run-Stage),
+   копирующих 5 хелперов в `~/.claude/bin/` + Start Menu shortcut на
+   `Start-Claude.bat`.
+3. Обновил `Next-steps` в конце installer'а — путь к `Set-Proxy.ps1`
+   теперь `~/.claude/bin/`, добавлено упоминание ярлыка Пуска.
+4. Обновил docstring `.DESCRIPTION` — пункт 1 Proxy теперь упоминает
+   автокопирование.
+5. **Verification standalone**: извлёк новую логику в
+   `%TEMP%\verify-proxy-helpers.ps1`, запустил на DANIILPC. Все 5
+   хелперов скопированы (Set-Proxy.ps1 6508 B, Set-Proxy.cmd 508 B,
+   Start-Claude.ps1 4380 B, Start-Claude.bat 448 B, Start-Claude.ahk
+   1313 B), ярлык 1905 B создан в
+   `%APPDATA%\Microsoft\Windows\Start Menu\Programs\`.
+6. Commit + push в claude-lite-instaler: `3562631` на origin/main.
+7. CLAUDE.md «Прокси» секция обновлена с новыми путями и ссылкой на
+   коммит фикса.
+
+### Что было сложнее ожидаемого
+
+- **Cyrillic в bash↔PowerShell.** Первая попытка verification через
+  `powershell -Command @'...'@` не сработала (`@` не распознан как
+  here-string в `-Command` контексте). Перешёл на `-File` с временным
+  скриптом — но Cyrillic в скрипте мангнулся при PowerShell read
+  (codepage 866 vs UTF-8 без BOM). Решение: переписал verification-
+  скрипт **на ASCII** (без Cyrillic в литералах кода). Урок: для
+  ad-hoc verification scripts не использовать Cyrillic.
+
+### Что не сделано
+
+- **Тест на чистой машине.** Verification прогнал только новый
+  блок standalone, не полный Install.ps1 с -Yes от начала до конца.
+  Это OK потому что блок самодостаточен (no global state from earlier
+  stages), но end-to-end тест остаётся на следующую установку.
 
 ## Связанные уроки
 
