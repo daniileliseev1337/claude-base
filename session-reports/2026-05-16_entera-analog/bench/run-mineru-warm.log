@@ -1,0 +1,127 @@
+﻿mineru.exe : 2026-05-18 14:20:19.080 | INFO     | mineru.cli.client:run_orchestrated_cli:877 - Started local mineru-api
+ at http://127.0.0.1:59204
+At line:9 char:1
++ & "$workdir\.venv\Scripts\mineru.exe" -p "$workdir\samples\upd_vrnlom ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-05-18 14:2...127.0.0.1:59204:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+2026-05-18 14:20:21.281 | INFO     | __main__:create_app:262 - Request concurrency limited to 3
+INFO:     Started server process [19900]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:59204 (Press CTRL+C to quit)
+2026-05-18 14:20:22.132 | INFO     | mineru.cli.client:run_planned_task:773 - Submitting batch 1/1 | 1 document, 1 page
+ in this batch | 1 page total | task#1 [upd_vrnlom]
+2026-05-18 14:20:24.846 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:183 - Pipeline proc
+essing-window multi-file run. doc_count=1, total_pages=1, window_size=64, total_batches=1
+2026-05-18 14:20:27.142 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:235 - Pipeline proc
+essing window batch 1/1: 1/1 pages, batch_pages=1, doc_slices=doc0:1-1
+2026-05-18 14:20:27.143 | INFO     | mineru.backend.pipeline.pipeline_analyze:batch_image_analyze:328 - GPU Memory: 1 G
+B, Batch Ratio: 1. 
+2026-05-18 14:20:27.144 | INFO     | mineru.backend.pipeline.model_init:__init__:207 - DocAnalysis init, this may take 
+some times......
+Start MinerU FastAPI Service: http://127.0.0.1:59204
+API documentation: http://127.0.0.1:59204/docs
+
+Fetching 7 files:   0%|          | 0/7 [00:00<?, ?it/s]
+Fetching 7 files: 100%|##########| 7/7 [00:00<00:00, 7000.51it/s]
+
+Fetching 3 files:   0%|          | 0/3 [00:00<?, ?it/s]
+Fetching 3 files: 100%|##########| 3/3 [00:00<?, ?it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 997.22it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 1010.68it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<?, ?it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<?, ?it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 1007.04it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 500.10it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 510.19it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<?, ?it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 1177.84it/s]
+2026-05-18 14:20:32.466 | INFO     | mineru.backend.pipeline.model_init:__init__:260 - DocAnalysis init done!
+2026-05-18 14:20:32.466 | INFO     | mineru.backend.pipeline.pipeline_analyze:custom_model_init:83 - model init cost: 5
+.3229193687438965
+
+Layout Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  2.27it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  2.27it/s]
+
+Table-ocr det:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.77it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.76it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<?, ?it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 1008.97it/s]
+
+Table-ocr rec cyrillic:   0%|          | 0/226 [00:00<?, ?it/s]
+Table-ocr rec cyrillic:   5%|5         | 12/226 [00:00<00:02, 86.33it/s]
+Table-ocr rec cyrillic:  11%|#         | 24/226 [00:00<00:02, 83.16it/s]
+Table-ocr rec cyrillic:  16%|#5        | 36/226 [00:00<00:02, 85.01it/s]
+Table-ocr rec cyrillic:  21%|##1       | 48/226 [00:00<00:02, 83.65it/s]
+Table-ocr rec cyrillic:  27%|##6       | 60/226 [00:00<00:01, 83.53it/s]
+Table-ocr rec cyrillic:  32%|###1      | 72/226 [00:00<00:01, 84.67it/s]
+Table-ocr rec cyrillic:  37%|###7      | 84/226 [00:00<00:01, 86.41it/s]
+Table-ocr rec cyrillic:  42%|####2     | 96/226 [00:01<00:01, 85.79it/s]
+Table-ocr rec cyrillic:  48%|####7     | 108/226 [00:01<00:01, 86.15it/s]
+Table-ocr rec cyrillic:  53%|#####3    | 120/226 [00:01<00:01, 87.37it/s]
+Table-ocr rec cyrillic:  58%|#####8    | 132/226 [00:01<00:01, 87.27it/s]
+Table-ocr rec cyrillic:  64%|######3   | 144/226 [00:01<00:00, 86.99it/s]
+Table-ocr rec cyrillic:  69%|######9   | 156/226 [00:01<00:00, 86.79it/s]
+Table-ocr rec cyrillic:  74%|#######4  | 168/226 [00:01<00:00, 87.80it/s]
+Table-ocr rec cyrillic:  80%|#######9  | 180/226 [00:02<00:00, 82.76it/s]
+Table-ocr rec cyrillic:  85%|########4 | 192/226 [00:02<00:00, 72.13it/s]
+Table-ocr rec cyrillic:  90%|######### | 204/226 [00:02<00:00, 57.44it/s]
+Table-ocr rec cyrillic:  96%|#########5| 216/226 [00:03<00:00, 34.96it/s]
+Table-ocr rec cyrillic:  98%|#########8| 222/226 [00:03<00:00, 24.43it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 20.66it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 53.13it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00,  7.14it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00,  7.14it/s]
+
+Table-wired Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s][A
+Fetching 1 files: 100%|##########| 1/1 [00:00<?, ?it/s]
+
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.71s/it]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.71s/it]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 998.41it/s]
+
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]
+Fetching 1 files: 100%|##########| 1/1 [00:00<00:00, 1000.31it/s]
+
+OCR-det cyrillic:   0%|          | 0/1 [00:00<?, ?it/s]
+OCR-det cyrillic: 100%|##########| 1/1 [00:00<00:00, 40.00it/s]
+
+Seal Predict: 0it [00:00, ?it/s]
+Seal Predict: 0it [00:00, ?it/s]
+
+Processing pages:   0%|          | 0/1 [00:00<?, ?it/s]
+Processing pages: 100%|##########| 1/1 [00:00<00:00, 14.29it/s]
+2026-05-18 14:20:41.822 | INFO     | mineru.cli.client:run_planned_task:809 - Completed batch 1/1 | Processed 1/1 page 
+| 1 of 1 batch finished | task#1 [upd_vrnlom]

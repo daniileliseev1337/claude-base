@@ -1,0 +1,17 @@
+﻿=== START 13:17:12 ===
+mineru.exe : 2026-05-18 13:17:15.912 | INFO     | mineru.cli.client:run_orchestrated_cli:877 - Started local mineru-api
+ at http://127.0.0.1:54466
+At line:8 char:1
++ & "$workdir\.venv\Scripts\mineru.exe" `
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-05-18 13:1...127.0.0.1:54466:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+2026-05-18 13:17:18.815 | INFO     | __main__:create_app:262 - Request concurrency limited to 3
+INFO:     Started server process [11916]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:54466 (Press CTRL+C to quit)
+Error: Timed out waiting for local mineru-api to become healthy. Failed to query MinerU API health from http://127.0.0.
+1:54466: 503 Service Unavailable
+=== DONE 13:22:26 exit=1 ===

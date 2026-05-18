@@ -1,0 +1,521 @@
+﻿=== START 14:25:00 ===
+mineru-api.exe : 2026-05-18 14:25:02.471 | INFO     | mineru.cli.fast_api:create_app:262 - Request concurrency limited 
+to 3
+At line:10 char:1
++ & "$venv\mineru-api.exe" --host 127.0.0.1 --port 18877 2>&1 | Out-Fil ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-05-18 14:2...cy limited to 3:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+INFO:     Started server process [9884]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18877 (Press CTRL+C to quit)
+Start MinerU FastAPI Service: http://127.0.0.1:18877
+API documentation: http://127.0.0.1:18877/docs
+INFO:     127.0.0.1:61637 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62826 - "POST /tasks HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:30.320 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:183 - Pipeline proc
+essing-window multi-file run. doc_count=1, total_pages=1, window_size=64, total_batches=1
+2026-05-18 14:25:30.710 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:235 - Pipeline proc
+essing window batch 1/1: 1/1 pages, batch_pages=1, doc_slices=doc0:1-1
+2026-05-18 14:25:30.713 | INFO     | mineru.backend.pipeline.pipeline_analyze:batch_image_analyze:328 - GPU Memory: 1 G
+B, Batch Ratio: 1. 
+2026-05-18 14:25:30.714 | INFO     | mineru.backend.pipeline.model_init:__init__:207 - DocAnalysis init, this may take 
+some times......
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:34,381 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:25:34,383 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:40,153 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:25:40,154 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:43,786 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:25:43,786 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:47,798 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:25:47,800 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:51,404 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:25:51,405 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:56,435 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:25:56,436 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:01,087 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:01,088 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:04,359 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:04,360 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:08,069 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:08,070 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:10,947 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:10,948 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:17,274 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:17,276 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:17.699 | INFO     | mineru.backend.pipeline.model_init:__init__:260 - DocAnalysis init done!
+2026-05-18 14:26:17.699 | INFO     | mineru.backend.pipeline.pipeline_analyze:custom_model_init:83 - model init cost: 4
+6.98671102523804
+
+Layout Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.88it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.88it/s]
+
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Table-ocr det:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.82it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.82it/s]
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:22,460 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:22,461 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:25,820 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:25,820 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+
+Table-ocr rec cyrillic:   0%|          | 0/226 [00:00<?, ?it/s]
+Table-ocr rec cyrillic:   5%|5         | 12/226 [00:00<00:02, 81.63it/s]
+Table-ocr rec cyrillic:  11%|#         | 24/226 [00:00<00:02, 83.64it/s]
+Table-ocr rec cyrillic:  16%|#5        | 36/226 [00:00<00:02, 85.68it/s]
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  21%|##1       | 48/226 [00:00<00:02, 83.01it/s]
+Table-ocr rec cyrillic:  27%|##6       | 60/226 [00:00<00:01, 83.75it/s]
+Table-ocr rec cyrillic:  32%|###1      | 72/226 [00:00<00:01, 85.22it/s]
+Table-ocr rec cyrillic:  37%|###7      | 84/226 [00:00<00:01, 85.58it/s]
+Table-ocr rec cyrillic:  42%|####2     | 96/226 [00:01<00:01, 83.91it/s]
+Table-ocr rec cyrillic:  48%|####7     | 108/226 [00:01<00:01, 83.53it/s]
+Table-ocr rec cyrillic:  53%|#####3    | 120/226 [00:01<00:01, 84.01it/s]
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  58%|#####8    | 132/226 [00:01<00:01, 84.16it/s]
+Table-ocr rec cyrillic:  64%|######3   | 144/226 [00:01<00:00, 82.51it/s]
+Table-ocr rec cyrillic:  69%|######9   | 156/226 [00:01<00:00, 82.41it/s]
+Table-ocr rec cyrillic:  74%|#######4  | 168/226 [00:02<00:00, 83.56it/s]
+Table-ocr rec cyrillic:  80%|#######9  | 180/226 [00:02<00:00, 79.65it/s]
+Table-ocr rec cyrillic:  85%|########4 | 192/226 [00:02<00:00, 71.72it/s]
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  90%|######### | 204/226 [00:02<00:00, 57.26it/s]
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  96%|#########5| 216/226 [00:03<00:00, 34.82it/s]
+Table-ocr rec cyrillic:  98%|#########8| 222/226 [00:03<00:00, 23.89it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 20.12it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 51.96it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00,  9.90it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00,  9.90it/s]
+
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Table-wired Predict:   0%|          | 0/1 [00:00<?, ?it/s]2026-05-18 14:26:34,586 - modelscope - INFO - Creating symbol
+ic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:34,587 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+
+Table-wired Predict: 100%|##########| 1/1 [00:05<00:00,  5.53s/it]
+Table-wired Predict: 100%|##########| 1/1 [00:05<00:00,  5.53s/it]
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:40,237 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:40,238 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:44,873 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:44,873 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+
+OCR-det cyrillic:   0%|          | 0/1 [00:00<?, ?it/s]
+OCR-det cyrillic: 100%|##########| 1/1 [00:00<00:00, 40.00it/s]
+
+Seal Predict: 0it [00:00, ?it/s]
+Seal Predict: 0it [00:00, ?it/s]
+
+Processing pages:   0%|          | 0/1 [00:00<?, ?it/s]
+Processing pages: 100%|##########| 1/1 [00:00<00:00, 13.27it/s]
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c/result HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51275 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51276 - "POST /tasks HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+2026-05-18 14:26:49.555 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:183 - Pipeline proc
+essing-window multi-file run. doc_count=1, total_pages=1, window_size=64, total_batches=1
+2026-05-18 14:26:49.603 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:235 - Pipeline proc
+essing window batch 1/1: 1/1 pages, batch_pages=1, doc_slices=doc0:1-1
+2026-05-18 14:26:49.603 | INFO     | mineru.backend.pipeline.pipeline_analyze:batch_image_analyze:328 - GPU Memory: 1 G
+B, Batch Ratio: 1. 
+
+Layout Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.62it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.62it/s]
+
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+Table-ocr det:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.76it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.76it/s]
+
+Table-ocr rec cyrillic:   0%|          | 0/226 [00:00<?, ?it/s]
+Table-ocr rec cyrillic:   5%|5         | 12/226 [00:00<00:03, 67.36it/s]
+Table-ocr rec cyrillic:  11%|#         | 24/226 [00:00<00:02, 74.26it/s]
+Table-ocr rec cyrillic:  16%|#5        | 36/226 [00:00<00:02, 76.90it/s]
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  21%|##1       | 48/226 [00:00<00:02, 79.74it/s]
+Table-ocr rec cyrillic:  27%|##6       | 60/226 [00:00<00:02, 80.60it/s]
+Table-ocr rec cyrillic:  32%|###1      | 72/226 [00:00<00:01, 81.70it/s]
+Table-ocr rec cyrillic:  37%|###7      | 84/226 [00:01<00:01, 77.88it/s]
+Table-ocr rec cyrillic:  42%|####2     | 96/226 [00:01<00:01, 76.32it/s]
+Table-ocr rec cyrillic:  48%|####7     | 108/226 [00:01<00:01, 74.57it/s]
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  53%|#####3    | 120/226 [00:01<00:01, 78.32it/s]
+Table-ocr rec cyrillic:  58%|#####8    | 132/226 [00:01<00:01, 74.02it/s]
+Table-ocr rec cyrillic:  64%|######3   | 144/226 [00:01<00:01, 77.53it/s]
+Table-ocr rec cyrillic:  69%|######9   | 156/226 [00:02<00:00, 79.36it/s]
+Table-ocr rec cyrillic:  74%|#######4  | 168/226 [00:02<00:00, 74.08it/s]
+Table-ocr rec cyrillic:  80%|#######9  | 180/226 [00:02<00:00, 70.92it/s]
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  85%|########4 | 192/226 [00:02<00:00, 64.72it/s]
+Table-ocr rec cyrillic:  90%|######### | 204/226 [00:02<00:00, 50.61it/s]
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  93%|#########2| 210/226 [00:03<00:00, 41.24it/s]
+Table-ocr rec cyrillic:  96%|#########5| 216/226 [00:03<00:00, 27.40it/s]
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  98%|#########8| 222/226 [00:04<00:00, 18.92it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 15.01it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 45.87it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00, 16.67it/s]
+
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+Table-wired Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.64s/it]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.64s/it]
+
+OCR-det cyrillic:   0%|          | 0/1 [00:00<?, ?it/s]
+OCR-det cyrillic: 100%|##########| 1/1 [00:00<00:00, 38.46it/s]
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+
+Seal Predict: 0it [00:00, ?it/s]
+Seal Predict: 0it [00:00, ?it/s]
+
+Processing pages:   0%|          | 0/1 [00:00<?, ?it/s]
+Processing pages: 100%|##########| 1/1 [00:00<00:00, 15.35it/s]
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51275 - "GET /tasks/b2e3d20b-1e49-4eed-b147-e173f48e4176/result HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64633 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63509 - "POST /tasks HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+2026-05-18 14:27:02.222 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:183 - Pipeline proc
+essing-window multi-file run. doc_count=1, total_pages=1, window_size=64, total_batches=1
+2026-05-18 14:27:02.268 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:235 - Pipeline proc
+essing window batch 1/1: 1/1 pages, batch_pages=1, doc_slices=doc0:1-1
+2026-05-18 14:27:02.268 | INFO     | mineru.backend.pipeline.pipeline_analyze:batch_image_analyze:328 - GPU Memory: 1 G
+B, Batch Ratio: 1. 
+
+Layout Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.76it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.76it/s]
+
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+Table-ocr det:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.89it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.88it/s]
+
+Table-ocr rec cyrillic:   0%|          | 0/226 [00:00<?, ?it/s]
+Table-ocr rec cyrillic:   5%|5         | 12/226 [00:00<00:02, 82.19it/s]
+Table-ocr rec cyrillic:  11%|#         | 24/226 [00:00<00:02, 80.89it/s]
+Table-ocr rec cyrillic:  16%|#5        | 36/226 [00:00<00:02, 80.23it/s]
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  21%|##1       | 48/226 [00:00<00:02, 79.93it/s]
+Table-ocr rec cyrillic:  27%|##6       | 60/226 [00:00<00:02, 79.02it/s]
+Table-ocr rec cyrillic:  32%|###1      | 72/226 [00:00<00:01, 79.89it/s]
+Table-ocr rec cyrillic:  37%|###7      | 84/226 [00:01<00:01, 80.81it/s]
+Table-ocr rec cyrillic:  42%|####2     | 96/226 [00:01<00:01, 80.72it/s]
+Table-ocr rec cyrillic:  48%|####7     | 108/226 [00:01<00:01, 81.17it/s]
+Table-ocr rec cyrillic:  53%|#####3    | 120/226 [00:01<00:01, 81.15it/s]
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  58%|#####8    | 132/226 [00:01<00:01, 80.13it/s]
+Table-ocr rec cyrillic:  64%|######3   | 144/226 [00:01<00:01, 78.83it/s]
+Table-ocr rec cyrillic:  69%|######9   | 156/226 [00:01<00:00, 79.66it/s]
+Table-ocr rec cyrillic:  74%|#######4  | 168/226 [00:02<00:00, 79.30it/s]
+Table-ocr rec cyrillic:  80%|#######9  | 180/226 [00:02<00:00, 74.73it/s]
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  85%|########4 | 192/226 [00:02<00:00, 66.57it/s]
+Table-ocr rec cyrillic:  90%|######### | 204/226 [00:02<00:00, 50.95it/s]
+Table-ocr rec cyrillic:  93%|#########2| 210/226 [00:03<00:00, 41.86it/s]
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  96%|#########5| 216/226 [00:03<00:00, 26.93it/s]
+Table-ocr rec cyrillic:  98%|#########8| 222/226 [00:04<00:00, 19.39it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 16.74it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:04<00:00, 48.36it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00, 16.67it/s]
+
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+Table-wired Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.81s/it]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.81s/it]
+
+OCR-det cyrillic:   0%|          | 0/1 [00:00<?, ?it/s]
+OCR-det cyrillic: 100%|##########| 1/1 [00:00<00:00, 52.63it/s]
+
+Seal Predict: 0it [00:00, ?it/s]
+Seal Predict: 0it [00:00, ?it/s]
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+
+Processing pages:   0%|          | 0/1 [00:00<?, ?it/s]
+Processing pages: 100%|##########| 1/1 [00:00<00:00, 16.13it/s]
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64633 - "GET /tasks/ea2f08bd-3bb3-4d58-84b9-07f48de233fe/result HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54042 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54043 - "POST /tasks HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+2026-05-18 14:27:14.919 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:183 - Pipeline proc
+essing-window multi-file run. doc_count=1, total_pages=1, window_size=64, total_batches=1
+2026-05-18 14:27:14.967 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:235 - Pipeline proc
+essing window batch 1/1: 1/1 pages, batch_pages=1, doc_slices=doc0:1-1
+2026-05-18 14:27:14.967 | INFO     | mineru.backend.pipeline.pipeline_analyze:batch_image_analyze:328 - GPU Memory: 1 G
+B, Batch Ratio: 1. 
+
+Layout Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.44it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.44it/s]
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+
+Table-ocr det:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.58it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.58it/s]
+
+Table-ocr rec cyrillic:   0%|          | 0/226 [00:00<?, ?it/s]
+Table-ocr rec cyrillic:   5%|5         | 12/226 [00:00<00:02, 80.07it/s]
+Table-ocr rec cyrillic:  11%|#         | 24/226 [00:00<00:02, 85.03it/s]
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  16%|#5        | 36/226 [00:00<00:02, 78.70it/s]
+Table-ocr rec cyrillic:  21%|##1       | 48/226 [00:00<00:02, 73.82it/s]
+Table-ocr rec cyrillic:  27%|##6       | 60/226 [00:00<00:02, 68.16it/s]
+Table-ocr rec cyrillic:  32%|###1      | 72/226 [00:00<00:02, 72.81it/s]
+Table-ocr rec cyrillic:  37%|###7      | 84/226 [00:01<00:01, 76.24it/s]
+Table-ocr rec cyrillic:  42%|####2     | 96/226 [00:01<00:01, 79.02it/s]
+Table-ocr rec cyrillic:  48%|####7     | 108/226 [00:01<00:01, 81.00it/s]
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  53%|#####3    | 120/226 [00:01<00:01, 71.86it/s]
+Table-ocr rec cyrillic:  58%|#####8    | 132/226 [00:01<00:01, 66.72it/s]
+Table-ocr rec cyrillic:  64%|######3   | 144/226 [00:01<00:01, 70.77it/s]
+Table-ocr rec cyrillic:  69%|######9   | 156/226 [00:02<00:01, 68.36it/s]
+Table-ocr rec cyrillic:  74%|#######4  | 168/226 [00:02<00:00, 70.11it/s]
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  80%|#######9  | 180/226 [00:02<00:00, 70.50it/s]
+Table-ocr rec cyrillic:  85%|########4 | 192/226 [00:02<00:00, 64.69it/s]
+Table-ocr rec cyrillic:  90%|######### | 204/226 [00:03<00:00, 45.84it/s]
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  93%|#########2| 210/226 [00:03<00:00, 34.13it/s]
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  96%|#########5| 216/226 [00:04<00:00, 25.19it/s]
+Table-ocr rec cyrillic:  98%|#########8| 222/226 [00:04<00:00, 17.34it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:05<00:00, 14.90it/s]
+Table-ocr rec cyrillic: 100%|##########| 226/226 [00:05<00:00, 43.69it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00, 16.39it/s]
+
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+Table-wired Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.96s/it]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.96s/it]
+
+OCR-det cyrillic:   0%|          | 0/1 [00:00<?, ?it/s]
+OCR-det cyrillic: 100%|##########| 1/1 [00:00<00:00, 47.62it/s]
+
+Seal Predict: 0it [00:00, ?it/s]
+Seal Predict: 0it [00:00, ?it/s]
+
+Processing pages:   0%|          | 0/1 [00:00<?, ?it/s]
+Processing pages: 100%|##########| 1/1 [00:00<00:00, 13.16it/s]
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54042 - "GET /tasks/5e9bd372-a3d3-473e-87c1-013f3bad67fe/result HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49224 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49225 - "POST /tasks HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+2026-05-18 14:28:27.443 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:183 - Pipeline proc
+essing-window multi-file run. doc_count=1, total_pages=1, window_size=64, total_batches=1
+2026-05-18 14:28:27.500 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:235 - Pipeline proc
+essing window batch 1/1: 1/1 pages, batch_pages=1, doc_slices=doc0:1-1
+2026-05-18 14:28:27.500 | INFO     | mineru.backend.pipeline.pipeline_analyze:batch_image_analyze:328 - GPU Memory: 1 G
+B, Batch Ratio: 1. 
+
+Layout Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.69it/s]
+Layout Predict: 100%|##########| 1/1 [00:00<00:00,  1.69it/s]
+
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+Table-ocr det:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.87it/s]
+Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.87it/s]
+
+Table-ocr rec cyrillic:   0%|          | 0/224 [00:00<?, ?it/s]
+Table-ocr rec cyrillic:   5%|5         | 12/224 [00:00<00:02, 80.00it/s]
+Table-ocr rec cyrillic:  11%|#         | 24/224 [00:00<00:02, 82.59it/s]
+Table-ocr rec cyrillic:  16%|#6        | 36/224 [00:00<00:02, 85.63it/s]
+Table-ocr rec cyrillic:  21%|##1       | 48/224 [00:00<00:02, 86.15it/s]
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  27%|##6       | 60/224 [00:00<00:01, 84.90it/s]
+Table-ocr rec cyrillic:  32%|###2      | 72/224 [00:00<00:01, 83.76it/s]
+Table-ocr rec cyrillic:  38%|###7      | 84/224 [00:00<00:01, 85.12it/s]
+Table-ocr rec cyrillic:  43%|####2     | 96/224 [00:01<00:01, 86.09it/s]
+Table-ocr rec cyrillic:  48%|####8     | 108/224 [00:01<00:01, 85.40it/s]
+Table-ocr rec cyrillic:  54%|#####3    | 120/224 [00:01<00:01, 84.96it/s]
+Table-ocr rec cyrillic:  59%|#####8    | 132/224 [00:01<00:01, 83.73it/s]
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  64%|######4   | 144/224 [00:01<00:00, 83.80it/s]
+Table-ocr rec cyrillic:  70%|######9   | 156/224 [00:01<00:00, 82.27it/s]
+Table-ocr rec cyrillic:  75%|#######5  | 168/224 [00:01<00:00, 83.45it/s]
+Table-ocr rec cyrillic:  80%|########  | 180/224 [00:02<00:00, 77.41it/s]
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  86%|########5 | 192/224 [00:02<00:00, 66.56it/s]
+Table-ocr rec cyrillic:  91%|#########1| 204/224 [00:02<00:00, 48.30it/s]
+Table-ocr rec cyrillic:  94%|#########3| 210/224 [00:03<00:00, 34.47it/s]
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+Table-ocr rec cyrillic:  96%|#########6| 216/224 [00:03<00:00, 25.74it/s]
+Table-ocr rec cyrillic:  99%|#########9| 222/224 [00:04<00:00, 17.13it/s]
+Table-ocr rec cyrillic: 100%|##########| 224/224 [00:04<00:00, 49.00it/s]
+
+Table-wireless Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00, 18.87it/s]
+
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+Table-wired Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.47s/it]
+Table-wired Predict: 100%|##########| 1/1 [00:01<00:00,  1.47s/it]
+
+OCR-det cyrillic:   0%|          | 0/1 [00:00<?, ?it/s]
+OCR-det cyrillic: 100%|##########| 1/1 [00:00<00:00, 50.00it/s]
+
+OCR-rec Predict:   0%|          | 0/1 [00:00<?, ?it/s]
+OCR-rec Predict: 100%|##########| 1/1 [00:00<00:00, 18.18it/s]
+
+Seal Predict: 0it [00:00, ?it/s]
+Seal Predict: 0it [00:00, ?it/s]
+
+Processing pages:   0%|          | 0/1 [00:00<?, ?it/s]
+Processing pages: 100%|##########| 1/1 [00:00<00:00, 41.67it/s]
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49224 - "GET /tasks/342a8aa9-9a15-4770-bf52-482697ab8bcc/result HTTP/1.1" 200 OK

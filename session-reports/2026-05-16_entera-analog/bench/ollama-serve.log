@@ -1,0 +1,10 @@
+﻿=== START 13:23:45 ===
+ollama.exe : Error: listen tcp 127.0.0.1:11434: bind: Only one usage of each socket address (protocol/network address/p
+ort) is normally permitted.
+At line:4 char:1
++ & $ollama serve 2>&1 | Out-File $log -Append -Encoding utf8
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error: listen t...ally permitted.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+=== EXIT 13:23:45 ===

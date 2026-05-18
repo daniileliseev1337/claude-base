@@ -1,0 +1,10 @@
+{
+  "model": "moondream:latest",
+  "image": "C:\\Users\\Apoliakov\\.claude\\session-reports\\2026-05-16_entera-analog\\bench\\samples\\upd_vrnlom_p1_small.png",
+  "elapsed_sec": 4.17,
+  "ollama_duration_sec": 4.15,
+  "eval_count_tokens": 69,
+  "raw_response": "список в двух из налениях, который будем в двух из налениях.",
+  "parsed_json": null,
+  "parse_error": "Expecting value: line 1 column 1 (char 0)"
+}
