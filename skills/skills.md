@@ -17,6 +17,7 @@ tags: [мета, индекс, skills]
 - [[word-helper]] — методология Word (find-replace, шаблоны, генерация, экспорт в md/PDF).
 - [[pdf-helper]] — методология PDF (чтение, редактирование, аннотации, формы, сравнение).
 - [[stroy-formatting]] — применение ГОСТ-стилей к итоговым DOCX/PDF. 4 шаблона в `formatting-templates/`.
+- [[image-text-replace]] — замена текста на сканах/JPEG/PNG через PaddleOCR + LaMa inpaint + Pillow render. Pipeline в `pipeline.py`, lazy install зависимостей. Primary mode — LaMa, opt-in fast-fill для batch'а из белых сканов.
 
 ## Как подключаются
 
