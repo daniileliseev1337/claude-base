@@ -688,6 +688,16 @@ optional? Если always — добавить их в Stage 0 / Stage 1. Есл
 optional — добавить документацию когда они нужны и как поставить
 позже без переустановки.
 
+**[UPDATE 2026-05-18]** Resolution designed. Корень проблемы: хелперы
+в репо `claude-lite-instaler` **есть** (`Set-Proxy.ps1`/`.cmd`,
+`Start-Claude.ps1`/`.bat`/`.ahk`), но `Install.ps1` их **не копирует**
+в persistent location — они остаются в installer-папке, которую
+пользователь может удалить. Дизайн фикса: копировать в `~/.claude/bin/` +
+Start Menu shortcut, рядом с уже там лежащим `diff-pdf.exe`. Полный
+дизайн с готовыми diff-блоками — в
+`~/.claude/memory/2026-05-18_lesson-15-proxy-helpers-persistence.md`.
+Реализация (15-20 мин в claude-lite-instaler репо) — queued.
+
 **Также:** на NB-HP-LQ6G прокси в env-vars был выставлен **системно**
 (не через `Set-Proxy.ps1`), но git его наследовал и ломался. Это
 говорит что для git нужно **отдельное** отношение — env-vars прокси
