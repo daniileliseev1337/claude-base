@@ -24,6 +24,7 @@
 !README.md
 !settings.json
 !mcp-manifest.json
+!Карта vault.md
 
 # Auto-sync скрипты (запускаются Claude Code как hooks)
 !scripts/
