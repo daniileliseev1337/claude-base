@@ -495,4 +495,30 @@ CORE-секция CLAUDE.md (STOP-процедура, шаг 2) ссылаетс
   визуальный page-diff двух PDF. Использовать через subprocess, **код не
   копировать**.
 
+## Связанные документы (Obsidian-граф)
+
+Главный hub визуального графа базы. Wikilinks ниже создают рёбра в Obsidian Graph View и подсвечивают центральные узлы методики:
+
+**Индексы папок:**
+- [[Карта vault]] — общая карта базы с Dataview-сводками
+- [[agents/agents|agents]] — каталог спецагентов
+- [[skills/skills|skills]] — каталог методологических скиллов
+- [[memory/memory|memory]] — каталог накопленных уроков
+- [[session-reports/session-reports|session-reports]] — отчёты сессий
+- [[harvested/harvested|harvested]] — внешние инструменты
+
+**Ключевые скиллы:**
+- [[karpathy-guidelines]] — 5 поведенческих принципов (приоритетнее всех других правил при конфликте)
+- [[excel-helper]], [[word-helper]], [[pdf-helper]], [[stroy-formatting]]
+
+**Ключевые агенты:**
+- [[designer]], [[auditor]], [[excel-validator]], [[word-checker]], [[pdf-reviewer]]
+
+**Главные уроки:**
+- [[2026-05-09_hooks-debugging]] — 16 ловушек hooks-debugging (Урок 16 мета)
+- [[2026-05-14_session-report-policy]] — правило отчёта каждой сессии
+- [[2026-05-13_harvest-workflow]] — методология harvest
+- [[2026-05-15_extras-distribution-mechanism]] — manifest + setup-extras
+- [[2026-05-18_lesson-15-proxy-helpers-persistence]] — Урок 15 CLOSED
+
 <!-- END USER EXTENSIONS -->
