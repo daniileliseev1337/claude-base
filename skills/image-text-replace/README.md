@@ -255,6 +255,47 @@ LaMa чисто стёр прежнее число. См. session-report
    median ~rgb(98,98,98) серый вместо чёрного. Fix: bottom **10**
    percentile = только ядро штрихов = `rgb(21,21,21)`. Замечено
    пользователем на КП К7 АХП 2026-05-19.
+7. **Текст «слишком цифровой»** — crisp ImageDraw render очевидно
+   отличался от сканового текста (тот имеет ink-bleed, scan blur,
+   шум). Fix: интегрирован полноценный `_render_scan_realistic()` стек
+   (v0.3):
+   - Render at 2× scale → LANCZOS downsample → natural anti-aliasing
+   - Horizontal motion blur 3-tap (имитация ink-bleed принтера)
+   - Gaussian blur 0.3 px → soft edges
+   - Subpixel char jitter ±0.4-0.8 px
+   - Contrast × 0.95 → washed scan look
+   - Edge noise = local bg noise std × 0.8 на alpha-transition pixels
+
+   Контролируется параметром `scan_realistic_degrade=True` (default).
+   Для debug crisp-режима: `--no-scan-degrade` в CLI.
+
+## API (Python lib)
+
+```python
+from pipeline import replace_text_in_image, run_ocr, find_value_near_label
+
+# Базовый find/replace со scan degradation (default)
+result = replace_text_in_image(
+    input_path="scan.png",
+    replacements=[("old", "new")],
+    font_path="C:/Windows/Fonts/arialbd.ttf",
+    mode="lama",
+)
+
+# Debug: crisp digital render без degradation
+result = replace_text_in_image(
+    input_path="scan.png",
+    replacements=[("old", "new")],
+    scan_realistic_degrade=False,
+)
+
+# Helper для "Label: value" сценариев — найти лейбл и взять
+# value справа от него на той же строке (КП К7 use-case)
+matches = run_ocr("scan.png")
+label, value = find_value_near_label(matches, r"Итог.*сумм")
+# label.text = "Итоговая сумма (вкл НДС)"
+# value.text = "144 105 177,91"
+```
 
 ## Связанные
 

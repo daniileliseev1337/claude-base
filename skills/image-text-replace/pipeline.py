@@ -301,6 +301,118 @@ def inpaint_fast(image_path: str, mask, output_path: str) -> None:
 # Rendering new text
 # ----------------------------------------------------------------------
 
+def _sample_text_color(arr, x: int, y: int, w: int, h: int) -> tuple[int, int, int]:
+    """Median color of top-10%-darkest pixels in bbox = real stroke cores."""
+    import numpy as np
+    region = arr[max(y, 0):y + h, max(x, 0):x + w]
+    if region.size == 0:
+        return (0, 0, 0)
+    gray = np.mean(region, axis=2)
+    dark_mask = gray < np.percentile(gray, 10)
+    if not dark_mask.any():
+        return (0, 0, 0)
+    return tuple(int(c) for c in np.median(region[dark_mask], axis=0))
+
+
+def _sample_bg_noise_std(arr, x: int, y: int, w: int, h: int) -> float:
+    """Estimate noise std of paper background near bbox. Fallback 5.0."""
+    import numpy as np
+    samples = []
+    yy1, yy2 = max(0, y - h - 6), max(0, y - 3)
+    if yy2 > yy1:
+        samples.append(arr[yy1:yy2, x:x + w])
+    xx1, xx2 = max(0, x - 40), max(0, x - 8)
+    if xx2 > xx1:
+        samples.append(arr[y:y + h, xx1:xx2])
+    stds = []
+    for s in samples:
+        if s.size == 0:
+            continue
+        sf = s.astype(np.float32)
+        g = sf.mean(axis=2)
+        bg_mask = g > np.percentile(g, 70)
+        if bg_mask.any():
+            stds.append(float(sf[bg_mask].std()))
+    return float(sum(stds) / len(stds)) if stds else 5.0
+
+
+def _render_scan_realistic(
+    font: "ImageFont.FreeTypeFont",
+    font_size: int,
+    text: str,
+    text_color: tuple[int, int, int],
+    noise_std: float,
+    rng_seed: int = 11,
+):
+    """Render text at 2× scale → degrade to scan-style → return (rgb, alpha, pad).
+
+    Stack (v0.3, чтобы вставка была неотличима от скана):
+    1. Single-pass render at 2× with subpixel char jitter ±0.4..0.8 px
+    2. 2× → 1× LANCZOS downsample → natural anti-aliasing as if scanned
+    3. Horizontal motion blur 3-tap (имитация ink-bleed принтера)
+    4. Slight Gaussian blur 0.3 px — soft edges
+    5. Mild contrast reduction × 0.95 — washed scan look
+    6. Edge noise (alpha in 0.05..0.85) × bg-noise-std × 0.8
+
+    Bug history v0.1→v0.3:
+    - v0.1 рендер был crisp digital → текст явно цифровая накладка.
+    - v0.2 multi-pass с alpha jitter → плотность падала, текст светлее
+      оригинала. user feedback "недостаточно размыт + сероват".
+    - v0.3 (это): full-opacity single pass + умеренная degradation. На
+      реальном КП К7 АХП незаметная вставка при normal viewing distance.
+    """
+    import random as _random
+    from PIL import Image, ImageDraw, ImageFilter, ImageFont
+    import numpy as np
+    import cv2
+
+    font_2x = ImageFont.truetype(font.path, font_size * 2)
+    m_img = Image.new("RGBA", (1, 1))
+    m_draw = ImageDraw.Draw(m_img)
+    m_bbox = m_draw.textbbox((0, 0), text, font=font_2x)
+    text_w_2x = m_bbox[2] - m_bbox[0]
+    text_h_2x = m_bbox[3] - m_bbox[1]
+    pad_2x = 18
+    canvas_w_2x = text_w_2x + 2 * pad_2x
+    canvas_h_2x = text_h_2x + 2 * pad_2x
+
+    canvas = Image.new("RGBA", (canvas_w_2x, canvas_h_2x), (0, 0, 0, 0))
+    draw_c = ImageDraw.Draw(canvas)
+    _random.seed(rng_seed)
+    cx = pad_2x - m_bbox[0]
+    cy = pad_2x - m_bbox[1]
+    for ch in text:
+        jx = _random.uniform(-0.8, 0.8)
+        jy = _random.uniform(-0.4, 0.4)
+        draw_c.text((cx + jx, cy + jy), ch, font=font_2x, fill=text_color + (255,))
+        cbb = draw_c.textbbox((cx, cy), ch, font=font_2x)
+        cx += (cbb[2] - cbb[0])
+
+    # 2× → 1× LANCZOS
+    canvas_1x = canvas.resize((canvas_w_2x // 2, canvas_h_2x // 2), Image.LANCZOS)
+    arr_text = np.array(canvas_1x).astype(np.float32)
+
+    # Horizontal motion blur 3-tap (printer ink-bleed)
+    kernel_mb = np.array([[0.0, 0.0, 0.0],
+                          [0.25, 0.5, 0.25],
+                          [0.0, 0.0, 0.0]], dtype=np.float32)
+    for c in range(4):
+        arr_text[:, :, c] = cv2.filter2D(arr_text[:, :, c], -1, kernel_mb)
+
+    # Gaussian blur 0.3
+    pil = Image.fromarray(arr_text.clip(0, 255).astype(np.uint8))
+    pil = pil.filter(ImageFilter.GaussianBlur(radius=0.3))
+    arr_text = np.array(pil).astype(np.float32)
+
+    rgb = arr_text[:, :, :3]
+    alpha_norm = arr_text[:, :, 3] / 255.0
+
+    # Mild contrast reduction
+    rgb = (rgb - 128) * 0.95 + 128
+
+    return rgb, alpha_norm, pad_2x // 2
+
+
 def render_text(
     cleaned_path: str,
     original_path: str,
@@ -310,19 +422,24 @@ def render_text(
     font_size: Optional[int],
     color: Optional[tuple[int, int, int]],
     output_path: str,
+    scan_realistic_degrade: bool = True,
 ) -> None:
     """Draw `replacements` text onto the inpainted image at original bbox positions.
 
-    Color auto-sampling reads dark pixels from `original_path` (BEFORE
-    inpainting) — otherwise we'd sample from the inpainted region which
-    no longer contains text and gives near-white = invisible result.
+    Color auto-sampling reads dark pixels from `original_path` (pre-inpaint).
+
+    `scan_realistic_degrade=True` (default v0.3+): применяет
+    scan-style degradation чтобы текст не выглядел цифровой накладкой.
+    Стек — см. _render_scan_realistic().
+
+    `scan_realistic_degrade=False`: crisp digital render (v0.2 поведение,
+    оставлен для отладки/case'ов где скан не нужен).
     """
     from PIL import Image, ImageDraw, ImageFont
     import numpy as np
 
     img = Image.open(cleaned_path).convert("RGB")
-    draw = ImageDraw.Draw(img)
-    # Sample colors from ORIGINAL (pre-inpaint), not cleaned.
+    arr = np.array(img)
     original_arr = np.array(Image.open(original_path).convert("RGB"))
 
     for m in matches:
@@ -335,32 +452,46 @@ def render_text(
             continue
 
         x, y, w, h = m.bbox_rect()
-
         size = font_size or max(8, int(h * 0.85))
         font = ImageFont.truetype(font_path, size)
 
-        if color is None:
-            region = original_arr[max(y, 0):y + h, max(x, 0):x + w]
-            if region.size > 0:
-                gray = np.mean(region, axis=2)
-                # Берём только САМЫЕ тёмные 10% — это ядро штрихов букв.
-                # 30 percentile захватывал anti-aliased edge-pixels → median
-                # получался серым (~rgb 98) вместо чёрного. Bug пойман на
-                # КП К7 АХП 2026-05-19, user noted "20% сероватое".
-                dark_mask = gray < np.percentile(gray, 10)
-                if dark_mask.any():
-                    median_color = tuple(int(c) for c in np.median(region[dark_mask], axis=0))
-                else:
-                    median_color = (0, 0, 0)
-            else:
-                median_color = (0, 0, 0)
-            text_color = median_color
-        else:
-            text_color = color
+        text_color = color if color is not None else _sample_text_color(original_arr, x, y, w, h)
 
-        draw.text((x, y), new_text, font=font, fill=text_color)
+        if not scan_realistic_degrade:
+            # Crisp digital render (v0.2 behavior)
+            draw = ImageDraw.Draw(img)
+            draw.text((x, y), new_text, font=font, fill=text_color)
+            arr = np.array(img)
+            continue
 
-    img.save(output_path)
+        # v0.3: scan-realistic degradation stack
+        noise_std = _sample_bg_noise_std(original_arr, x, y, w, h)
+        rgb_text, alpha_text, pad = _render_scan_realistic(
+            font, size, new_text, text_color, noise_std, rng_seed=hash(new_text) & 0xFFFF
+        )
+
+        canvas_h, canvas_w = rgb_text.shape[:2]
+        paste_x = x - pad
+        paste_y = y - pad
+        dst_y1 = max(0, paste_y); dst_y2 = min(arr.shape[0], paste_y + canvas_h)
+        dst_x1 = max(0, paste_x); dst_x2 = min(arr.shape[1], paste_x + canvas_w)
+        src_y1 = dst_y1 - paste_y; src_y2 = src_y1 + (dst_y2 - dst_y1)
+        src_x1 = dst_x1 - paste_x; src_x2 = src_x1 + (dst_x2 - dst_x1)
+
+        dst_patch = arr[dst_y1:dst_y2, dst_x1:dst_x2].astype(np.float32)
+        src_rgb = rgb_text[src_y1:src_y2, src_x1:src_x2]
+        src_a = alpha_text[src_y1:src_y2, src_x1:src_x2, np.newaxis]
+
+        blended = src_rgb * src_a + dst_patch * (1 - src_a)
+
+        # Edge noise — alpha in 0.05..0.85 = edge transition pixels
+        edge_mask = ((src_a.squeeze() > 0.05) & (src_a.squeeze() < 0.85)).astype(np.float32)[:, :, np.newaxis]
+        noise = np.random.normal(0, noise_std * 0.8, blended.shape).astype(np.float32)
+        blended = blended + noise * edge_mask
+
+        arr[dst_y1:dst_y2, dst_x1:dst_x2] = np.clip(blended, 0, 255).astype(np.uint8)
+
+    Image.fromarray(arr).save(output_path)
 
 
 # ----------------------------------------------------------------------
@@ -381,6 +512,7 @@ def replace_text_in_image(
     min_confidence: float = 0.5,
     dry_run: bool = False,
     preloaded_matches: Optional[Sequence[OcrMatch]] = None,
+    scan_realistic_degrade: bool = True,
 ) -> dict:
     """Main public entry. Returns dict with summary.
 
@@ -463,6 +595,7 @@ def replace_text_in_image(
         font_size=font_size,
         color=color,
         output_path=output_path,
+        scan_realistic_degrade=scan_realistic_degrade,
     )
 
     print(f"[5/5] Saved: {output_path}", flush=True)
@@ -496,6 +629,8 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--output", default=None)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--min-conf", type=float, default=0.5)
+    p.add_argument("--no-scan-degrade", action="store_true",
+                   help="Skip scan-realistic degradation, render crisp digital text (debug)")
     args = p.parse_args()
     if len(args.find) != len(args.replace):
         p.error("--find and --replace must come in pairs")
@@ -522,6 +657,7 @@ def main() -> int:
         ocr_langs=tuple(s.strip() for s in args.ocr_lang.split(",")),
         min_confidence=args.min_conf,
         dry_run=args.dry_run,
+        scan_realistic_degrade=not args.no_scan_degrade,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
     return 0 if result["status"] in ("ok", "dry_run") else 1
