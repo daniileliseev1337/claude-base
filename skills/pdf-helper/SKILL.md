@@ -15,6 +15,8 @@ description: |
   - "pikepdf", "pypdf", "pdfplumber", "pdf metadata"
   - "перекрасить облачка", "polygon cloud", "аннотации pdf"
   - "сравнить два pdf", "diff pdf"
+  - сканированный PDF (нет text layer) → авто-routing на OCR pipeline
+    из image-text-replace (EasyOCR + smart cap + bbox detection)
 ---
 
 # pdf-helper
@@ -22,6 +24,72 @@ description: |
 ## Когда подключаться
 
 Любая задача с PDF, выходящая за рамки простого чтения нескольких строк. Если пользователь просит «открой PDF» и в нём 1-2 страницы простого текста — Read tool достаточно. Всё остальное — сюда.
+
+## ВАЖНО — обязательная проверка: текстовый PDF или скан
+
+**Первый шаг при любой задаче с PDF — определить тип:**
+
+```python
+import pdfplumber
+with pdfplumber.open(pdf_path) as pdf:
+    text_total = sum(len((page.extract_text() or "").strip()) for page in pdf.pages)
+    img_pages = sum(1 for page in pdf.pages if page.images)
+    n_pages = len(pdf.pages)
+
+if text_total < 50 * n_pages and img_pages == n_pages:
+    # Каждая страница содержит images, текстового слоя нет → СКАН
+    is_scan = True
+else:
+    is_scan = False
+```
+
+**Для скан-PDF** (text_total ≈ 0, каждая страница имеет image):
+- markitdown / pdf-mcp **не дают** содержимое (нет text layer)
+- Routing: image-text-replace pipeline (EasyOCR + bbox + smart cap)
+- См. ниже секцию «OCR для скан-PDF»
+
+**Для текстового PDF**:
+- markitdown / pdf-mcp работают как обычно
+- pikepdf для структурных операций
+
+Эта проверка должна быть **первой** при работе с любым unknown PDF.
+
+## OCR для скан-PDF (proactive use)
+
+Когда пользователь:
+- Просит **прочитать** скан-PDF → не только при «замени текст»
+- Хочет **найти** значение в таблице скана
+- Нужно **извлечь** структурные данные (номер документа, сумму, дату)
+
+Используем стек из `image-text-replace`:
+
+```python
+import sys
+sys.path.insert(0, str(Path.home() / ".claude/skills/image-text-replace"))
+from pipeline import run_ocr, find_neighbor_cell_reference, smart_cap_height_detect
+
+# 1. Render page → PNG
+import pypdfium2 as pdfium
+pdf = pdfium.PdfDocument(pdf_path)
+page_img = pdf[0].render(scale=200/72).to_pil()
+
+# 2. EasyOCR + bbox
+matches = run_ocr(page_img_path)
+# Каждый match: text, bbox, confidence
+
+# 3. Для структурных задач (label: value) — find_neighbor_cell_reference
+label = next(m for m in matches if "итог" in m.text.lower())
+value = find_neighbor_cell_reference(matches, label, side='right', digits_only=True)
+# value.text = "144 105 177,91"
+```
+
+Это **сильнее markitdown** для сканов:
+- Точные bbox координаты каждого token
+- Smart cap detection (игнорирует descenders)
+- Label-value pairing для cell-style данных
+- Confidence per token
+
+Скилл image-text-replace **уже умеет** OCR — image text replace это **второстепенная** функция. Основная — точное распознавание содержимого scan-PDF с координатами.
 
 ## Иерархия инструментов (от простого к сложному)
 

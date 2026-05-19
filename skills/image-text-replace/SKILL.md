@@ -1,26 +1,31 @@
 ---
 name: image-text-replace
 description: |
-  Замена/вставка текста на сканированных изображениях (JPEG/PNG/scan-PDF):
-  OCR обнаружение → smart cap detection → font calibration → render с
-  matching стилем → optional SD inpaint scan-ification.
+  Скилл для сканированных изображений (JPEG/PNG/scan-PDF). Две связанные функции:
 
-  Pipeline v3.0 (production-ready, проверен на КП К7 АХП 2026-05-19):
-  EasyOCR → smart_cap_height_detect → find_neighbor_cell → Times Bold
-  render at cell_h × 1.42 → minimal degradation → midline alignment →
-  SD img2img strength=0.10 polish.
+  **1. OCR с координатами и структурой (primary use):**
+  EasyOCR (RU+EN) + smart_cap_height_detect + find_neighbor_cell_reference
+  + bbox normalisation. Точное распознавание токенов с координатами,
+  отлично для извлечения значений из ячеек таблиц, поиска label→value
+  пар, чтения форм. Сильнее markitdown для сканов.
 
-  Status v3.0: production-ready после 16 итераций. Финальный результат
-  принят пользователем как "именно то чего мы хотели". См.
-  LESSONS-LEARNED.md для retrospective и anti-patterns.
+  **2. Замена/вставка текста (secondary use):**
+  OCR → mask → LaMa inpaint → Times Bold render → SD img2img strength=0.10
+  полировка. v3.0 — production-ready после 16 итераций (КП К7 АХП case).
 
-  Триггеры:
-  - "замени текст на картинке", "замена текста в скане"
+  Триггеры (OCR, primary):
+  - "разбери скан", "что в этом скане", "извлеки данные из скана"
+  - "OCR скана", "распознать сканированный документ"
+  - "найди в скане X" (например, сумму, шифр, дату)
+  - "что написано на скане", "прочитай scan-PDF"
+  - "значение в ячейке скана", "label → value скан"
+  - после `pdf-helper` определил что PDF это скан (нет text layer)
+
+  Триггеры (text replace, secondary):
+  - "замени текст на картинке/скане"
   - "исправь шифр на скане", "затри текст на изображении"
   - "вставь текст в ячейку скана", "добавь % в строку"
-  - "OCR + inpaint", "scan text replacement"
   - "увеличь сумму в скане на N%", "поменяй цифру в скане"
-  - после работы с PDF где из страницы извлекли scan-картинку
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
