@@ -38,6 +38,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# === Pre-flight notification: HF token check ===
+if (-not (Test-Path "$env:USERPROFILE\.claude\.hf-token") -and -not $env:HF_TOKEN) {
+    Write-Host ""
+    Write-Host "[INFO] Перед началом установки:" -ForegroundColor Cyan
+    Write-Host "  Для полной функциональности (image-text-replace v3.0 SD-полировка)" -ForegroundColor Cyan
+    Write-Host "  нужен HuggingFace токен. Получить можно у Даниила: elikzloy147@gmail.com" -ForegroundColor Cyan
+    Write-Host "  GitHub: daniileliseev1337" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  Без токена: image-text-replace будет работать в v2 режиме (без SD)" -ForegroundColor Gray
+    Write-Host "  LaMa и EasyOCR — установятся в любом случае" -ForegroundColor Gray
+    Write-Host ""
+}
+
 # === Constants ===
 $ClaudeDir    = "$env:USERPROFILE\.claude"
 $ManifestPath = "$ClaudeDir\mcp-manifest.json"
@@ -297,7 +310,35 @@ if (Test-Path $HFTokenFile) {
     $HFToken = $env:HF_TOKEN
     Write-Host "  HF token from environment variable"
 } else {
-    Write-Warn "No HF token (создай $HFTokenFile). SD download будет пропущен. LaMa+EasyOCR работают без token."
+    # Prominent message — new user needs to contact Daniil for token
+    Write-Host ""
+    Write-Host "+=========================================================================+" -ForegroundColor Yellow
+    Write-Host "|  ВНИМАНИЕ: Stable Diffusion (SD) не будет установлен                    |" -ForegroundColor Yellow
+    Write-Host "+=========================================================================+" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "|  SD требуется для финальной 'scan-полировки' в image-text-replace v3.0  |" -ForegroundColor Yellow
+    Write-Host "|  (полностью неотличимая от скана вставка текста).                       |" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "|  Что работает БЕЗ SD: image-text-replace v2.3 (Times Bold + smart cap)  |" -ForegroundColor Yellow
+    Write-Host "|  Что НЕ работает без SD: --sd-refine финальный AI-pass                  |" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "|  ЧТОБЫ ВКЛЮЧИТЬ SD:                                                     |" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "|  1. Напиши Даниилу: elikzloy147@gmail.com                               |" -ForegroundColor Yellow
+    Write-Host "|     (GitHub: daniileliseev1337)                                         |" -ForegroundColor Yellow
+    Write-Host "|     Запроси HuggingFace токен для распространения SD моделей.           |" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "|  2. Получив строку 'hf_...', выполни:                                   |" -ForegroundColor Yellow
+    Write-Host "|     'hf_xxx...' | Out-File -Encoding ascii `"$HFTokenFile`" -NoNewline   |" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "|  3. Запусти setup-extras повторно — SD скачается автоматически.        |" -ForegroundColor Yellow
+    Write-Host "|     (5.4 GB, 10-60 мин на корп-сети)                                    |" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "|  LaMa и EasyOCR — устанавливаются БЕЗ token, продолжаю...               |" -ForegroundColor Yellow
+    Write-Host "|                                                                         |" -ForegroundColor Yellow
+    Write-Host "+=========================================================================+" -ForegroundColor Yellow
+    Write-Host ""
+    Log "SD skipped — no .hf-token, user notified to contact Daniil (elikzloy147@gmail.com)"
 }
 
 $SDCacheDir = 'C:\sd-cache'  # ASCII-safe, обязательно для HF symlinks
@@ -423,3 +464,11 @@ Write-Host "  1. Перезапустить Claude Code чтобы появил�
 Write-Host "  2. Проверка: claude mcp list" -ForegroundColor Gray
 Write-Host "  3. Для autocad-mcp с реальным AutoCAD -- ручной APPLOAD (см. post-install note выше)" -ForegroundColor Gray
 Write-Host ""
+
+# Финальный reminder про SD если token отсутствует
+if (-not (Test-Path $HFTokenFile) -and -not $env:HF_TOKEN) {
+    Write-Host "Если нужна полная функциональность image-text-replace v3.0 (SD scan-полировка):" -ForegroundColor Magenta
+    Write-Host "  Напиши Даниилу (elikzloy147@gmail.com) — он даст HuggingFace token" -ForegroundColor Magenta
+    Write-Host "  → положи в $HFTokenFile → запусти setup-extras снова" -ForegroundColor Magenta
+    Write-Host ""
+}
