@@ -314,6 +314,96 @@ def _sample_text_color(arr, x: int, y: int, w: int, h: int) -> tuple[int, int, i
     return tuple(int(c) for c in np.median(region[dark_mask], axis=0))
 
 
+def _estimate_psf_sigma(arr, x: int, y: int, w: int, h: int) -> tuple[float, float]:
+    """Estimate anisotropic Gaussian PSF (sigma_x, sigma_y) from text edges
+    in the scan region.
+
+    Идея: на сканированном тексте границы букв не идеальные ступеньки,
+    а плавные переходы (бумага + тонер + scanner CCD blur). Ширина этого
+    перехода = PSF sigma скана. Если рендерить новый текст с тем же
+    sigma — он будет неотличим по «мягкости краёв».
+
+    Метод:
+    1. Sobel-вычисление сильных edges в bbox региона
+    2. Sampling 5-pixel profile перпендикулярно edge
+    3. Width of 80%→20% intensity transition ≈ 1.68 × sigma
+    4. Median по сэмплам = robust PSF estimate
+
+    Returns (sigma_x, sigma_y). Fallback (0.35, 0.35) если edges не найдены.
+
+    Option 3 (PSF estimation) из roadmap 2026-05-19.
+    """
+    import cv2
+    import numpy as np
+
+    region = arr[max(y, 0):y + h, max(x, 0):x + w].astype(np.float32)
+    if region.size == 0:
+        return (0.35, 0.35)
+    gray = region.mean(axis=2) if region.ndim == 3 else region
+
+    # Vertical edges (Sobel x) → measure sigma_x
+    sobel_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    abs_sx = np.abs(sobel_x)
+    thr_x = np.percentile(abs_sx, 90)
+    sx_widths = []
+    for ey in range(2, gray.shape[0] - 2):
+        row_sobel = abs_sx[ey]
+        if row_sobel.max() < thr_x:
+            continue
+        ex = int(np.argmax(row_sobel))
+        if ex < 3 or ex > gray.shape[1] - 3:
+            continue
+        profile = gray[ey, ex - 2:ex + 3]
+        if profile.max() - profile.min() < 30:
+            continue
+        # Normalize so profile goes from 1 (bright) to 0 (dark)
+        norm = (profile - profile.min()) / (profile.max() - profile.min() + 1e-6)
+        if profile[0] < profile[-1]:
+            norm = 1.0 - norm
+        try:
+            idx80 = next(i for i, v in enumerate(norm) if v < 0.8)
+            idx20 = next(i for i, v in enumerate(norm) if v < 0.2)
+            width = max(0, idx20 - idx80)
+            if 0 < width < 5:
+                sx_widths.append(width / 1.68)
+        except StopIteration:
+            pass
+
+    # Horizontal edges (Sobel y) → measure sigma_y
+    sobel_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    abs_sy = np.abs(sobel_y)
+    thr_y = np.percentile(abs_sy, 90)
+    sy_widths = []
+    for ex in range(2, gray.shape[1] - 2):
+        col_sobel = abs_sy[:, ex]
+        if col_sobel.max() < thr_y:
+            continue
+        ey = int(np.argmax(col_sobel))
+        if ey < 3 or ey > gray.shape[0] - 3:
+            continue
+        profile = gray[ey - 2:ey + 3, ex]
+        if profile.max() - profile.min() < 30:
+            continue
+        norm = (profile - profile.min()) / (profile.max() - profile.min() + 1e-6)
+        if profile[0] < profile[-1]:
+            norm = 1.0 - norm
+        try:
+            idx80 = next(i for i, v in enumerate(norm) if v < 0.8)
+            idx20 = next(i for i, v in enumerate(norm) if v < 0.2)
+            width = max(0, idx20 - idx80)
+            if 0 < width < 5:
+                sy_widths.append(width / 1.68)
+        except StopIteration:
+            pass
+
+    sigma_x = float(np.median(sx_widths)) if sx_widths else 0.35
+    sigma_y = float(np.median(sy_widths)) if sy_widths else 0.35
+    # Clip to reasonable range — too low gives no blur, too high blurs everything
+    sigma_x = max(0.15, min(sigma_x, 1.5))
+    sigma_y = max(0.15, min(sigma_y, 1.5))
+    return (sigma_x, sigma_y)
+
+
 def _sample_bg_noise_std(arr, x: int, y: int, w: int, h: int) -> float:
     """Estimate noise std of paper background near bbox. Fallback 5.0."""
     import numpy as np
@@ -342,6 +432,7 @@ def _render_scan_realistic(
     text: str,
     text_color: tuple[int, int, int],
     noise_std: float,
+    psf_sigma: tuple[float, float] = (0.35, 0.35),
     rng_seed: int = 11,
 ):
     """Render text at 2× scale → degrade to scan-style → return (rgb, alpha, text_offset).
@@ -375,6 +466,7 @@ def _render_scan_realistic(
     """
     from PIL import Image, ImageDraw, ImageFilter, ImageFont
     import numpy as np
+    import cv2
 
     font_2x = ImageFont.truetype(font.path, font_size * 2)
     # Measure bbox с anchor="lt" — top-left глифа в (0,0)
@@ -398,10 +490,24 @@ def _render_scan_realistic(
     # 2× → 1× LANCZOS downsample (natural AA)
     canvas_1x = canvas.resize((canvas_w_2x // 2, canvas_h_2x // 2), Image.LANCZOS)
 
-    # Skip motion blur (v0.4) — он жрал жирность. Только лёгкий Gaussian.
-    canvas_1x = canvas_1x.filter(ImageFilter.GaussianBlur(radius=0.25))
-
+    # v0.5 (Option 3 — PSF): анизотропный Gaussian blur с sigma'ми оценёнными
+    # из реальных edges скана (`_estimate_psf_sigma`). Если PSF (0.35, 0.35)
+    # default — это умеренный isotropic blur ~ v0.4 behavior.
     arr_text = np.array(canvas_1x).astype(np.float32)
+    sigma_x, sigma_y = psf_sigma
+    # cv2.GaussianBlur with separate ksize per axis = anisotropic
+    # ksize must be odd; auto-compute from sigma
+    def _ksize(sig):
+        k = int(round(sig * 6)) | 1  # odd, ~6 sigma coverage
+        return max(3, k)
+    kx, ky = _ksize(sigma_x), _ksize(sigma_y)
+    for c in range(4):
+        arr_text[:, :, c] = cv2.GaussianBlur(
+            arr_text[:, :, c],
+            ksize=(kx, ky),
+            sigmaX=sigma_x,
+            sigmaY=sigma_y,
+        )
     rgb = arr_text[:, :, :3]
     alpha_norm = arr_text[:, :, 3] / 255.0
 
@@ -465,10 +571,13 @@ def render_text(
             arr = np.array(img)
             continue
 
-        # v0.4: scan-realistic degradation stack
+        # v0.5: scan-realistic + estimated PSF from local edges (Option 3)
         noise_std = _sample_bg_noise_std(original_arr, x, y, w, h)
+        psf_sigma = _estimate_psf_sigma(original_arr, x, y, w, h)
         rgb_text, alpha_text, text_offset = _render_scan_realistic(
-            font, size, new_text, text_color, noise_std, rng_seed=hash(new_text) & 0xFFFF
+            font, size, new_text, text_color, noise_std,
+            psf_sigma=psf_sigma,
+            rng_seed=hash(new_text) & 0xFFFF,
         )
 
         canvas_h, canvas_w = rgb_text.shape[:2]
