@@ -301,14 +301,20 @@ def inpaint_fast(image_path: str, mask, output_path: str) -> None:
 # Rendering new text
 # ----------------------------------------------------------------------
 
-def _sample_text_color(arr, x: int, y: int, w: int, h: int) -> tuple[int, int, int]:
-    """Median color of top-10%-darkest pixels in bbox = real stroke cores."""
+def _sample_text_color(arr, x: int, y: int, w: int, h: int,
+                        percentile: float = 5.0) -> tuple[int, int, int]:
+    """Median color of darkest N-percentile pixels in bbox = real stroke cores.
+
+    v1.0: default 5% (raньше 10%). User feedback "светлее оригинала" —
+    нужны более тёмные cores. Bottom 5% даёт rgb~(10..15) для типичных
+    сканов вместо rgb~(20..25).
+    """
     import numpy as np
     region = arr[max(y, 0):y + h, max(x, 0):x + w]
     if region.size == 0:
         return (0, 0, 0)
     gray = np.mean(region, axis=2)
-    dark_mask = gray < np.percentile(gray, 10)
+    dark_mask = gray < np.percentile(gray, percentile)
     if not dark_mask.any():
         return (0, 0, 0)
     return tuple(int(c) for c in np.median(region[dark_mask], axis=0))
@@ -369,9 +375,10 @@ def _match_histogram_to_reference(
         ref_target_indices = (rendered_percentiles * (len(ref_sorted) - 1)).astype(np.int32)
         ref_target_indices = np.clip(ref_target_indices, 0, len(ref_sorted) - 1)
         mapped = ref_sorted[ref_target_indices]
-        # Blend strength 0.4 — preserve original character shape, добавить
-        # variance матчинг (не overshoot к hollow look как в v0.9 strength=0.85)
-        blend_strength = 0.4
+        # Blend strength 0.25 (v1.0) — preserve dark cores intact, only
+        # gently push outliers toward ref CDF. v0.9 strength=0.4 ещё видно
+        # «прерывистость» — выше strength делает text прозрачнее, не темнее.
+        blend_strength = 0.25
         new_values = blend_strength * mapped + (1 - blend_strength) * rendered_values
         result[:, :, c][rendered_stroke_mask] = new_values
 
