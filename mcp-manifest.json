@@ -182,6 +182,15 @@
       "post_install_note": "If AutoCAD installed: in AutoCAD run APPLOAD and load '{install_dir}\\lisp-code\\mcp_dispatch.lsp'. Then restart Claude Code to see 8 new tools.",
       "size_mb": 150,
       "requires_internet": true
+    },
+    {
+      "name": "adeu",
+      "purpose": "docx-diff с нативными Word Track Changes для diff между ревизиями. Полезно для согласования правок в коммерческих документах.",
+      "method": "uvx",
+      "install_args": ["--from", "adeu", "adeu-server"],
+      "register_args": ["-s", "user", "--", "uvx", "--from", "adeu", "adeu-server"],
+      "size_mb": 10,
+      "post_install_note": "Прогрев первый раз: uvx --from adeu adeu-server --help (затем restart Claude session)."
     }
   ]
 }

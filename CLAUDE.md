@@ -475,20 +475,25 @@ CORE-секция CLAUDE.md (STOP-процедура, шаг 2) ссылаетс
 | 6 | `sequential-thinking` | Meta-cognition для multi-step |
 | 7 | `fetch` | Произвольный URL |
 | 8 | `time` | Часовые пояса, расчёт дат |
-| 9 | `adeu` | docx-diff с нативными Word Track Changes |
-| 10 | `pdf-edit` | Наш собственный MCP для правок PDF (merge/split/delete/rotate/extract/replace/watermark) |
+| 9 | `adeu` | docx-diff с нативными Word Track Changes (через manifest) |
+
+**Опциональные (по типу ПК):**
+
+| Имя | Когда нужен |
+|-----|-------------|
+| `autocad-mcp` | ПК с установленным AutoCAD (через manifest, github-zip-uv) |
+
+**Pending (требует распространения, на 2026-05-19 только на Apoliakov-PC):**
+
+| Имя | Состояние |
+|-----|-----------|
+| `pdf-edit` | Custom single-file script в `~/.claude/mcp-servers/pdf-edit/pdf_edit_mcp.py`. **Только на Apoliakov-PC** где был создан. `mcp-servers/` в .gitignore → не распространяется через git. **TODO**: переместить скрипт в распространяемое место + добавить в manifest. |
 
 **Правило для STOP-процедуры:**
-- В шаге 2 сверять с этими 10 именами, не с 8.
-- В шаге 5 строка подтверждения: `✓ прочитан CLAUDE.md (MCP: X/10)`.
-- Если какого-то нет — предупредить как обычно, прогревом `uvx <name> --help`
-  (для `pdf-edit` — `uv run --script C:\Users\Apoliakov\.claude\mcp-servers\pdf-edit\pdf_edit_mcp.py`).
-
-**Где живут добавленные:**
-- `adeu`: `uvx --from adeu adeu-server`, регистрация в user scope.
-- `pdf-edit`: single-file PEP 723 скрипт в `~/.claude/mcp-servers/pdf-edit/pdf_edit_mcp.py`,
-  зависимости (fastmcp, pikepdf, pypdf, reportlab) разрешаются uv автоматически
-  при первом запуске.
+- В шаге 2 сверять с **9 стандартными** именами + опциональным `autocad-mcp` если ПК с AutoCAD.
+- В шаге 5 строка подтверждения: `✓ прочитан CLAUDE.md (MCP: X/9)` (или `/10` с autocad).
+- `pdf-edit` — отдельно: «pdf-edit pending, требует ручного создания на этом ПК».
+- Если standard MCP отсутствует — прогрев `uvx <name> --help` + restart session.
 
 **Дополнительный портативный бинарь (не MCP, для subprocess):**
 - `diff-pdf v0.5.3` (GPL-2.0): `~/.claude/bin/diff-pdf/diff-pdf.exe` —
