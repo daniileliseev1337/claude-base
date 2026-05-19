@@ -1,7 +1,7 @@
 {
   "$schema_version": 1,
   "$schema_doc": "Manifest of MCP servers and Python user-packages used across the team. Read by scripts/setup-extras.ps1 to install/register missing items on the local machine. Read by scripts/auto-pull.ps1 to notify user about pending diff between manifest and local state. WHEN ADDING A NEW MCP SERVER OR PACKAGE: edit this file, commit + push -- auto-sync will distribute it. Other PCs will see notification 'extras-diff: N pending' in auto-sync.log and the user can run setup-extras.ps1 to apply.",
-  "$last_updated": "2026-05-15",
+  "$last_updated": "2026-05-18",
 
   "python_user_packages": [
     {
@@ -49,6 +49,38 @@
       "min_python": "3.10",
       "max_python": "3.12",
       "size_mb": 105
+    },
+    {
+      "name": "Pillow",
+      "import_name": "PIL",
+      "purpose": "Image render (text on scans) for skills/image-text-replace",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 3
+    },
+    {
+      "name": "opencv-python",
+      "import_name": "cv2",
+      "purpose": "Image mask ops + fast inpaint fallback for skills/image-text-replace",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 30
+    },
+    {
+      "name": "iopaint",
+      "purpose": "LaMa inpaint engine (primary mode) for skills/image-text-replace. CLI: iopaint run --model=lama --image=<dir> --mask=<dir> --output=<dir>",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 200,
+      "post_install_note": "REQUIRED: download LaMa model (~196 MB) to ASCII-safe path before first use. Auto-download через iopaint часто рвётся на 50% (MD5 mismatch). Manual download: mkdir 'C:\\iopaint-cache\\torch\\hub\\checkpoints'; curl -L --retry 10 --retry-delay 5 --retry-all-errors -o 'C:\\iopaint-cache\\torch\\hub\\checkpoints\\big-lama.pt' 'https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt'. Pipeline сам ставит TORCH_HOME=C:\\iopaint-cache\\torch. Подробности — skills/image-text-replace/README.md."
+    },
+    {
+      "name": "easyocr",
+      "purpose": "OCR engine для skills/image-text-replace (RU+EN). Заменил paddleocr т.к. paddleocr 3.x качает модели с baidu CDN который недоступен с корп-сети. EasyOCR качает с GitHub Releases.",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 150,
+      "post_install_note": "First use of easyocr.Reader(['ru','en']) скачивает ~64MB detection + 50MB recognition модели в %USERPROFILE%/.EasyOCR/model/. Source — GitHub Releases (стабильно)."
     }
   ],
 

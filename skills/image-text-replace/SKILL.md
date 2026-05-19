@@ -5,15 +5,19 @@ description: |
   через OCR, стереть AI-инпейнтингом (LaMa), отрендерить новый текст в
   том же месте.
 
-  Pipeline: PaddleOCR → mask из bbox → IOPaint (LaMa) → Pillow render →
+  Pipeline: EasyOCR (RU+EN) → mask из bbox → IOPaint (LaMa) → Pillow render →
   сохранение. Primary режим — LaMa (работает на любом фоне). Opt-in
   fast-fill режим (cv2 + bg-color) для batch'а из идентичных белых сканов.
+
+  Status: 2026-05-19 v0.2 — end-to-end протестирован на реальном
+  сканированном КП (4 страницы PDF, замена грандтотала +20% на стр.4).
 
   Триггеры (подключается автоматически):
   - "замени текст на картинке", "замена текста на изображении", "замена текста в скане"
   - "исправь шифр на скане", "поменяй число на картинке", "затри текст на изображении"
   - "remove text from image", "inpaint text", "OCR + inpaint"
   - "перепечатать текст в скане", "replace text in scan"
+  - "увеличь сумму в скане на N%", "поменяй цифру на N в скане"
   - после работы с PDF где из страницы извлекли картинку и нужно её
     подправить перед обратной вставкой
 tools: Read, Write, Edit, Bash, Glob, Grep
@@ -34,23 +38,25 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 ```
 input.png (или .jpg, .tiff)
     │
-    ├── PaddleOCR.ocr(input)
+    ├── EasyOCR.readtext(input)  — RU+EN, через PIL (Unicode paths!)
     │       └→ [(text, bbox, conf), ...]
     │
     ├── фильтр по запросу пользователя
-    │   (literal substring / regex / "всё в регионе X")
+    │   (literal substring / regex / find_value_near_label для "Label: value")
     │       └→ список bbox'ов на замазку
     │
-    ├── PIL build_mask(bboxes, dilate=4px)
-    │       └→ mask.png (бинарная маска: белое = замазать)
+    ├── build_mask(bboxes, dilate=4px)
+    │       └→ numpy mask (бинарная: белое = замазать)
     │
     ├── mode=lama (default):
-    │       iopaint run --model=lama → cleaned.png
+    │       iopaint run --model=lama --model-dir=C:\iopaint-cache\torch → cleaned.png
     │   mode=fast:
     │       cv2.inpaint(image, mask, method=TELEA) → cleaned.png
-    │       (или просто bg-color fill из медианы вокруг bbox)
+    │       (для batch'а из идентичных белых сканов, в 50x быстрее)
     │
-    ├── PIL ImageDraw.text(cleaned, new_text, bbox.xy, font, color)
+    ├── render_text() — Pillow ImageDraw.text() с цветом из ОРИГИНАЛА
+    │       (важно: семплировать цвет из original, не cleaned —
+    │        иначе получишь near-white на near-white = invisible)
     │       └→ result.png
     │
     └── сохранить рядом с input как input.replaced.png

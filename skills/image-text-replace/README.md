@@ -1,28 +1,42 @@
 # image-text-replace — установка и примеры
 
 Скилл для замены текста на растровых изображениях через OCR + AI-инпейнтинг.
-Полная методология — в [SKILL.md](SKILL.md).
+Полная методология — в [SKILL.md](SKILL.md). **Status: v0.2 (2026-05-19),
+end-to-end протестирован на реальном сканированном PDF.**
 
 ## Установка зависимостей
 
-Все ставятся лениво при первом запуске `pipeline.py`. Но если хочешь
-заранее (например, для оффлайн-машины):
+Все 4 пакета: `easyocr`, `iopaint`, `Pillow`, `opencv-python` (+ `numpy`)
+в нашем `mcp-manifest.json` → ставятся через `setup-extras.ps1`.
+
+Если ставить вручную:
 
 ```powershell
-# PaddleOCR + PaddlePaddle — уже стоят (setup-extras manifest)
-# Доустановить:
-python -m pip install --user iopaint Pillow opencv-python numpy
+python -m pip install --user easyocr iopaint Pillow opencv-python numpy
 ```
 
-Первый запуск **`mode=lama`** скачает модель LaMa (~174 MB) из HuggingFace
-в `~/.cache/iopaint/`. На корп-прокси нужны env-vars:
+**Важно: модель LaMa нужно загрузить однократно**, ~196 MB:
 
 ```powershell
-$env:HTTPS_PROXY = "http://your-proxy:port"
-$env:HTTP_PROXY  = "http://your-proxy:port"
+# Создаём ASCII-safe папку (важно при кириллице в имени пользователя)
+mkdir "C:\iopaint-cache\torch\hub\checkpoints"
+curl -L --retry 10 --retry-delay 5 --retry-all-errors `
+    -o "C:\iopaint-cache\torch\hub\checkpoints\big-lama.pt" `
+    "https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt"
 ```
 
-или прогрев через наш `~/.claude/bin/Set-Proxy.ps1`.
+Сеть может рваться — curl с `--retry 10 --retry-all-errors` обычно
+дотягивает за 1-2 попытки. Pipeline сам ставит `TORCH_HOME=C:\iopaint-cache\torch`
+и iopaint находит модель по этому пути.
+
+### Почему ASCII-safe путь
+
+Windows + Python + кириллица в имени пользователя (`C:\Users\Даниил\...`)
+ломает несколько вещей:
+- `cv2.imread()` не открывает Unicode-пути → читаем через Pillow
+  (`np.array(Image.open(path).convert("RGB"))`)
+- iopaint грузит модель из `~/.cache/torch/...` и Python мангнул байты
+  для имени `Даниил` → форсируем `TORCH_HOME=C:\iopaint-cache\torch`
 
 ## Quick smoke test
 
@@ -184,12 +198,58 @@ TODO для следующей итерации.
 - **Google Document AI** — облако, paid, требует выгрузки изображений
   во внешний сервис (для документов клиентов — не делаем).
 
-## Тесты
+## Тесты — выполнены 2026-05-19
 
-Будут добавлены после первого реального скана. Сейчас скилл
-**не тестирован на конкретном файле** — это design + ленивая установка
-зависимостей. Karpathy 4 (верификация) выполнится на первой реальной
-задаче.
+### Test 1 — синтетический скан (smoke)
+
+Генерация: `tmp/make-test-scan.py` создаёт PNG 1200×800 с текстом
+«Шифр документа: Ф.2024.123456789» + другой контент.
+
+Запуск:
+```powershell
+python pipeline.py --input test-scan-input.png `
+    --find "Ф.2024.123456789" --replace "Ф.2026.987654321" --mode lama
+```
+
+Результат: «Ф.2024.123456789» заменён на «Ф.2026.987654321», цвет
+подобран автоматически из bbox оригинала, шов после LaMa инпейнта
+не виден. **PASSED.**
+
+### Test 2 — реальный сканированный КП
+
+Файл: `КП К7 АХП от 07.05.26.pdf` (4 страницы, все сканы, ~1 MB).
+
+Workflow:
+1. Render 4 страниц в PNG через pypdfium2 (200 DPI).
+2. OCR на каждой → find_value_near_label('Итоговая.*сумм') нашёл
+   на стр. 4: label «Итоговая сумма (вкл НДС)» (conf 1.00) + value
+   «144 105 177,91» (conf 0.998).
+3. Compute new = 144105177.91 × 1.2 = 172926213.49 → форматирую
+   как «172 926 213,49».
+4. pipeline.py --mode lama --find "144 105 177,91" --replace "172 926 213,49"
+   → page-4-replaced.png.
+5. Pillow `save_all` собрал 4 страницы в `КП К7 АХП от 07.05.26 (+20%).pdf`
+   на Desktop. 1.42 MB.
+
+**PASSED.** Замена визуально неотличима от оригинального шрифта,
+LaMa чисто стёр прежнее число. См. session-report
+`2026-05-15_handoff-manifest-extras-installer-stage8/artifacts/`.
+
+## Найденные баги (fixed в v0.2)
+
+1. **cv2.imread не читает Unicode-пути** (Cyrillic username) →
+   `easyocr.readtext(np.array(Image.open(path).convert("RGB")))`.
+2. **color sampling из cleaned image** возвращал почти-белый →
+   текст невидим. Fix: семплировать из `original_path`, не из
+   `cleaned_path`.
+3. **PaddleOCR 3.x качает модели с baidu CDN** который недоступен с
+   нашей сети → заменили на EasyOCR (модели с GitHub Releases).
+4. **iopaint грузит модель из `~/.cache/torch/...`** который ломается
+   на Windows с кириллицей в username → форсируем
+   `TORCH_HOME=C:\iopaint-cache\torch`.
+5. **LaMa download через iopaint рвался на 46-51%** (MD5 mismatch).
+   Workaround: качать модель руками через `curl --retry 10` в
+   ASCII-safe путь перед первым запуском.
 
 ## Связанные
 

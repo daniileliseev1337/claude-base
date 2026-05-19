@@ -1,33 +1,43 @@
 #!/usr/bin/env python
 """
-image-text-replace pipeline.
+image-text-replace pipeline v0.2.
 
 Заменяет указанный текст на растровом изображении (скан, JPEG, PNG):
-1. OCR через PaddleOCR -> текст + bbox координаты
+1. OCR через EasyOCR (RU+EN) -> текст + bbox координаты
 2. Фильтр по запросу пользователя (literal / regex)
 3. Mask из bbox с расширением (dilate)
-4. Inpaint: LaMa (default) либо cv2.inpaint TELEA (fast mode)
+4. Inpaint: IOPaint LaMa (default) либо cv2.inpaint TELEA (fast mode)
 5. Render нового текста через Pillow в том же месте
 6. Сохранение result рядом с оригиналом
 
+v0.2 changelog:
+- Switch OCR engine PaddleOCR -> EasyOCR. Причина: paddleocr 3.x
+  тянет модели с baidu CDN, на корп-сети не работает.
+- PIL-loaded image для обхода cv2.imread ANSI-path issue (папки с
+  кириллицей в пути).
+- Singleton OCR reader (cache) для batch-обработки.
+- Helper `find_value_near_label()` для кейса "Метка: значение".
+- find/replace теперь поддерживает мульти-OCR-результаты (join
+  соседних bbox'ов в одну строку).
+
 CLI usage:
-    python pipeline.py --input scan.png \
-        --find "Шифр Ф.2024.123456789" \
-        --replace "Шифр Ф.2026.987654321" \
-        --font "C:/Windows/Fonts/arial.ttf" \
+    python pipeline.py --input scan.png \\
+        --find "Ф.2024.123456789" \\
+        --replace "Ф.2026.987654321" \\
+        --font "C:/Windows/Fonts/arial.ttf" \\
         --mode lama
 
 Python lib:
-    from pipeline import replace_text_in_image
-    replace_text_in_image(
-        input_path="scan.png",
-        replacements=[("old", "new")],
-        font_path="C:/Windows/Fonts/arial.ttf",
-        mode="lama",
-    )
+    from pipeline import replace_text_in_image, run_ocr, find_value_near_label
+    matches = run_ocr("scan.png")
+    label_bbox, value_match = find_value_near_label(matches, r"Итоговая сумма")
+    # ... compute new value ...
+    replace_text_in_image("scan.png",
+        replacements=[(value_match.text, "new value")],
+        font_path="C:/Windows/Fonts/arial.ttf")
 
-Зависимости (лениво устанавливаются):
-    paddleocr, paddlepaddle, iopaint (для mode=lama), Pillow, opencv-python, numpy
+Зависимости (ставятся через setup-extras.ps1):
+    easyocr, iopaint, Pillow, opencv-python, numpy
 """
 
 from __future__ import annotations
@@ -39,28 +49,35 @@ import re
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable, Optional, Sequence
 
 
 # ----------------------------------------------------------------------
 # Lazy deps installer
 # ----------------------------------------------------------------------
 
+_IMPORT_MAP = {
+    "easyocr": "easyocr",
+    "Pillow": "PIL",
+    "opencv-python": "cv2",
+    "numpy": "numpy",
+    "iopaint": "iopaint",
+}
+
+
 def _ensure_deps(mode: str) -> None:
-    """Install missing pip packages on first run. Idempotent."""
-    required = ["paddleocr", "Pillow", "opencv-python", "numpy"]
+    required = ["easyocr", "Pillow", "opencv-python", "numpy"]
     if mode == "lama":
         required.append("iopaint")
-
     missing: list[str] = []
     for pkg in required:
+        import_name = _IMPORT_MAP[pkg]
         try:
-            __import__(pkg.split("-")[0].replace("Pillow", "PIL").replace("opencv", "cv2"))
+            __import__(import_name)
         except ImportError:
             missing.append(pkg)
-
     if missing:
         print(f"[ensure-deps] Installing: {missing}", flush=True)
         subprocess.run(
@@ -81,32 +98,50 @@ class OcrMatch:
     confidence: float
 
     def bbox_rect(self) -> tuple[int, int, int, int]:
-        """Return axis-aligned bounding rectangle: (x, y, w, h)."""
+        """Axis-aligned bounding rectangle: (x, y, w, h)."""
         xs = [p[0] for p in self.bbox]
         ys = [p[1] for p in self.bbox]
         x, y = min(xs), min(ys)
         return x, y, max(xs) - x, max(ys) - y
 
+    def center_y(self) -> int:
+        ys = [p[1] for p in self.bbox]
+        return (min(ys) + max(ys)) // 2
+
     def height_px(self) -> int:
-        x, y, w, h = self.bbox_rect()
-        return h
+        return self.bbox_rect()[3]
 
 
 # ----------------------------------------------------------------------
-# OCR
+# OCR (EasyOCR with PIL-load workaround)
 # ----------------------------------------------------------------------
 
-def run_ocr(image_path: str, langs: str = "ru,en") -> list[OcrMatch]:
-    """Run PaddleOCR on image, return list of OcrMatch."""
-    from paddleocr import PaddleOCR
-    primary_lang = langs.split(",")[0].strip()
-    ocr = PaddleOCR(use_angle_cls=True, lang=primary_lang, show_log=False)
-    raw = ocr.ocr(image_path, cls=True)
+_READER_CACHE: dict[tuple[str, ...], object] = {}
+
+
+def _get_reader(langs: Sequence[str]):
+    import easyocr
+    key = tuple(sorted(langs))
+    if key not in _READER_CACHE:
+        _READER_CACHE[key] = easyocr.Reader(list(langs), gpu=False, verbose=False)
+    return _READER_CACHE[key]
+
+
+def _load_image_as_array(image_path: str):
+    """Read image via Pillow (handles Unicode paths) → numpy RGB array."""
+    from PIL import Image
+    import numpy as np
+    return np.array(Image.open(image_path).convert("RGB"))
+
+
+def run_ocr(image_path: str, langs: Sequence[str] = ("ru", "en")) -> list[OcrMatch]:
+    """Run EasyOCR on image, return list of OcrMatch."""
+    reader = _get_reader(langs)
+    img = _load_image_as_array(image_path)
+    raw = reader.readtext(img)
     matches: list[OcrMatch] = []
-    if not raw or not raw[0]:
-        return matches
-    for region in raw[0]:
-        bbox_pts, (text, conf) = region
+    for region in raw:
+        bbox_pts, text, conf = region
         bbox_tuple = tuple((int(p[0]), int(p[1])) for p in bbox_pts)
         matches.append(OcrMatch(text=text, bbox=bbox_tuple, confidence=float(conf)))
     return matches
@@ -116,7 +151,7 @@ def filter_matches(
     matches: Sequence[OcrMatch],
     find_pattern: str,
     use_regex: bool,
-    min_confidence: float = 0.7,
+    min_confidence: float = 0.5,
 ) -> list[OcrMatch]:
     """Pick matches whose text matches user's pattern."""
     if use_regex:
@@ -125,12 +160,50 @@ def filter_matches(
     return [m for m in matches if find_pattern in m.text and m.confidence >= min_confidence]
 
 
+def find_value_near_label(
+    matches: Sequence[OcrMatch],
+    label_pattern: str,
+    side: str = "right",
+    row_tolerance_px: int = 20,
+    use_regex: bool = True,
+) -> Optional[tuple[OcrMatch, OcrMatch]]:
+    """For 'Label: value' patterns. Find label match, then the nearest
+    OcrMatch on the same row (right side by default).
+
+    Returns (label_match, value_match) or None.
+    """
+    label_hits = filter_matches(matches, label_pattern, use_regex=use_regex)
+    if not label_hits:
+        return None
+    label_match = max(label_hits, key=lambda m: m.confidence)
+    lx, ly, lw, lh = label_match.bbox_rect()
+    label_right = lx + lw
+    label_left = lx
+    label_cy = label_match.center_y()
+    candidates = [
+        m for m in matches
+        if m is not label_match
+        and abs(m.center_y() - label_cy) <= row_tolerance_px
+    ]
+    if side == "right":
+        candidates = [m for m in candidates if m.bbox_rect()[0] >= label_right - 10]
+        candidates.sort(key=lambda m: m.bbox_rect()[0])
+    elif side == "left":
+        candidates = [m for m in candidates if (m.bbox_rect()[0] + m.bbox_rect()[2]) <= label_left + 10]
+        candidates.sort(key=lambda m: -(m.bbox_rect()[0] + m.bbox_rect()[2]))
+    else:
+        raise ValueError(f"side must be 'left' or 'right', got {side!r}")
+    if not candidates:
+        return None
+    return label_match, candidates[0]
+
+
 # ----------------------------------------------------------------------
 # Mask building
 # ----------------------------------------------------------------------
 
-def build_mask(image_shape: tuple[int, int], matches: Iterable[OcrMatch], dilate_px: int = 4):
-    """Return binary mask (0/255) of size (H, W) covering match bboxes + dilation."""
+def build_mask(image_shape: tuple[int, int, ...], matches: Iterable[OcrMatch], dilate_px: int = 4):
+    """Binary mask (0/255) covering match bboxes + dilation."""
     import cv2
     import numpy as np
 
@@ -149,9 +222,31 @@ def build_mask(image_shape: tuple[int, int], matches: Iterable[OcrMatch], dilate
 # Inpainting backends
 # ----------------------------------------------------------------------
 
+def _ascii_safe_cache_dir() -> Path:
+    """Return an ASCII-only cache directory for torch/iopaint models.
+
+    Windows + Python + Cyrillic username breaks model loading
+    (`~/.cache/torch/...` resolves to garbled bytes for usernames like
+    'Даниил'). Use C:\\iopaint-cache as a stable fallback.
+    """
+    if os.name == "nt":
+        candidate = Path(r"C:\iopaint-cache")
+    else:
+        candidate = Path.home() / ".cache" / "iopaint-pipeline"
+    candidate.mkdir(parents=True, exist_ok=True)
+    return candidate
+
+
 def inpaint_lama(image_path: str, mask, output_path: str) -> None:
-    """Use IOPaint CLI with LaMa model."""
-    import cv2
+    """Use IOPaint CLI with LaMa model. Sets TORCH_HOME to ASCII-safe path."""
+    from PIL import Image
+
+    cache_root = _ascii_safe_cache_dir()
+    env = os.environ.copy()
+    env["TORCH_HOME"] = str(cache_root / "torch")
+    env["XDG_CACHE_HOME"] = str(cache_root / "xdg")
+    env["HF_HOME"] = str(cache_root / "hf")
+    (cache_root / "torch").mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as td:
         img_dir = Path(td) / "img"
@@ -161,37 +256,45 @@ def inpaint_lama(image_path: str, mask, output_path: str) -> None:
         mask_dir.mkdir()
         out_dir.mkdir()
 
-        src_name = Path(image_path).name
-        shutil_copy = Path(image_path).read_bytes()
-        (img_dir / src_name).write_bytes(shutil_copy)
-        cv2.imwrite(str(mask_dir / src_name), mask)
+        ascii_name = "input.png"
+        Image.open(image_path).convert("RGB").save(img_dir / ascii_name)
+        Image.fromarray(mask).save(mask_dir / ascii_name)
 
         cmd = [
             sys.executable, "-m", "iopaint", "run",
             "--model=lama",
             "--device=cpu",
+            f"--model-dir={cache_root / 'torch'}",
             f"--image={img_dir}",
             f"--mask={mask_dir}",
             f"--output={out_dir}",
         ]
-        print(f"[lama] {' '.join(cmd)}", flush=True)
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        print(f"[lama] cache={cache_root}", flush=True)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True,
+            encoding="utf-8", errors="replace", env=env,
+        )
         if result.returncode != 0:
-            raise RuntimeError(f"iopaint failed:\n{result.stderr}")
+            raise RuntimeError(
+                f"iopaint failed (rc={result.returncode}):\n"
+                f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            )
 
-        # iopaint outputs <src>.png in out_dir
-        out_files = list(out_dir.glob(f"{Path(src_name).stem}.*"))
+        out_files = list(out_dir.glob("input.*"))
         if not out_files:
             raise RuntimeError(f"iopaint produced no output in {out_dir}")
-        Path(output_path).write_bytes(out_files[0].read_bytes())
+        Image.open(out_files[0]).save(output_path)
 
 
 def inpaint_fast(image_path: str, mask, output_path: str) -> None:
-    """Use cv2.inpaint with TELEA algorithm — fast for uniform backgrounds."""
+    """cv2.inpaint with TELEA — fast for uniform backgrounds."""
     import cv2
-    img = cv2.imread(image_path)
-    result = cv2.inpaint(img, mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
-    cv2.imwrite(output_path, result)
+    from PIL import Image
+    import numpy as np
+    img = np.array(Image.open(image_path).convert("RGB"))
+    bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    result = cv2.inpaint(bgr, mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
+    Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB)).save(output_path)
 
 
 # ----------------------------------------------------------------------
@@ -200,29 +303,31 @@ def inpaint_fast(image_path: str, mask, output_path: str) -> None:
 
 def render_text(
     cleaned_path: str,
+    original_path: str,
     matches: Sequence[OcrMatch],
     replacements: Sequence[tuple[str, str]],
     font_path: str,
-    font_size: int | None,
-    color: tuple[int, int, int] | None,
+    font_size: Optional[int],
+    color: Optional[tuple[int, int, int]],
     output_path: str,
 ) -> None:
-    """Render new text at original bbox positions."""
+    """Draw `replacements` text onto the inpainted image at original bbox positions.
+
+    Color auto-sampling reads dark pixels from `original_path` (BEFORE
+    inpainting) — otherwise we'd sample from the inpainted region which
+    no longer contains text and gives near-white = invisible result.
+    """
     from PIL import Image, ImageDraw, ImageFont
-    import cv2
     import numpy as np
 
     img = Image.open(cleaned_path).convert("RGB")
     draw = ImageDraw.Draw(img)
-
-    # Build text-replacement map (find -> replace)
-    repl_map = dict(replacements)
-    original_img_arr = np.array(Image.open(cleaned_path).convert("RGB"))
+    # Sample colors from ORIGINAL (pre-inpaint), not cleaned.
+    original_arr = np.array(Image.open(original_path).convert("RGB"))
 
     for m in matches:
-        # Find which replacement applies to this match
         new_text = None
-        for find, repl in repl_map.items():
+        for find, repl in replacements:
             if find in m.text:
                 new_text = m.text.replace(find, repl)
                 break
@@ -231,15 +336,14 @@ def render_text(
 
         x, y, w, h = m.bbox_rect()
 
-        # Auto font size from height of original
         size = font_size or max(8, int(h * 0.85))
         font = ImageFont.truetype(font_path, size)
 
-        # Auto color: median color of dark pixels within bbox (assume text = dark)
         if color is None:
-            region = original_img_arr[max(y, 0):y + h, max(x, 0):x + w]
+            region = original_arr[max(y, 0):y + h, max(x, 0):x + w]
             if region.size > 0:
                 gray = np.mean(region, axis=2)
+                # Text is darker than background — bottom 30 percentile = text pixels.
                 dark_mask = gray < np.percentile(gray, 30)
                 if dark_mask.any():
                     median_color = tuple(int(c) for c in np.median(region[dark_mask], axis=0))
@@ -265,17 +369,23 @@ def replace_text_in_image(
     replacements: Sequence[tuple[str, str]],
     font_path: str = "C:/Windows/Fonts/arial.ttf",
     mode: str = "lama",
-    output_path: str | None = None,
+    output_path: Optional[str] = None,
     use_regex: bool = False,
-    font_size: int | None = None,
-    color: tuple[int, int, int] | None = None,
+    font_size: Optional[int] = None,
+    color: Optional[tuple[int, int, int]] = None,
     dilate_px: int = 4,
-    ocr_lang: str = "ru,en",
-    min_confidence: float = 0.7,
+    ocr_langs: Sequence[str] = ("ru", "en"),
+    min_confidence: float = 0.5,
     dry_run: bool = False,
+    preloaded_matches: Optional[Sequence[OcrMatch]] = None,
 ) -> dict:
-    """Main public entry. Returns dict with summary."""
-    import cv2
+    """Main public entry. Returns dict with summary.
+
+    `preloaded_matches` — если уже сделали OCR заранее (например, для
+    нескольких find/replace на одном изображении в разных шагах),
+    можно передать готовый список и не делать OCR повторно.
+    """
+    from PIL import Image
 
     _ensure_deps(mode)
 
@@ -284,11 +394,14 @@ def replace_text_in_image(
         p = Path(input_path)
         output_path = str(p.with_name(f"{p.stem}.replaced{p.suffix}"))
 
-    print(f"[1/5] OCR {input_path}...", flush=True)
-    all_matches = run_ocr(input_path, langs=ocr_lang)
-    print(f"      → {len(all_matches)} text regions found", flush=True)
+    if preloaded_matches is None:
+        print(f"[1/5] OCR {input_path}...", flush=True)
+        all_matches = run_ocr(input_path, langs=ocr_langs)
+        print(f"      -> {len(all_matches)} text regions found", flush=True)
+    else:
+        all_matches = list(preloaded_matches)
+        print(f"[1/5] Using {len(all_matches)} preloaded OCR matches", flush=True)
 
-    # Collect matches for each find pattern
     selected: list[OcrMatch] = []
     summary_per_find = []
     for find, repl in replacements:
@@ -307,7 +420,7 @@ def replace_text_in_image(
             "input": input_path,
             "output": None,
             "summary": summary_per_find,
-            "message": "Ни один из find-паттернов не сматчился. Проверь OCR результат с --dry-run без фильтра.",
+            "message": "Ни один из find-паттернов не сматчился. Запусти с --dry-run и проверь OCR результаты.",
         }
 
     if dry_run:
@@ -320,15 +433,14 @@ def replace_text_in_image(
         }
 
     print(f"[2/5] Building mask ({len(selected)} regions, dilate={dilate_px}px)...", flush=True)
-    img = cv2.imread(input_path)
-    if img is None:
-        raise RuntimeError(f"OpenCV cannot read {input_path}")
-    mask = build_mask(img.shape, selected, dilate_px=dilate_px)
+    pil_img = Image.open(input_path).convert("RGB")
+    img_shape = (pil_img.height, pil_img.width, 3)
+    mask = build_mask(img_shape, selected, dilate_px=dilate_px)
 
     cleaned_path = str(Path(output_path).with_name(f"{Path(output_path).stem}.cleaned{Path(output_path).suffix}"))
 
     if mode == "lama":
-        print(f"[3/5] Inpainting with LaMa (CPU, может занять 5-30 сек)...", flush=True)
+        print(f"[3/5] Inpainting with LaMa (CPU, ~5-30 сек)...", flush=True)
         inpaint_lama(input_path, mask, cleaned_path)
     elif mode == "fast":
         print(f"[3/5] Inpainting with cv2 TELEA (fast)...", flush=True)
@@ -341,6 +453,7 @@ def replace_text_in_image(
         raise FileNotFoundError(f"Font not found: {font_path}")
     render_text(
         cleaned_path=cleaned_path,
+        original_path=input_path,
         matches=selected,
         replacements=replacements,
         font_path=font_path,
@@ -367,19 +480,19 @@ def replace_text_in_image(
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Replace text on raster image via OCR + inpaint.")
-    p.add_argument("--input", required=True, help="Path to source image (.png/.jpg/.tiff)")
-    p.add_argument("--find", action="append", required=True, help="Text to find. Can repeat for batch.")
-    p.add_argument("--replace", action="append", required=True, help="Replacement text. Match --find by position.")
-    p.add_argument("--regex", action="store_true", help="Treat --find as regex")
-    p.add_argument("--font", default="C:/Windows/Fonts/arial.ttf", help="TTF font path (must support Cyrillic)")
-    p.add_argument("--font-size", type=int, default=None, help="Font size in px (auto from bbox height if not set)")
-    p.add_argument("--color", default=None, help="Hex color #RRGGBB for new text (auto from bbox median if not set)")
-    p.add_argument("--mode", choices=["lama", "fast"], default="lama", help="Inpaint backend")
-    p.add_argument("--ocr-lang", default="ru,en", help="PaddleOCR languages")
-    p.add_argument("--dilate", type=int, default=4, help="Pixels to dilate mask around bbox")
-    p.add_argument("--output", default=None, help="Output path (default: <input>.replaced.<ext>)")
-    p.add_argument("--dry-run", action="store_true", help="Only show OCR matches, no inpaint/render")
-    p.add_argument("--yes", action="store_true", help="Skip interactive confirmation")
+    p.add_argument("--input", required=True)
+    p.add_argument("--find", action="append", required=True, help="Text to find. Can repeat.")
+    p.add_argument("--replace", action="append", required=True, help="Replacement. Pairs with --find by position.")
+    p.add_argument("--regex", action="store_true")
+    p.add_argument("--font", default="C:/Windows/Fonts/arial.ttf")
+    p.add_argument("--font-size", type=int, default=None)
+    p.add_argument("--color", default=None, help="Hex #RRGGBB or omit for auto")
+    p.add_argument("--mode", choices=["lama", "fast"], default="lama")
+    p.add_argument("--ocr-lang", default="ru,en")
+    p.add_argument("--dilate", type=int, default=4)
+    p.add_argument("--output", default=None)
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--min-conf", type=float, default=0.5)
     args = p.parse_args()
     if len(args.find) != len(args.replace):
         p.error("--find and --replace must come in pairs")
@@ -403,7 +516,8 @@ def main() -> int:
         font_size=args.font_size,
         color=color,
         dilate_px=args.dilate,
-        ocr_lang=args.ocr_lang,
+        ocr_langs=tuple(s.strip() for s in args.ocr_lang.split(",")),
+        min_confidence=args.min_conf,
         dry_run=args.dry_run,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
