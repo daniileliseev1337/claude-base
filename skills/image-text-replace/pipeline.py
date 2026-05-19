@@ -314,6 +314,180 @@ def _sample_text_color(arr, x: int, y: int, w: int, h: int) -> tuple[int, int, i
     return tuple(int(c) for c in np.median(region[dark_mask], axis=0))
 
 
+def _extract_char_glyph(arr, match: OcrMatch, char_index: int):
+    """Extract pixel patch for a single character within an OCR'd word.
+
+    Uses uniform-width assumption (bbox_width / len(text)). Точнее всего
+    для tabular digits в одинаковом шрифте, менее точно для proportional
+    шрифтов. Returns (patch_rgb_arr, patch_bbox_in_original) or (None, None).
+
+    Option 4 (borrow glyphs) из roadmap 2026-05-19.
+    """
+    text = match.text
+    if not text or char_index < 0 or char_index >= len(text):
+        return None, None
+    x, y, w, h = match.bbox_rect()
+    char_w = w / len(text)
+    px1 = int(x + char_index * char_w)
+    px2 = int(x + (char_index + 1) * char_w)
+    pad = max(1, int(char_w * 0.12))
+    px1 = max(0, px1 - pad)
+    px2 = min(arr.shape[1], px2 + pad)
+    py1 = max(0, y - 1)
+    py2 = min(arr.shape[0], y + h + 1)
+    patch = arr[py1:py2, px1:px2].copy()
+    return patch, (px1, py1, px2 - px1, py2 - py1)
+
+
+def _find_char_in_scan(
+    target_char: str,
+    all_matches: Sequence[OcrMatch],
+    min_confidence: float = 0.7,
+    prefer_height: Optional[int] = None,
+):
+    """Search OCR matches for one containing target_char.
+
+    `prefer_height` (если задана) — выбирать match с bbox-height ближе к этому
+    значению (для веса matching: bold ≈ taller). Иначе — самый confident.
+
+    Returns (ocr_match, char_position_in_word_text) or None.
+    """
+    candidates = []
+    for m in all_matches:
+        if m.confidence < min_confidence:
+            continue
+        if target_char in m.text:
+            candidates.append((m, m.text.index(target_char)))
+    if not candidates:
+        return None
+    if prefer_height is not None:
+        candidates.sort(key=lambda c: (abs(c[0].height_px() - prefer_height), -c[0].confidence))
+    else:
+        candidates.sort(key=lambda c: -c[0].confidence)
+    return candidates[0]
+
+
+def try_borrow_text_from_scan(
+    target_text: str,
+    all_matches: Sequence[OcrMatch],
+    arr,
+    target_height: int,
+    min_borrow_ratio: float = 0.5,
+) -> Optional[dict]:
+    """Try to compose target_text by borrowing glyph patches from elsewhere
+    in the same scan.
+
+    Workflow:
+    1. Для каждого char в target_text — `_find_char_in_scan()` с предпочтением
+       к target_height (matching weight).
+    2. Если найдено: `_extract_char_glyph()` дает pixel patch.
+    3. Сборка patches в одну композицию с baseline alignment.
+    4. Если borrowed < min_borrow_ratio × len(target_text) — return None,
+       caller использует синтезированный рендер.
+
+    Returns dict {
+        'composed_rgb': HxWx3 array,
+        'composed_alpha': HxW float 0..1,
+        'text_offset': (offset_x, offset_y),  # для caller paste calculation
+        'borrowed_chars': list[bool],         # какие позиции были borrowed
+        'borrow_ratio': float
+    } or None if insufficient borrowing possible.
+
+    Option 4 (borrow glyphs). Лучше всего работает когда scan содержит
+    repeat'ы тех же символов (tabular numbers, статичные labels). Для
+    one-off bold вставок может вернуть None и caller fallback'нется на
+    PSF-aware synthesized рендер.
+    """
+    import numpy as np
+
+    # Step 1: try to find each char in scan
+    char_sources: list[tuple] = []  # (char, patch, bbox, was_borrowed)
+    borrowed_count = 0
+    for ch in target_text:
+        if ch.isspace():
+            char_sources.append((ch, None, None, False))
+            continue
+        result = _find_char_in_scan(ch, all_matches, prefer_height=target_height)
+        if result is None:
+            char_sources.append((ch, None, None, False))
+            continue
+        match, pos = result
+        patch, bbox = _extract_char_glyph(arr, match, pos)
+        if patch is None:
+            char_sources.append((ch, None, None, False))
+            continue
+        char_sources.append((ch, patch, bbox, True))
+        borrowed_count += 1
+
+    non_space_count = sum(1 for ch in target_text if not ch.isspace())
+    if non_space_count == 0:
+        return None
+    borrow_ratio = borrowed_count / non_space_count
+    if borrow_ratio < min_borrow_ratio:
+        return None
+
+    # Step 2: scale all borrowed patches to target_height and assemble
+    composed_chars = []
+    for ch, patch, bbox, was_borrowed in char_sources:
+        if was_borrowed:
+            from PIL import Image
+            pil = Image.fromarray(patch).convert("RGBA")
+            ratio = target_height / pil.height
+            new_w = max(1, int(pil.width * ratio))
+            scaled = pil.resize((new_w, target_height), Image.LANCZOS)
+            # Convert to RGBA via alpha = 1 - (gray/255) — text is darker than bg
+            arr_p = np.array(scaled).astype(np.float32)
+            if arr_p.shape[2] == 4:
+                arr_p = arr_p[:, :, :3]
+            gray = arr_p.mean(axis=2)
+            # text alpha = how dark pixel is, relative to bright background
+            bg_estimate = float(np.percentile(gray, 90))
+            alpha = (1 - gray / max(bg_estimate, 1)).clip(0, 1)
+            composed_chars.append((ch, arr_p, alpha))
+        else:
+            # Spacer or unborrowed — caller will handle these via synthesized fallback
+            # For simplicity, insert empty gap of ~half target_height for unborrowed
+            gap_w = target_height // 3 if ch.isspace() else 0
+            composed_chars.append((ch, None, gap_w))
+
+    # If any unborrowed non-space char, signal caller to fall back (current
+    # scope: only when ALL non-space chars borrowed)
+    has_unborrowed_text = any(
+        ch is not None and not ch[0].isspace() and ch[1] is None
+        for ch in composed_chars
+    )
+    if has_unborrowed_text:
+        # v1: только полная сборка из borrowed (для proof-of-concept)
+        # v2 (future): mix borrowed + synthesized для отдельных букв
+        return None
+
+    # Step 3: concatenate horizontally
+    total_w = sum(
+        (entry[1].shape[1] if entry[1] is not None else entry[2])
+        for entry in composed_chars
+    )
+    composed_rgb = np.full((target_height, total_w, 3), 255, dtype=np.float32)
+    composed_alpha = np.zeros((target_height, total_w), dtype=np.float32)
+    cursor = 0
+    for ch, patch_rgb, patch_alpha in composed_chars:
+        if patch_rgb is None:
+            # Whitespace gap
+            cursor += patch_alpha  # using last field as gap width
+            continue
+        w_p = patch_rgb.shape[1]
+        composed_rgb[:, cursor:cursor + w_p] = patch_rgb
+        composed_alpha[:, cursor:cursor + w_p] = patch_alpha
+        cursor += w_p
+
+    return {
+        "composed_rgb": composed_rgb,
+        "composed_alpha": composed_alpha,
+        "text_offset": (0, 0),  # composed без padding
+        "borrowed_chars": [src[3] for src in char_sources],
+        "borrow_ratio": borrow_ratio,
+    }
+
+
 def _estimate_psf_sigma(arr, x: int, y: int, w: int, h: int) -> tuple[float, float]:
     """Estimate anisotropic Gaussian PSF (sigma_x, sigma_y) from text edges
     in the scan region.
@@ -530,6 +704,8 @@ def render_text(
     color: Optional[tuple[int, int, int]],
     output_path: str,
     scan_realistic_degrade: bool = True,
+    prefer_borrow: bool = False,
+    all_ocr_matches: Optional[Sequence[OcrMatch]] = None,
 ) -> None:
     """Draw `replacements` text onto the inpainted image at original bbox positions.
 
@@ -571,14 +747,28 @@ def render_text(
             arr = np.array(img)
             continue
 
-        # v0.5: scan-realistic + estimated PSF from local edges (Option 3)
+        # v0.6: PSF + optional glyph borrowing (Options 3+4)
         noise_std = _sample_bg_noise_std(original_arr, x, y, w, h)
         psf_sigma = _estimate_psf_sigma(original_arr, x, y, w, h)
-        rgb_text, alpha_text, text_offset = _render_scan_realistic(
-            font, size, new_text, text_color, noise_std,
-            psf_sigma=psf_sigma,
-            rng_seed=hash(new_text) & 0xFFFF,
-        )
+
+        # Option 4 attempt — only if user enabled prefer_borrow AND OCR-matches passed
+        borrowed = None
+        if prefer_borrow and all_ocr_matches is not None:
+            borrowed = try_borrow_text_from_scan(
+                new_text, all_ocr_matches, original_arr, target_height=h
+            )
+
+        if borrowed is not None:
+            print(f"      → Used borrowed glyphs (ratio={borrowed['borrow_ratio']:.2f})", flush=True)
+            rgb_text = borrowed["composed_rgb"]
+            alpha_text = borrowed["composed_alpha"]
+            text_offset = borrowed["text_offset"]
+        else:
+            rgb_text, alpha_text, text_offset = _render_scan_realistic(
+                font, size, new_text, text_color, noise_std,
+                psf_sigma=psf_sigma,
+                rng_seed=hash(new_text) & 0xFFFF,
+            )
 
         canvas_h, canvas_w = rgb_text.shape[:2]
         # Text top-left должен приземлиться в (x, y) на destination.
@@ -626,6 +816,7 @@ def replace_text_in_image(
     dry_run: bool = False,
     preloaded_matches: Optional[Sequence[OcrMatch]] = None,
     scan_realistic_degrade: bool = True,
+    prefer_borrow: bool = False,
 ) -> dict:
     """Main public entry. Returns dict with summary.
 
@@ -709,6 +900,8 @@ def replace_text_in_image(
         color=color,
         output_path=output_path,
         scan_realistic_degrade=scan_realistic_degrade,
+        prefer_borrow=prefer_borrow,
+        all_ocr_matches=all_matches,
     )
 
     print(f"[5/5] Saved: {output_path}", flush=True)
@@ -744,6 +937,8 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--min-conf", type=float, default=0.5)
     p.add_argument("--no-scan-degrade", action="store_true",
                    help="Skip scan-realistic degradation, render crisp digital text (debug)")
+    p.add_argument("--prefer-borrow", action="store_true",
+                   help="Try to borrow glyphs from scan before falling back to synthesized (Option 4)")
     args = p.parse_args()
     if len(args.find) != len(args.replace):
         p.error("--find and --replace must come in pairs")
@@ -771,6 +966,7 @@ def main() -> int:
         min_confidence=args.min_conf,
         dry_run=args.dry_run,
         scan_realistic_degrade=not args.no_scan_degrade,
+        prefer_borrow=args.prefer_borrow,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
     return 0 if result["status"] in ("ok", "dry_run") else 1
