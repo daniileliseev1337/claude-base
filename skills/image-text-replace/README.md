@@ -106,7 +106,7 @@ python pipeline.py `
 ### 5. Скан внутри PDF (страница со штампом-картинкой)
 
 ```powershell
-# 1. Извлечь страницу как PNG через pdf-edit MCP или pikepdf
+# 1. Извлечь страницу как PNG через pypdfium2 или pikepdf
 # 2. Применить наш скилл
 # 3. Вставить обратно (см. skill pdf-helper)
 ```

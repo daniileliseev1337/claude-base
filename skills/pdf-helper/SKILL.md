@@ -34,7 +34,7 @@ description: |
 | Заполнение AcroForm | Python `pypdf.PdfWriter.update_page_form_field_values()` | XFA-формы — отдельная история, обычно не поддерживается |
 | Аннотации (облачка, маркеры) | Python `pikepdf` (низкоуровневые объекты PDF) | Удалять `/AP` после смены цвета — иначе старый рендер останется |
 | Сравнение двух версий PDF | `diff-pdf.exe` (визуальный) или текст через `pdf-mcp` + `difflib` | Бинарный diff бесполезен |
-| Редактирование (merge/split/delete/rotate/extract/replace/watermark) | MCP `pdf-edit` | На pikepdf/pypdf/reportlab, см. ниже |
+| Редактирование (merge/split/delete/rotate/extract/replace/watermark) | (нет MCP) | pikepdf + pypdf + reportlab напрямую, см. ниже |
 
 **Правило**: всегда сначала смотри, есть ли подходящий MCP в `claude mcp list`. Если есть — через него. Если нужна более тонкая операция — Python.
 
@@ -131,22 +131,22 @@ pdf.save("output.pdf")
 
 Лицензия GPL-2.0 — допустимо как **внешний бинарь** через subprocess, **код не копировать** в наши инструменты.
 
-## pdf-edit MCP (наш собственный)
+## Редактирование PDF — pikepdf/pypdf напрямую
 
-Свой минимальный MCP-сервер: `~/.claude/mcp-servers/pdf-edit/pdf_edit_mcp.py` (PEP 723 single-file на FastMCP + pikepdf/pypdf/reportlab). 8 операций:
+Базовые операции делаем через Python-библиотеки в Bash subprocess (не своим MCP):
 
-| Tool | Что делает |
-|------|------------|
-| `merge_pdfs` | Объединить список PDF в один |
-| `split_pdf` | Разбить PDF постранично в папку |
-| `delete_pages` | Удалить указанные страницы (1-based) |
-| `rotate_pages` | Повернуть страницы на 90/180/270° (пустой список = все) |
-| `extract_range` | Извлечь диапазон страниц [start..end] |
-| `replace_page` | Заменить страницу из другого PDF |
-| `watermark_text` | Текстовый водяной знак (диагональ, opacity) |
-| `watermark_image` | PNG/JPG водяной знак по центру |
-
-Запуск: `claude mcp list` должен показать `pdf-edit: ... ✓ Connected`. Если нет — `claude mcp add pdf-edit -s user -- uv run --script C:\Users\Apoliakov\.claude\mcp-servers\pdf-edit\pdf_edit_mcp.py`.
+| Операция | Библиотека | Пример |
+|----------|------------|--------|
+| Merge | `pypdf.PdfWriter` + `add_page` | `for p in pages: writer.add_page(p)` |
+| Split | `pikepdf.Pdf` slice | `pdf.pages[start:end]` |
+| Delete pages | `del pdf.pages[idx]` | pikepdf |
+| Rotate | `pdf.pages[i].rotate(90)` | pikepdf |
+| Extract range | `pdf.pages[start:end]` | pikepdf |
+| Replace page | `pdf.pages[i] = src.pages[j]` | pikepdf |
+| Watermark text | `reportlab` → canvas → merge | через PdfWriter overlay |
+| Watermark image | `reportlab.platypus.Image` | overlay |
+| AcroForm fill | `pypdf.update_page_form_field_values` | pypdf |
+| Аннотации | pikepdf низкоуровневый | прямая правка `/Annots` |
 
 ## MCP-роутинг (повтор для удобства)
 
@@ -154,7 +154,7 @@ pdf.save("output.pdf")
 |--------|------------|----------------|
 | Чтение текста | markitdown | pdfminer |
 | Чтение таблиц | pdf-mcp | pdfplumber |
-| Редактирование (merge/split/rotate/watermark) | **pdf-edit** | pikepdf + pypdf напрямую |
-| AcroForm заполнение | (пока нет в pdf-edit) | pypdf.update_page_form_field_values |
-| Аннотации (перекрашивание) | (пока нет в pdf-edit) | pikepdf низкоуровневый |
+| Редактирование (merge/split/rotate/watermark) | (нет MCP) | pikepdf + pypdf + reportlab |
+| AcroForm заполнение | (нет MCP) | pypdf.update_page_form_field_values |
+| Аннотации (перекрашивание) | (нет MCP) | pikepdf низкоуровневый |
 | Визуальный diff | (нет MCP) | `diff-pdf.exe` portable |

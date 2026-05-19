@@ -483,16 +483,9 @@ CORE-секция CLAUDE.md (STOP-процедура, шаг 2) ссылаетс
 |-----|-------------|
 | `autocad-mcp` | ПК с установленным AutoCAD (через manifest, github-zip-uv) |
 
-**Pending (требует распространения, на 2026-05-19 только на Apoliakov-PC):**
-
-| Имя | Состояние |
-|-----|-----------|
-| `pdf-edit` | Custom single-file script в `~/.claude/mcp-servers/pdf-edit/pdf_edit_mcp.py`. **Только на Apoliakov-PC** где был создан. `mcp-servers/` в .gitignore → не распространяется через git. **TODO**: переместить скрипт в распространяемое место + добавить в manifest. |
-
 **Правило для STOP-процедуры:**
 - В шаге 2 сверять с **9 стандартными** именами + опциональным `autocad-mcp` если ПК с AutoCAD.
 - В шаге 5 строка подтверждения: `✓ прочитан CLAUDE.md (MCP: X/9)` (или `/10` с autocad).
-- `pdf-edit` — отдельно: «pdf-edit pending, требует ручного создания на этом ПК».
 - Если standard MCP отсутствует — прогрев `uvx <name> --help` + restart session.
 
 **Дополнительный портативный бинарь (не MCP, для subprocess):**
