@@ -250,6 +250,11 @@ LaMa чисто стёр прежнее число. См. session-report
 5. **LaMa download через iopaint рвался на 46-51%** (MD5 mismatch).
    Workaround: качать модель руками через `curl --retry 10` в
    ASCII-safe путь перед первым запуском.
+6. **Color sampling сероватый** — брал bottom 30 percentile интенсивности
+   как «тёмные пиксели», но туда попадали anti-aliased edge-pixels →
+   median ~rgb(98,98,98) серый вместо чёрного. Fix: bottom **10**
+   percentile = только ядро штрихов = `rgb(21,21,21)`. Замечено
+   пользователем на КП К7 АХП 2026-05-19.
 
 ## Связанные
 

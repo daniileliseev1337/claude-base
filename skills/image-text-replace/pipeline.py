@@ -343,8 +343,11 @@ def render_text(
             region = original_arr[max(y, 0):y + h, max(x, 0):x + w]
             if region.size > 0:
                 gray = np.mean(region, axis=2)
-                # Text is darker than background — bottom 30 percentile = text pixels.
-                dark_mask = gray < np.percentile(gray, 30)
+                # Берём только САМЫЕ тёмные 10% — это ядро штрихов букв.
+                # 30 percentile захватывал anti-aliased edge-pixels → median
+                # получался серым (~rgb 98) вместо чёрного. Bug пойман на
+                # КП К7 АХП 2026-05-19, user noted "20% сероватое".
+                dark_mask = gray < np.percentile(gray, 10)
                 if dark_mask.any():
                     median_color = tuple(int(c) for c in np.median(region[dark_mask], axis=0))
                 else:
