@@ -1246,7 +1246,10 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--find", action="append", required=True, help="Text to find. Can repeat.")
     p.add_argument("--replace", action="append", required=True, help="Replacement. Pairs with --find by position.")
     p.add_argument("--regex", action="store_true")
-    p.add_argument("--font", default="C:/Windows/Fonts/arial.ttf")
+    # v3.0 lesson: для сканированных финансовых документов (КП, акты)
+    # шрифт обычно Times New Roman Bold (серифный bold), не Arial.
+    # Калибровка через font-calibration sheet перед запуском обязательна.
+    p.add_argument("--font", default="C:/Windows/Fonts/timesbd.ttf")
     p.add_argument("--font-size", type=int, default=None)
     p.add_argument("--color", default=None, help="Hex #RRGGBB or omit for auto")
     p.add_argument("--mode", choices=["lama", "fast"], default="lama")
