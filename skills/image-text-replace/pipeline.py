@@ -314,6 +314,70 @@ def _sample_text_color(arr, x: int, y: int, w: int, h: int) -> tuple[int, int, i
     return tuple(int(c) for c in np.median(region[dark_mask], axis=0))
 
 
+def _match_histogram_to_reference(
+    rendered_rgb,
+    rendered_alpha,
+    reference_arr,
+    ref_x: int,
+    ref_y: int,
+    ref_w: int,
+    ref_h: int,
+):
+    """Match intensity histogram of stroke pixels in rendered text to reference scan text.
+
+    Diagnostic 2026-05-19 показал что synthesized text слишком однородный:
+    mean=54 std=27 (rendered) vs mean=85 std=60 (real scan). Решение —
+    histogram matching: CDF intensity всех stroke-pixels рендера mapping'ит
+    в CDF reference text pixels.
+
+    rendered_rgb: HxWx3 float32 наш рендер
+    rendered_alpha: HxW float32 0..1 (где текст)
+    reference_arr: full image array
+    ref_x, ref_y, ref_w, ref_h: bbox эталона на скане
+
+    Returns adjusted rgb где stroke pixels следуют CDF реального скана.
+    """
+    import numpy as np
+
+    ref_patch = reference_arr[max(ref_y, 0):ref_y + ref_h,
+                              max(ref_x, 0):ref_x + ref_w].astype(np.float32)
+    if ref_patch.size == 0 or rendered_rgb.size == 0:
+        return rendered_rgb
+
+    # Reference stroke pixels — только тёмные ядра (bottom 25%, не 50% —
+    # иначе захватываются edge anti-alias pixels которые light grey)
+    ref_gray = ref_patch.mean(axis=2)
+    ref_stroke_mask = ref_gray < np.percentile(ref_gray, 25)
+    if not ref_stroke_mask.any():
+        return rendered_rgb
+    ref_stroke_pixels = ref_patch[ref_stroke_mask]  # Nx3
+
+    # Rendered stroke pixels — где alpha значимая
+    rendered_stroke_mask = rendered_alpha > 0.3
+    if not rendered_stroke_mask.any():
+        return rendered_rgb
+
+    # Match histograms per channel via CDF interpolation
+    result = rendered_rgb.copy()
+    for c in range(3):
+        ref_values = ref_stroke_pixels[:, c]
+        rendered_values = rendered_rgb[:, :, c][rendered_stroke_mask]
+        ref_sorted = np.sort(ref_values)
+        rendered_sorted = np.sort(rendered_values)
+        rendered_percentiles = np.searchsorted(rendered_sorted, rendered_values).astype(np.float32)
+        rendered_percentiles /= max(len(rendered_sorted) - 1, 1)
+        ref_target_indices = (rendered_percentiles * (len(ref_sorted) - 1)).astype(np.int32)
+        ref_target_indices = np.clip(ref_target_indices, 0, len(ref_sorted) - 1)
+        mapped = ref_sorted[ref_target_indices]
+        # Blend strength 0.4 — preserve original character shape, добавить
+        # variance матчинг (не overshoot к hollow look как в v0.9 strength=0.85)
+        blend_strength = 0.4
+        new_values = blend_strength * mapped + (1 - blend_strength) * rendered_values
+        result[:, :, c][rendered_stroke_mask] = new_values
+
+    return result
+
+
 def _extract_texture_residual(arr, x: int, y: int, w: int, h: int):
     """Extract high-frequency texture/noise residual from scan reference area.
 
