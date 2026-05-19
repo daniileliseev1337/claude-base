@@ -442,6 +442,103 @@ def _apply_texture_residual(rendered_rgb, alpha_norm, texture_residual,
     return result.clip(0, 255)
 
 
+def refine_bg_with_diffusion(
+    rendered_arr,
+    paste_x: int,
+    paste_y: int,
+    text_alpha,
+    sd_cache_dir: str = "C:/sd-cache",
+    strength: float = 0.12,
+    prompt: str = "scanned document paper",
+    inference_steps: int = 15,
+):
+    """SD-2-inpaint bg-only refinement (Option 2 hybrid, B3).
+
+    Refines paper texture around inserted text. Character pixels are
+    PROTECTED by inverse-alpha inpaint mask — SD diffuses ONLY background.
+    Zero risk of hallucinated characters (text shapes unchanged by SD).
+
+    Args:
+        rendered_arr: full page image numpy array (HxWx3 uint8)
+        paste_x, paste_y: where text alpha was placed in rendered_arr
+        text_alpha: HxW float 0..1 — text mask in canvas coords
+        sd_cache_dir: HF cache dir (ASCII-safe, e.g. C:/sd-cache)
+        strength: 0.10-0.15 minimal change. >0.25 risks visible artifacts.
+        prompt: optional context. Empty works too.
+        inference_steps: 10-20 на CPU (60-120 sec). Lower = faster, worse.
+
+    Returns:
+        refined numpy array (same shape as rendered_arr).
+
+    Requires diffusers + transformers + accelerate + SD-2 model downloaded.
+    Falls back to no-op if model unavailable.
+    """
+    import numpy as np
+    from PIL import Image
+
+    try:
+        import torch
+        from diffusers import StableDiffusionInpaintPipeline
+    except ImportError:
+        print("[diffusion] diffusers not installed, skipping bg refinement", flush=True)
+        return rendered_arr
+
+    # Crop region around text with margin (smaller crop = faster SD)
+    canvas_h, canvas_w = text_alpha.shape
+    margin = 30
+    crop_x1 = max(0, paste_x - margin)
+    crop_y1 = max(0, paste_y - margin)
+    crop_x2 = min(rendered_arr.shape[1], paste_x + canvas_w + margin)
+    crop_y2 = min(rendered_arr.shape[0], paste_y + canvas_h + margin)
+    if (crop_x2 - crop_x1) <= 0 or (crop_y2 - crop_y1) <= 0:
+        return rendered_arr
+
+    region = rendered_arr[crop_y1:crop_y2, crop_x1:crop_x2].copy()
+    # Build inpaint mask in crop coords. 1 = regenerate (BG), 0 = preserve (text).
+    crop_h, crop_w = region.shape[:2]
+    text_in_crop = np.zeros((crop_h, crop_w), dtype=np.float32)
+    text_x_offset = paste_x - crop_x1
+    text_y_offset = paste_y - crop_y1
+    text_x2 = min(crop_w, text_x_offset + canvas_w)
+    text_y2 = min(crop_h, text_y_offset + canvas_h)
+    text_in_crop[text_y_offset:text_y2, text_x_offset:text_x2] = text_alpha[
+        :text_y2 - text_y_offset, :text_x2 - text_x_offset
+    ]
+    inpaint_mask = (text_in_crop < 0.3).astype(np.float32)  # 1=BG, 0=text strokes
+
+    # SD requires 8-multiple dims, common 512x512
+    target_size = 512
+    image_pil = Image.fromarray(region).resize((target_size, target_size), Image.LANCZOS)
+    mask_pil = Image.fromarray((inpaint_mask * 255).astype(np.uint8)).resize(
+        (target_size, target_size), Image.LANCZOS
+    )
+
+    print(f"[diffusion] Loading SD-1.5-inpaint pipeline (cache: {sd_cache_dir})...", flush=True)
+    pipe = StableDiffusionInpaintPipeline.from_pretrained(
+        "runwayml/stable-diffusion-inpainting",
+        cache_dir=sd_cache_dir,
+        torch_dtype=torch.float32,
+        safety_checker=None,
+        requires_safety_checker=False,
+    )
+    pipe.to("cpu")
+
+    print(f"[diffusion] Inpainting (strength={strength}, steps={inference_steps})...", flush=True)
+    result = pipe(
+        prompt=prompt,
+        image=image_pil,
+        mask_image=mask_pil,
+        strength=strength,
+        num_inference_steps=inference_steps,
+        guidance_scale=7.5,
+    ).images[0]
+
+    # Resize back to crop size + paste
+    refined = np.array(result.resize((crop_w, crop_h), Image.LANCZOS))
+    rendered_arr[crop_y1:crop_y2, crop_x1:crop_x2] = refined
+    return rendered_arr
+
+
 def _find_alpha_anchors(alpha_norm, threshold: float = 0.05) -> dict:
     """Find pixel anchors based on alpha channel — для rendered text.
 
