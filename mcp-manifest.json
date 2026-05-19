@@ -1,7 +1,7 @@
 {
   "$schema_version": 1,
   "$schema_doc": "Manifest of MCP servers and Python user-packages used across the team. Read by scripts/setup-extras.ps1 to install/register missing items on the local machine. Read by scripts/auto-pull.ps1 to notify user about pending diff between manifest and local state. WHEN ADDING A NEW MCP SERVER OR PACKAGE: edit this file, commit + push -- auto-sync will distribute it. Other PCs will see notification 'extras-diff: N pending' in auto-sync.log and the user can run setup-extras.ps1 to apply.",
-  "$last_updated": "2026-05-18",
+  "$last_updated": "2026-05-19",
 
   "python_user_packages": [
     {
@@ -81,6 +81,35 @@
       "max_python": "3.12",
       "size_mb": 150,
       "post_install_note": "First use of easyocr.Reader(['ru','en']) скачивает ~64MB detection + 50MB recognition модели в %USERPROFILE%/.EasyOCR/model/. Source — GitHub Releases (стабильно)."
+    },
+    {
+      "name": "diffusers",
+      "purpose": "SD pipeline для skills/image-text-replace v3.0 финального scan-ification pass. Включает: StableDiffusionInpaintPipeline для low-strength img2img на text region",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 30,
+      "post_install_note": "REQUIRED: установить также transformers + accelerate + safetensors. SD model (runwayml/stable-diffusion-inpainting ~3.4GB UNet + 2GB other) скачивается на первом использовании в ASCII-safe path C:/sd-cache. Требует HF account + read token (https://huggingface.co/settings/tokens). См. skills/image-text-replace/SKILL.md секцию 'SD setup'."
+    },
+    {
+      "name": "transformers",
+      "purpose": "SD pipeline dependency (text encoder, tokenizer for image-text-replace v3.0)",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 60
+    },
+    {
+      "name": "accelerate",
+      "purpose": "SD pipeline dependency (memory-efficient model loading)",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 5
+    },
+    {
+      "name": "safetensors",
+      "purpose": "SD model weights format (safer than .ckpt pickle)",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 2
     }
   ],
 

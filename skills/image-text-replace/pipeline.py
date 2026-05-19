@@ -442,6 +442,198 @@ def _apply_texture_residual(rendered_rgb, alpha_norm, texture_residual,
     return result.clip(0, 255)
 
 
+def smart_cap_height_detect(arr, x: int, y: int, w: int, h: int,
+                              core_ratio: float = 0.3) -> dict:
+    """Detect cap height ignoring descenders (commas, parens, dots).
+
+    Row counts as "core stroke" if dark pixels >= core_ratio × bbox_width.
+    Top/bottom of core rows = actual cap top/bottom of letters/digits.
+    Critical для accurate font_size calculation на text with mixed
+    descenders (например '16 877,50' с запятой descender).
+
+    Returns dict {'cap_top', 'cap_bottom', 'cap_height'}.
+
+    v2.2+ pipeline.
+    """
+    import numpy as np
+
+    region = arr[max(y, 0):y + h, max(x, 0):x + w]
+    if region.size == 0:
+        return {"cap_top": y, "cap_bottom": y + h, "cap_height": h}
+    gray = region.mean(axis=2) if region.ndim == 3 else region
+    dark = gray < 150
+    core_rows = np.where(dark.sum(axis=1) > w * core_ratio)[0]
+    if len(core_rows) == 0:
+        return {"cap_top": y, "cap_bottom": y + h, "cap_height": h}
+    cap_top = int(core_rows[0]) + y
+    cap_bottom = int(core_rows[-1]) + y
+    return {"cap_top": cap_top, "cap_bottom": cap_bottom,
+            "cap_height": cap_bottom - cap_top + 1}
+
+
+def find_neighbor_cell_reference(
+    matches: Sequence[OcrMatch],
+    label_match: OcrMatch,
+    side: str = "right",
+    row_tolerance_px: int = 15,
+    digits_only: bool = True,
+):
+    """Find OCR match of CELL DIGITS на той же строке справа/слева от label.
+
+    Используется для sampling color/PSF/font reference точно по типу
+    text который должен match (numeric cells vs bold label = разные стили).
+    Без этого можно вставлять bold-style text в место где должен быть
+    regular numeric value.
+
+    v1.5+ pipeline.
+    """
+    import re
+
+    lx, ly, lw, lh = label_match.bbox_rect()
+    label_y_center = ly + lh // 2
+    label_right_edge = lx + lw
+    label_left_edge = lx
+
+    DIGITS_RE = re.compile(r'^[\d\s,.\-]+$')
+
+    candidates = []
+    for m in matches:
+        if m is label_match:
+            continue
+        mx, my, mw, mh = m.bbox_rect()
+        if abs((my + mh // 2) - label_y_center) > row_tolerance_px:
+            continue
+        if side == "right" and mx <= label_right_edge:
+            continue
+        if side == "left" and (mx + mw) >= label_left_edge:
+            continue
+        if digits_only and not DIGITS_RE.match(m.text.strip()):
+            continue
+        candidates.append(m)
+
+    if not candidates:
+        return None
+    # Closest to label horizontally
+    if side == "right":
+        candidates.sort(key=lambda m: m.bbox_rect()[0])
+    else:
+        candidates.sort(key=lambda m: -(m.bbox_rect()[0] + m.bbox_rect()[2]))
+    return candidates[0]
+
+
+def compute_midline_paste_y(
+    label_anchors: dict,
+    cell_anchors: dict,
+    text_canvas_height: int,
+    text_anchors_in_canvas: dict,
+) -> int:
+    """Compute paste_y so that rendered text center aligns with cell row midline.
+
+    Combines label and cell midlines (averaged for robustness).
+    Used for "по центру ячейки" alignment пользовательский request.
+
+    v1.8+ pipeline.
+    """
+    cell_midline = (cell_anchors['cap_top'] + cell_anchors['cap_bottom']) // 2
+    label_midline = (label_anchors['top_y'] + label_anchors['bottom_y']) // 2
+    target_midline = (cell_midline + label_midline) // 2
+    text_canvas_midline = (text_anchors_in_canvas['top_y'] +
+                            text_anchors_in_canvas['bottom_y']) // 2
+    return target_midline - text_canvas_midline
+
+
+def refine_text_region_with_diffusion(
+    rendered_arr,
+    crop_bbox: tuple[int, int, int, int],
+    sd_cache_dir: str = "C:/sd-cache",
+    sd_repo: str = "runwayml/stable-diffusion-inpainting",
+    strength: float = 0.10,
+    inference_steps: int = 15,
+    prompt: str = "scanned document paper, bold serif text, fine paper grain, monochrome",
+    negative_prompt: str = "blurry, distorted, illegible, wrong characters",
+    guidance_scale: float = 5.0,
+):
+    """SD img2img на cropped region вокруг inserted text для scan-ification.
+
+    КЛЮЧЕВОЙ финальный pass v3.0. Превращает синтезированный text в
+    «visually scanned» через AI-generated paper grain + edge softness.
+
+    Strength 0.10 — ОЧЕНЬ низкий → SD едва меняет content. Text shapes
+    preserved (читаемость), но получают scan-style texture.
+
+    !!! RISK !!! Strength > 0.20 может галлюцинировать символы. Для
+    финансовых документов держать strength <= 0.15.
+
+    Args:
+        rendered_arr: full page HxWx3 uint8 (с уже вставленным text)
+        crop_bbox: (x1, y1, x2, y2) — bounding box region для SD pass.
+            Should include margin around inserted text + some surrounding
+            scan context.
+        sd_cache_dir: HF cache directory (ASCII-safe path required)
+        sd_repo: HF repo ID. Default runwayml mirror (non-gated).
+        strength: 0.05-0.15 безопасно. 0.10 default.
+        inference_steps: 15 на CPU = ~1-3 min. Lower = faster, worse.
+        prompt: text-conditioning. "scanned document" works для most cases.
+        negative_prompt: anti-hallucination.
+
+    Returns:
+        modified rendered_arr (in-place) with SD-refined region.
+
+    v3.0 — финальная итерация после 16 шагов на КП К7 АХП case.
+    """
+    import numpy as np
+    from PIL import Image
+
+    try:
+        import torch
+        from diffusers import StableDiffusionInpaintPipeline
+    except ImportError:
+        print("[sd-refine] diffusers not installed, skipping", flush=True)
+        return rendered_arr
+
+    x1, y1, x2, y2 = crop_bbox
+    x1 = max(0, x1)
+    y1 = max(0, y1)
+    x2 = min(rendered_arr.shape[1], x2)
+    y2 = min(rendered_arr.shape[0], y2)
+    if (x2 - x1) <= 0 or (y2 - y1) <= 0:
+        return rendered_arr
+
+    region = rendered_arr[y1:y2, x1:x2]
+    orig_size = (x2 - x1, y2 - y1)
+
+    target_size = 512
+    region_pil = Image.fromarray(region)
+    region_512 = region_pil.resize((target_size, target_size), Image.LANCZOS)
+    # Mask: full white = SD touches everything. Low strength → minimal change.
+    mask_512 = Image.new("L", (target_size, target_size), 255)
+
+    print(f"[sd-refine] Loading SD pipeline (cache: {sd_cache_dir})...", flush=True)
+    pipe = StableDiffusionInpaintPipeline.from_pretrained(
+        sd_repo,
+        cache_dir=sd_cache_dir,
+        torch_dtype=torch.float32,
+        safety_checker=None,
+        requires_safety_checker=False,
+    )
+    pipe.to("cpu")
+
+    print(f"[sd-refine] img2img strength={strength}, steps={inference_steps}...", flush=True)
+    result = pipe(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        image=region_512,
+        mask_image=mask_512,
+        strength=strength,
+        num_inference_steps=inference_steps,
+        guidance_scale=guidance_scale,
+    ).images[0]
+
+    refined = np.array(result.resize(orig_size, Image.LANCZOS))
+    rendered_arr[y1:y2, x1:x2] = refined
+    return rendered_arr
+
+
 def refine_bg_with_diffusion(
     rendered_arr,
     paste_x: int,
@@ -1262,6 +1454,10 @@ def _parse_args() -> argparse.Namespace:
                    help="Skip scan-realistic degradation, render crisp digital text (debug)")
     p.add_argument("--prefer-borrow", action="store_true",
                    help="Try to borrow glyphs from scan before falling back to synthesized (Option 4)")
+    p.add_argument("--sd-refine", action="store_true",
+                   help="v3.0: SD img2img на text region with strength=0.10 для scan-ify (требует SD model в C:/sd-cache)")
+    p.add_argument("--sd-strength", type=float, default=0.10,
+                   help="SD denoising strength. 0.05-0.15 safe. >0.20 risks hallucinated characters")
     args = p.parse_args()
     if len(args.find) != len(args.replace):
         p.error("--find and --replace must come in pairs")
