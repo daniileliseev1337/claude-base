@@ -279,7 +279,130 @@ foreach ($srv in $mcpSrvs) {
     }
 }
 
-# === Step 4: Marker ===
+# === Step 4: Model downloads (LaMa, EasyOCR, SD) ===
+#
+# HF token обязателен ТОЛЬКО для SD download (LaMa и EasyOCR грузятся без auth).
+# Storage: ~/.claude/.hf-token (gitignored, per-machine).
+# Содержимое: одна строка "hf_..." без кавычек, без пробелов.
+# Получить: https://huggingface.co/settings/tokens (read scope достаточен).
+# Auto-classifier блокирует committing token в public repo, поэтому
+# каждый ПК должен иметь свой .hf-token локально.
+#
+$HFTokenFile = "$ClaudeDir\.hf-token"
+$HFToken = $null
+if (Test-Path $HFTokenFile) {
+    $HFToken = (Get-Content $HFTokenFile -Raw).Trim()
+    Write-Host "  HF token loaded from .hf-token"
+} elseif ($env:HF_TOKEN) {
+    $HFToken = $env:HF_TOKEN
+    Write-Host "  HF token from environment variable"
+} else {
+    Write-Warn "No HF token (создай $HFTokenFile). SD download будет пропущен. LaMa+EasyOCR работают без token."
+}
+
+$SDCacheDir = 'C:\sd-cache'  # ASCII-safe, обязательно для HF symlinks
+$LamaCacheDir = 'C:\iopaint-cache\torch\hub\checkpoints'
+$LamaModelUrl = 'https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt'
+$LamaModelPath = "$LamaCacheDir\big-lama.pt"
+
+Write-Step "Step 4: Model downloads for image-text-replace v3.0"
+
+# 4a. LaMa model (~196 MB from GitHub Releases, no auth needed)
+if (Test-Path $LamaModelPath) {
+    $size = (Get-Item $LamaModelPath).Length / 1MB
+    Write-Skip "LaMa model already present ($('{0:N0}' -f $size) MB)"
+} elseif ($DryRun) {
+    Write-Host "  [dry] Would download LaMa model from $LamaModelUrl"
+} else {
+    Write-Host "  Downloading LaMa model (~196 MB from GitHub, ~1-3 min)..."
+    New-Item -ItemType Directory -Path $LamaCacheDir -Force | Out-Null
+    try {
+        # curl with retries — Invoke-WebRequest часто рвётся на больших файлах
+        & curl.exe -L --retry 10 --retry-delay 5 --retry-all-errors `
+            -o $LamaModelPath $LamaModelUrl
+        if ($LASTEXITCODE -eq 0 -and (Test-Path $LamaModelPath)) {
+            $size = (Get-Item $LamaModelPath).Length / 1MB
+            Write-OK "LaMa model downloaded ($('{0:N0}' -f $size) MB)"
+            Log "LaMa model downloaded to $LamaModelPath"
+        } else {
+            Write-Warn "LaMa download exit=$LASTEXITCODE. image-text-replace LaMa mode will retry на первом запуске."
+        }
+    } catch {
+        Write-Warn "LaMa download exception: $_"
+    }
+}
+
+# 4b. EasyOCR Russian model warmup (~100 MB from GitHub Releases)
+$easyOcrUserDir = "$env:USERPROFILE\.EasyOCR\model"
+if ((Test-Path "$easyOcrUserDir\cyrillic_g2.pth") -or
+    (Test-Path "$easyOcrUserDir\craft_mlt_25k.pth")) {
+    Write-Skip "EasyOCR Russian models already cached"
+} elseif ($DryRun) {
+    Write-Host "  [dry] Would warmup EasyOCR Reader(['ru','en'])"
+} else {
+    if (Test-Path $Py312Path) {
+        Write-Host "  Warming up EasyOCR (downloads ~100 MB Russian + detection models)..."
+        & $Py312Path -c "import easyocr; easyocr.Reader(['ru','en'], gpu=False, verbose=False); print('EasyOCR ready')"
+        if ($LASTEXITCODE -eq 0) {
+            Write-OK "EasyOCR models ready"
+            Log "EasyOCR Russian models cached"
+        } else {
+            Write-Warn "EasyOCR warmup exit=$LASTEXITCODE. Will retry on first skill use."
+        }
+    } else {
+        Write-Warn "Python 3.12 not available — EasyOCR warmup skipped"
+    }
+}
+
+# 4c. SD inpaint model (~3.4 GB UNet + ~2 GB other from HF, requires token)
+$sdSnapshotDir = "$SDCacheDir\models--runwayml--stable-diffusion-inpainting"
+$sdUnetFile = "$sdSnapshotDir\snapshots\*\unet\diffusion_pytorch_model.bin"
+if (Test-Path $sdUnetFile) {
+    Write-Skip "SD-1.5 inpaint model already cached at $SDCacheDir"
+} elseif ($DryRun) {
+    Write-Host "  [dry] Would download SD model from HuggingFace (~5.4 GB total, requires HF auth)"
+} else {
+    if (-not (Test-Path $Py312Path)) {
+        Write-Warn "Python 3.12 not available — SD download skipped"
+    } elseif (-not $HFToken) {
+        Write-Warn "No HF token — SD download skipped. Pipeline без --sd-refine продолжит работать."
+        Write-Host "    Чтобы добавить SD: получи token на https://huggingface.co/settings/tokens"
+        Write-Host "    и положи в $HFTokenFile (одна строка hf_...)"
+    } else {
+        Write-Host "  Downloading SD-1.5 inpaint model (~5.4 GB total, 10-60 min on corp net)..."
+        New-Item -ItemType Directory -Path $SDCacheDir -Force | Out-Null
+        $env:HF_TOKEN = $HFToken
+        $env:HF_HOME = $SDCacheDir
+        $sdDownloadCmd = @"
+import os
+os.environ['HF_HOME'] = r'$SDCacheDir'
+from huggingface_hub import snapshot_download, login
+login(token=os.environ['HF_TOKEN'])
+for attempt in range(10):
+    try:
+        path = snapshot_download(
+            repo_id='runwayml/stable-diffusion-inpainting',
+            cache_dir=r'$SDCacheDir',
+            allow_patterns=['*.json', '*.txt', '*.safetensors', '*.bin', '*.model'],
+            ignore_patterns=['*.ckpt', '*.fp16.*'],
+            max_workers=2,
+        )
+        print(f'OK: {path}')
+        break
+    except Exception as e:
+        print(f'retry on: {type(e).__name__}')
+"@
+        & $Py312Path -c $sdDownloadCmd
+        if ($LASTEXITCODE -eq 0 -and (Test-Path $sdSnapshotDir)) {
+            Write-OK "SD-1.5 inpaint model downloaded to $SDCacheDir"
+            Log "SD model downloaded"
+        } else {
+            Write-Warn "SD download exit=$LASTEXITCODE. Possible network issue или auth fail. Pipeline без --sd-refine продолжит работать."
+        }
+    }
+}
+
+# === Step 5: Marker ===
 if (-not $DryRun) {
     $manifestHash = (Get-FileHash $ManifestPath -Algorithm SHA256).Hash
     @{
