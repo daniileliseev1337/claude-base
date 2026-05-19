@@ -344,73 +344,74 @@ def _render_scan_realistic(
     noise_std: float,
     rng_seed: int = 11,
 ):
-    """Render text at 2× scale → degrade to scan-style → return (rgb, alpha, pad).
+    """Render text at 2× scale → degrade to scan-style → return (rgb, alpha, text_offset).
 
-    Stack (v0.3, чтобы вставка была неотличима от скана):
-    1. Single-pass render at 2× with subpixel char jitter ±0.4..0.8 px
-    2. 2× → 1× LANCZOS downsample → natural anti-aliasing as if scanned
-    3. Horizontal motion blur 3-tap (имитация ink-bleed принтера)
-    4. Slight Gaussian blur 0.3 px — soft edges
-    5. Mild contrast reduction × 0.95 — washed scan look
-    6. Edge noise (alpha in 0.05..0.85) × bg-noise-std × 0.8
+    Returns:
+        rgb (HxWx3 float32): rendered text RGB
+        alpha_norm (HxW float32): alpha 0..1
+        text_offset (tuple[int, int]): (offset_x, offset_y) от top-left
+            возвращаемого canvas до top-left глифа текста. Caller должен
+            считать paste_x = x - offset_x, paste_y = y - offset_y чтобы
+            глиф приземлился в (x, y) на destination.
 
-    Bug history v0.1→v0.3:
-    - v0.1 рендер был crisp digital → текст явно цифровая накладка.
-    - v0.2 multi-pass с alpha jitter → плотность падала, текст светлее
-      оригинала. user feedback "недостаточно размыт + сероват".
-    - v0.3 (это): full-opacity single pass + умеренная degradation. На
-      реальном КП К7 АХП незаметная вставка при normal viewing distance.
+    Stack v0.4 (после фикса bug "съехало вверх, не жирный"):
+    1. `anchor="lt"` для предсказуемого положения текста в canvas
+    2. Render at 2× scale (без per-char jitter — он жрал жирность)
+    3. 2× → 1× LANCZOS downsample → natural AA
+    4. **Skipped motion blur** — в v0.3 [0.25,0.5,0.25] kernel
+       размазывал bold штрихи → текст становился тоньше оригинала
+    5. Мини Gaussian 0.25 px — лёгкое смягчение краёв
+    6. Contrast × 1.05 (boost, не reduce) — компенсация LANCZOS-усреднения
+    7. Edge noise на alpha 0.05..0.85 × bg_noise × 0.8
+
+    Bug history v0.1→v0.4:
+    - v0.1 crisp digital → "слишком цифровой"
+    - v0.2 multi-pass + alpha jitter → "плотность падала, серый"
+    - v0.3 motion blur + per-char jitter + contrast×0.95 → "съехал вверх,
+      не жирный"
+    - v0.4 (это): anchor="lt" для positioning + skip motion blur + skip
+      per-char jitter + contrast×1.05 — preserve bold weight + точное
+      положение.
     """
-    import random as _random
     from PIL import Image, ImageDraw, ImageFilter, ImageFont
     import numpy as np
-    import cv2
 
     font_2x = ImageFont.truetype(font.path, font_size * 2)
+    # Measure bbox с anchor="lt" — top-left глифа в (0,0)
     m_img = Image.new("RGBA", (1, 1))
     m_draw = ImageDraw.Draw(m_img)
-    m_bbox = m_draw.textbbox((0, 0), text, font=font_2x)
+    m_bbox = m_draw.textbbox((0, 0), text, font=font_2x, anchor="lt")
     text_w_2x = m_bbox[2] - m_bbox[0]
     text_h_2x = m_bbox[3] - m_bbox[1]
-    pad_2x = 18
+    # Pad for blur margins + descender room
+    pad_2x = 20
     canvas_w_2x = text_w_2x + 2 * pad_2x
     canvas_h_2x = text_h_2x + 2 * pad_2x
 
     canvas = Image.new("RGBA", (canvas_w_2x, canvas_h_2x), (0, 0, 0, 0))
     draw_c = ImageDraw.Draw(canvas)
-    _random.seed(rng_seed)
-    cx = pad_2x - m_bbox[0]
-    cy = pad_2x - m_bbox[1]
-    for ch in text:
-        jx = _random.uniform(-0.8, 0.8)
-        jy = _random.uniform(-0.4, 0.4)
-        draw_c.text((cx + jx, cy + jy), ch, font=font_2x, fill=text_color + (255,))
-        cbb = draw_c.textbbox((cx, cy), ch, font=font_2x)
-        cx += (cbb[2] - cbb[0])
+    # Draw at (pad_2x, pad_2x) с anchor="lt" → текст top-left ровно в
+    # (pad_2x, pad_2x). Без per-char jitter — экономим weight.
+    draw_c.text((pad_2x, pad_2x), text, font=font_2x,
+                fill=text_color + (255,), anchor="lt")
 
-    # 2× → 1× LANCZOS
+    # 2× → 1× LANCZOS downsample (natural AA)
     canvas_1x = canvas.resize((canvas_w_2x // 2, canvas_h_2x // 2), Image.LANCZOS)
+
+    # Skip motion blur (v0.4) — он жрал жирность. Только лёгкий Gaussian.
+    canvas_1x = canvas_1x.filter(ImageFilter.GaussianBlur(radius=0.25))
+
     arr_text = np.array(canvas_1x).astype(np.float32)
-
-    # Horizontal motion blur 3-tap (printer ink-bleed)
-    kernel_mb = np.array([[0.0, 0.0, 0.0],
-                          [0.25, 0.5, 0.25],
-                          [0.0, 0.0, 0.0]], dtype=np.float32)
-    for c in range(4):
-        arr_text[:, :, c] = cv2.filter2D(arr_text[:, :, c], -1, kernel_mb)
-
-    # Gaussian blur 0.3
-    pil = Image.fromarray(arr_text.clip(0, 255).astype(np.uint8))
-    pil = pil.filter(ImageFilter.GaussianBlur(radius=0.3))
-    arr_text = np.array(pil).astype(np.float32)
-
     rgb = arr_text[:, :, :3]
     alpha_norm = arr_text[:, :, 3] / 255.0
 
-    # Mild contrast reduction
-    rgb = (rgb - 128) * 0.95 + 128
+    # Contrast BOOST (не reduce) — компенсация LANCZOS-усреднения которое
+    # делает bold штрихи светлее. ×1.05 возвращает их к исходной плотности.
+    rgb = ((rgb - 128) * 1.05 + 128).clip(0, 255)
 
-    return rgb, alpha_norm, pad_2x // 2
+    # Text offset within 1x canvas — это куда попал top-left глифа
+    text_offset = (pad_2x // 2, pad_2x // 2)
+    return rgb, alpha_norm, text_offset
 
 
 def render_text(
@@ -464,15 +465,18 @@ def render_text(
             arr = np.array(img)
             continue
 
-        # v0.3: scan-realistic degradation stack
+        # v0.4: scan-realistic degradation stack
         noise_std = _sample_bg_noise_std(original_arr, x, y, w, h)
-        rgb_text, alpha_text, pad = _render_scan_realistic(
+        rgb_text, alpha_text, text_offset = _render_scan_realistic(
             font, size, new_text, text_color, noise_std, rng_seed=hash(new_text) & 0xFFFF
         )
 
         canvas_h, canvas_w = rgb_text.shape[:2]
-        paste_x = x - pad
-        paste_y = y - pad
+        # Text top-left должен приземлиться в (x, y) на destination.
+        # Canvas top-left -> destination paste_x/paste_y. Текст внутри
+        # canvas сдвинут на text_offset → компенсируем.
+        paste_x = x - text_offset[0]
+        paste_y = y - text_offset[1]
         dst_y1 = max(0, paste_y); dst_y2 = min(arr.shape[0], paste_y + canvas_h)
         dst_x1 = max(0, paste_x); dst_x2 = min(arr.shape[1], paste_x + canvas_w)
         src_y1 = dst_y1 - paste_y; src_y2 = src_y1 + (dst_y2 - dst_y1)
