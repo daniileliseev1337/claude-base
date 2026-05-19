@@ -314,6 +314,65 @@ def _sample_text_color(arr, x: int, y: int, w: int, h: int) -> tuple[int, int, i
     return tuple(int(c) for c in np.median(region[dark_mask], axis=0))
 
 
+def _find_pixel_anchors(arr, x: int, y: int, w: int, h: int,
+                        darkness_threshold: Optional[float] = None) -> dict:
+    """Find precise pixel-based anchors within OCR bbox для positioning.
+
+    OCR bbox имеет padding под antialiasing → top-left bbox ≠ actual top-left
+    глифа. Для baseline-precise alignment нужны actual dark-pixel coordinates.
+
+    Returns dict с:
+        - 'top_y': topmost row с dark pixels
+        - 'bottom_y': bottommost row с dark pixels
+        - 'left_x': leftmost col с dark pixels
+        - 'right_x': rightmost col с dark pixels
+        - 'baseline_y': estimated baseline (≈ bottom_y - small descender offset)
+
+    A4: Pixel-precise anchor detection (2026-05-19).
+    """
+    import numpy as np
+
+    region = arr[max(y, 0):y + h, max(x, 0):x + w]
+    if region.size == 0:
+        return {
+            "top_y": y, "bottom_y": y + h,
+            "left_x": x, "right_x": x + w,
+            "baseline_y": y + int(h * 0.85),
+        }
+    gray = region.mean(axis=2) if region.ndim == 3 else region
+    # Threshold: что-то значимо темнее фона
+    if darkness_threshold is None:
+        darkness_threshold = float(np.percentile(gray, 70)) - 30
+        darkness_threshold = max(darkness_threshold, 100)
+    dark_mask = gray < darkness_threshold
+
+    if not dark_mask.any():
+        # Fallback to bbox edges
+        return {
+            "top_y": y, "bottom_y": y + h,
+            "left_x": x, "right_x": x + w,
+            "baseline_y": y + int(h * 0.85),
+        }
+
+    rows_with_dark = np.where(dark_mask.any(axis=1))[0]
+    cols_with_dark = np.where(dark_mask.any(axis=0))[0]
+    top_local = int(rows_with_dark[0])
+    bottom_local = int(rows_with_dark[-1])
+    left_local = int(cols_with_dark[0])
+    right_local = int(cols_with_dark[-1])
+
+    # baseline ≈ bottom of x-height letters, обычно ~95% от глифа высоты
+    # для строк без descenders. С descenders — bottom уже = baseline + descender.
+    baseline_local = bottom_local  # для строки с descenders это близко к baseline
+    return {
+        "top_y": y + top_local,
+        "bottom_y": y + bottom_local,
+        "left_x": x + left_local,
+        "right_x": x + right_local,
+        "baseline_y": y + baseline_local,
+    }
+
+
 def _extract_char_glyph(arr, match: OcrMatch, char_index: int):
     """Extract pixel patch for a single character within an OCR'd word.
 
