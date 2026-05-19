@@ -314,6 +314,63 @@ def _sample_text_color(arr, x: int, y: int, w: int, h: int) -> tuple[int, int, i
     return tuple(int(c) for c in np.median(region[dark_mask], axis=0))
 
 
+def _extract_texture_residual(arr, x: int, y: int, w: int, h: int):
+    """Extract high-frequency texture/noise residual from scan reference area.
+
+    Идея: реальный scan-текст имеет шум внутри штрихов (неравномерный
+    тонер, paper texture, scanner CCD). Synthesized text штрихи слишком
+    гладкие. Residual = region - heavy_smooth(region) — выделяет именно
+    high-freq texture, которую можно наложить на synthesized text для
+    matching plausibility.
+
+    Returns HxWx3 float32 residual (mean ≈ 0, captures texture pattern).
+
+    Phase B2 (Patch-based style transfer, 2026-05-19).
+    """
+    import numpy as np
+    import cv2
+
+    region = arr[max(y, 0):y + h, max(x, 0):x + w].astype(np.float32)
+    if region.size == 0:
+        return None
+    smooth = cv2.GaussianBlur(region, (5, 5), 2.0)
+    residual = region - smooth
+    return residual
+
+
+def _apply_texture_residual(rendered_rgb, alpha_norm, texture_residual,
+                             weight: float = 0.5):
+    """Overlay texture residual onto rendered text where alpha is high.
+
+    Tiled if texture smaller than rendered. Weight scales how strongly the
+    texture pattern shows up — too high обращается в noise, too low — нет
+    эффекта.
+    """
+    import numpy as np
+
+    if texture_residual is None or texture_residual.size == 0:
+        return rendered_rgb
+
+    rh, rw = rendered_rgb.shape[:2]
+    th, tw = texture_residual.shape[:2]
+
+    if th < rh or tw < rw:
+        tile_h = (rh + th - 1) // th
+        tile_w = (rw + tw - 1) // tw
+        tiled = np.tile(texture_residual, (tile_h, tile_w, 1))[:rh, :rw]
+    else:
+        # Use random crop of bigger reference for variety
+        max_ty = th - rh
+        max_tx = tw - rw
+        ty = int(np.random.randint(0, max_ty + 1)) if max_ty > 0 else 0
+        tx = int(np.random.randint(0, max_tx + 1)) if max_tx > 0 else 0
+        tiled = texture_residual[ty:ty + rh, tx:tx + rw]
+
+    alpha_3d = alpha_norm[:, :, np.newaxis] if alpha_norm.ndim == 2 else alpha_norm
+    result = rendered_rgb + tiled * alpha_3d * weight
+    return result.clip(0, 255)
+
+
 def _find_pixel_anchors(arr, x: int, y: int, w: int, h: int,
                         darkness_threshold: Optional[float] = None) -> dict:
     """Find precise pixel-based anchors within OCR bbox для positioning.
@@ -765,6 +822,8 @@ def render_text(
     scan_realistic_degrade: bool = True,
     prefer_borrow: bool = False,
     all_ocr_matches: Optional[Sequence[OcrMatch]] = None,
+    apply_texture_transfer: bool = True,
+    texture_weight: float = 0.5,
 ) -> None:
     """Draw `replacements` text onto the inpainted image at original bbox positions.
 
@@ -828,6 +887,13 @@ def render_text(
                 psf_sigma=psf_sigma,
                 rng_seed=hash(new_text) & 0xFFFF,
             )
+            # B2: apply texture residual from reference scan area
+            if apply_texture_transfer:
+                texture = _extract_texture_residual(original_arr, x, y, w, h)
+                if texture is not None:
+                    rgb_text = _apply_texture_residual(
+                        rgb_text, alpha_text, texture, weight=texture_weight
+                    )
 
         canvas_h, canvas_w = rgb_text.shape[:2]
         # Text top-left должен приземлиться в (x, y) на destination.
