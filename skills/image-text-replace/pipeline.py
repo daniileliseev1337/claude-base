@@ -442,6 +442,33 @@ def _apply_texture_residual(rendered_rgb, alpha_norm, texture_residual,
     return result.clip(0, 255)
 
 
+def _find_alpha_anchors(alpha_norm, threshold: float = 0.05) -> dict:
+    """Find pixel anchors based on alpha channel — для rendered text.
+
+    Использует alpha вместо darkness threshold, потому что у synthesized
+    text anti-aliased edges имеют gray=150-200 которые проваливаются
+    под darkness threshold, но они визуально являются частью глифа.
+    Alpha > 0.05 = любой видимый wisp = реальный visual top/bottom.
+
+    v1.1 fix для "ниже оригинала" жалобы.
+    """
+    import numpy as np
+
+    if alpha_norm.size == 0 or not (alpha_norm > threshold).any():
+        h, w = alpha_norm.shape
+        return {"top_y": 0, "bottom_y": h, "left_x": 0, "right_x": w, "baseline_y": h}
+    mask = alpha_norm > threshold
+    rows = np.where(mask.any(axis=1))[0]
+    cols = np.where(mask.any(axis=0))[0]
+    return {
+        "top_y": int(rows[0]),
+        "bottom_y": int(rows[-1]),
+        "left_x": int(cols[0]),
+        "right_x": int(cols[-1]),
+        "baseline_y": int(rows[-1]),
+    }
+
+
 def _find_pixel_anchors(arr, x: int, y: int, w: int, h: int,
                         darkness_threshold: Optional[float] = None) -> dict:
     """Find precise pixel-based anchors within OCR bbox для positioning.
