@@ -216,9 +216,70 @@ bbox не должен сдвигать font_size всей группы).
 `TestUnifyFontSizeForBatch` (5 кейсов включая воспроизведение
 heights из реального КП ЛС АХП v7).
 
+## §7 OCR-альтернативы — DocTR и PaddleOCR проверены, не взяты (2026-05-20)
+
+### Контекст
+
+После 22+ итераций (К-7 АХП 16 + ЛС АХП 6) возникло подозрение что
+EasyOCR — источник нестабильности bbox и корень всех bug'ов с позицией.
+Запущен harvest (см. `session-reports/2026-05-20_k7-base-audit/harvested/
+scan-text-replace-alternatives.md`) — 5 кандидатов из 3 категорий.
+
+### Эмпирический benchmark на КП ЛС АХП page3.png
+
+**EasyOCR baseline (наш текущий):**
+- heights `[18, 18, 19, 18, 17, 18, 18, 18, 17, 17, 19, 20]`
+- median = 18, **std = 0.90**, range = 3
+
+**DocTR (Mindee, Apache-2.0, polygon bbox обещало быть лучше):**
+- найдено 29 numeric matches вместо ожидаемых 12 (false positives)
+- DocTR агрессивно делит `1 679,11` на 2 слова (`1679,11` + `492,61`)
+- cap_heights `[17,16,17,16,8,17,15,15,16,16,13,16,18,16,18,17,4,18,9,...]`
+- median = 16, **std = 3.23** — в **3.6× хуже** EasyOCR
+- outliers 4, 8, 9, 12 — descenders / partial detections
+
+**PaddleOCR PP-StructureV3:**
+- Установка ОК (paddleocr 3.5.0 + paddlex[ocr] 3.5.2)
+- baidu CDN (`paddlepaddle.org.cn`) **доступен напрямую** (status=200) — корп-прокси
+  НЕ виноват
+- НО: модели **скачиваются частично** в `~/.paddlex/official_models/`
+  и при load падают `RuntimeError: json.exception.parse_error.101:
+  empty input`. После clean cache + retry — скачалось 6.6 MB из
+  ожидаемых ~200 MB. Silent network failures.
+- Невозможно использовать без deep debug paddle installer'а.
+
+### Корневой вывод
+
+**OCR не был источником боли.** EasyOCR std=0.90 — это **очень устойчивый**
+bbox. Проблема была в **per-cell font_size** в нашем коде (см. §6).
+
+После внедрения `unify_font_size_for_batch()` (§6) — переход на другой
+OCR-движок даёт **diminishing returns** или, как в случае DocTR,
+**деградацию**.
+
+### Что не брать (с обоснованием)
+
+- **DocTR** — agressive word-segmentation, false positives, std в 3.6× хуже.
+- **PaddleOCR PP-Structure** — не запускается reliably в нашей среде
+  (silent model download failures).
+- **AnyText** (Category C, end-to-end) — не пробовали, conda-only,
+  cyrillic editing не подтверждён. Backlog если возникнет реальная
+  необходимость в radical-апгрейде.
+
+### Action items для будущего
+
+1. **Не возвращаться к замене EasyOCR без новых данных** — мы потратили
+   на это исследование ~1 сессии, результат отрицательный.
+2. Если bbox опять окажется проблемой — сначала проверить `std` через
+   `unify_font_size_for_batch` diagnostic dict. Если std уже < 1.5 —
+   корень не в OCR.
+3. AnyText проверить только при появлении **task где нужно editing
+   многих стилей одновременно** (не наш текущий tabular use case).
+
 ## Связанные
 
 - `pipeline.py` — главная реализация (`unify_font_size_for_batch`)
 - `SKILL.md` — описание скилла
 - `ROADMAP-heavy-options.md` — другие подходы (CNN style transfer и др.)
 - `~/.claude/evals/test_image_text_replace.py` — regression-тесты
+- `~/.claude/session-reports/2026-05-20_k7-base-audit/harvested/scan-text-replace-alternatives.md` — полный отчёт harvest 5 кандидатов
