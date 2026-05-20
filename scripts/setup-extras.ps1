@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Установка дополнительных Python-пакетов и MCP-серверов из mcp-manifest.json.
 
