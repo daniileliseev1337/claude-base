@@ -29,15 +29,52 @@ description: |
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-# image-text-replace v3.0
+# image-text-replace v3.1
 
 Скилл для **программной замены/вставки текста** на сканированных
 растровых изображениях. Финансовые документы (КП, акты, счета),
 техническая документация, отсканированные таблицы.
 
-> **CRITICAL FIRST STEP для нового документа:** font calibration через
-> `calibration.py` — определи реальный шрифт скана. Это #1 урок —
-> 8 итераций потеряны на tuning Arial когда scan был Times Bold.
+## ⚠ ОБЯЗАТЕЛЬНОЕ правило перед первым render (для нового документа)
+
+**ПЕРЕД** любым LaMa inpaint / render / SD pass на скан, **который
+ранее не обрабатывался в данной сессии** — Claude **обязан** вызвать
+`AskUserQuestion`:
+
+```yaml
+question: "Документ <имя.pdf>: выполнена ли font calibration?"
+header: "Calibration"
+options:
+  - label: "Нет, прогнать calibration.py сейчас (Recommended)"
+    description: "30 секунд: render эталонной строки в 12 шрифтах → визуально подобрать. Защита от потери 3+ итераций на неверном шрифте."
+  - label: "Да, шрифт известен"
+    description: "Указать font path в --font параметре pipeline (например C:/Windows/Fonts/timesbd.ttf)."
+  - label: "Пропускаем, default Times Bold"
+    description: "Понимаю риск: К-7 АХП case — 8 итераций на Arial; LS АХП case — 3 итерации на Bold vs Regular."
+```
+
+**Без явного ответа пользователя — Шаг 2 (pipeline) не запускать.**
+
+**Почему правило-«пометка» в LESSONS-LEARNED не сработала:** пропуск
+калибровки **повторился в LS АХП case** (2026-05-20) несмотря на
+урок из К-7 АХП case (2026-05-19). Жёсткий guard через AskUserQuestion
+защищает от повторения как у `stroy-formatting` со стилями.
+
+**Исключение** — если пользователь **явно** в запросе указал
+шрифт или сказал «работаю с тем же шаблоном что и раньше, шрифт
+`<path>`» — calibration можно пропустить, переход к Шагу 2.
+
+## ⚠ ОБЯЗАТЕЛЬНОЕ правило для буквенных ячеек (импорт из LS case)
+
+Если в pipeline есть SD pass на ячейку **с буквами** (русские/латинские)
+— **не использовать** `refine_text_region_with_diffusion` (он может
+галлюцинировать символы при strength > 0.15: Н→П в LS case).
+
+**Использовать** `refine_bg_with_diffusion` (refine'ит только фон
+вокруг текста через inverse-alpha mask, zero risk искажения символов).
+
+Для **числовых** ячеек `refine_text_region_with_diffusion` остаётся
+default — цифры устойчивее к SD distortion.
 
 ## Когда подключать
 
@@ -206,4 +243,5 @@ snapshot_download(
 - v0.6: glyph borrowing (Option 4) — opt-in helper
 - v1.4: cap-height font sizing — integrated
 - v2.3: Times Bold default — integrated
-- **v3.0**: SD scan-ification — production stack
+- v3.0: SD scan-ification — production stack (КП К7 АХП case, 2026-05-19)
+- **v3.1**: hard calibration guard через AskUserQuestion + `refine_bg_with_diffusion` preference для буквенных ячеек (импорт из КП ЛС АХП case, 2026-05-20)

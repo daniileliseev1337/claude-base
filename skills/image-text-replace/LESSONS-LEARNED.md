@@ -144,8 +144,81 @@ UNet + smaller VAE/text_encoder/safety_checker. На корп-сети с пре
 - ETA для следующего similar case: с этим документом + правильным шрифтом
   с первой попытки = **15 минут** вместо 4+ часов.
 
+## §6 Унификация font_size для batch замены (КП ЛС АХП v7, 2026-05-20)
+
+### Симптом
+
+После v6.1 pipeline (`do_v6_surgical.py`) при replacement 13 ячеек на
+странице 3 КП ЛС АХП — визуально цифры разного размера: в одной строке
+выглядят меньше, в другой крупнее.
+
+### Корень
+
+`do_v6_surgical.py:169`:
+
+```python
+orig_h_real = anc["bottom_y"] - anc["top_y"]  # per-cell
+font_size = max(10, int(orig_h_real / cap_ratio))  # per-cell
+```
+
+Каждая ячейка получает **свой** `orig_h_real` (через
+`find_dark_anchors` или `smart_cap_height_detect`). OCR bbox содержит
+±2-3px noise → cap_height варьируется → font_size меняется на ±1-2pt
+между строками. В документе где все Regular-цифры должны быть одного
+размера — это сразу заметно.
+
+Из реальных данных v7 run:
+
+```
+[unified] Regular: heights=[18, 18, 19, 18, 17, 18, 18, 18, 17, 17, 19, 20]
+```
+
+Variance 17-20 → font_size 25-30pt в зависимости от строки.
+
+### Фикс
+
+Pre-pass до основного цикла: посчитать `median(cap_height)` отдельно
+по weight-категории (Regular vs Bold), затем использовать ОДИН font_size
+на категорию.
+
+Реализован как `unify_font_size_for_batch()` в `pipeline.py` (v3.1+).
+
+```python
+from pipeline import unify_font_size_for_batch
+
+regular_matches = [m for m in target_matches if m.bbox_rect()[1] < BOLD_Y]
+bold_matches    = [m for m in target_matches if m.bbox_rect()[1] >= BOLD_Y]
+
+font_size_reg, _  = unify_font_size_for_batch(arr, regular_matches, cap_ratio=0.66)
+font_size_bold, _ = unify_font_size_for_batch(arr, bold_matches,    cap_ratio=0.70)
+
+for m in target_matches:
+    is_bold = m.bbox_rect()[1] >= BOLD_Y
+    font_size = font_size_bold if is_bold else font_size_reg
+    # ... render ...
+```
+
+Median (а не mean) — устойчив к outliers OCR bbox (1 сильно неправильный
+bbox не должен сдвигать font_size всей группы).
+
+### Когда применять
+
+- **Всегда** для batch text replacement (3+ ячеек одной категории) в
+  табличных документах.
+- **Не применять**, если ячейки **действительно** разного размера в
+  оригинале (например header bold large + body regular small) —
+  в этом случае разделить на 2 batch'а по визуальному размеру и
+  unify каждую отдельно.
+
+### Тесты
+
+См. `~/.claude/evals/test_image_text_replace.py` →
+`TestUnifyFontSizeForBatch` (5 кейсов включая воспроизведение
+heights из реального КП ЛС АХП v7).
+
 ## Связанные
 
-- `pipeline.py` — главная реализация
+- `pipeline.py` — главная реализация (`unify_font_size_for_batch`)
 - `SKILL.md` — описание скилла
 - `ROADMAP-heavy-options.md` — другие подходы (CNN style transfer и др.)
+- `~/.claude/evals/test_image_text_replace.py` — regression-тесты

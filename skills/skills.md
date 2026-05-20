@@ -18,6 +18,7 @@ tags: [мета, индекс, skills]
 - [[pdf-helper]] — методология PDF (чтение, редактирование, аннотации, формы, сравнение).
 - [[stroy-formatting]] — применение ГОСТ-стилей к итоговым DOCX/PDF. 4 шаблона в `formatting-templates/`.
 - [[image-text-replace]] — замена текста на сканах/JPEG/PNG через PaddleOCR + LaMa inpaint + Pillow render. Pipeline в `pipeline.py`, lazy install зависимостей. Primary mode — LaMa, opt-in fast-fill для batch'а из белых сканов.
+- [[chains-pattern]] — методология именованных цепочек (когда и как создавать chains в `~/.claude/chains/`). Триггеры: «составь pipeline», «многошаговая задача», «несколько последовательных шагов». Импорт из К-7 аудита 2026-05-20.
 
 ## Как подключаются
 

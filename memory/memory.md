@@ -21,6 +21,13 @@ tags: [мета, индекс, memory]
 - [[2026-05-15_extras-distribution-mechanism]] — manifest + setup-extras + Install.ps1 Stage 8 архитектура распространения Python/MCP стека.
 - [[2026-05-18_lesson-15-proxy-helpers-persistence]] — Урок 15: proxy-хелперы persistence в claude-lite-instaler (CLOSED 2026-05-18 коммитом `3562631`).
 
+### Архитектурные backlog'и (из аудитов чужих баз)
+
+- [[project_designer_decomposition]] — backlog stage-decomposition агента `designer` по pattern К-7 (S1→S2→S3→S4). Не активировать пока нет реального триггера. Источник — аудит К-7 от 2026-05-20.
+- [[backlog_promptfoo_semantic_tests]] — backlog promptfoo для семантических тестов LLM-агентов. Триггер — потребность тестировать вывод designer/word-checker на эталонах. Сейчас покрытие через pytest (см. `~/.claude/evals/`). Источник — аудит К-7 от 2026-05-20.
+- [[backlog_teammate_mode_tmux]] — backlog teammateMode tmux + AGENT_TEAMS (4.7 из roadmap'а). tmux отсутствует на Windows DANIILPC + env-правки требуют явного согласия. Альтернатива — `teammateMode: in-process`. Источник — аудит К-7 от 2026-05-20.
+- [[rd_plugins_test_plan]] — R&D test plan для свежеустановленных плагинов superpowers и claude-md-management (4.6, 4.8). Активны после перезапуска Claude Code. Источник — аудит К-7 от 2026-05-20.
+
 ### Доменные кейсы (проектирование)
 
 - [[2026-05-07-pnr-ventilation]] — пуско-наладка вентиляции.

@@ -471,6 +471,81 @@ def smart_cap_height_detect(arr, x: int, y: int, w: int, h: int,
             "cap_height": cap_bottom - cap_top + 1}
 
 
+def unify_font_size_for_batch(
+    arr,
+    target_matches: Sequence[OcrMatch],
+    cap_ratio: float = 0.66,
+) -> tuple[int, dict]:
+    """For batch text replacement: compute ONE font_size for the whole
+    batch via median cap_height — instead of per-cell sizing which gives
+    visible size variance.
+
+    Background (LESSONS-LEARNED §6, КП ЛС АХП v7 case 2026-05-20):
+    Per-cell font_size, рассчитанный из smart_cap_height_detect на OCR
+    bbox каждой ячейки, варьируется на ±1-3px из-за OCR noise → font_size
+    колеблется ±1-2pt между строками → визуально цифры разного размера
+    в табличном документе где должны быть одного.
+
+    Fix: ОДИН font_size на batch (одна weight-категория). Median
+    устойчив к outliers OCR bbox.
+
+    Usage:
+        regular_matches = [m for m in target_matches if m.bbox_rect()[1] < 1100]
+        bold_matches    = [m for m in target_matches if m.bbox_rect()[1] >= 1100]
+
+        font_size_reg, diag_reg   = unify_font_size_for_batch(arr, regular_matches, cap_ratio=0.66)
+        font_size_bold, diag_bold = unify_font_size_for_batch(arr, bold_matches,    cap_ratio=0.70)
+
+        for m in target_matches:
+            is_bold = m.bbox_rect()[1] >= 1100
+            font_size = font_size_bold if is_bold else font_size_reg
+            # ... render ...
+
+    Args:
+        arr: image as numpy array
+        target_matches: matches whose font_size to unify
+        cap_ratio: cap_height / font_size ratio (0.66 ≈ Times Regular,
+                   0.70 ≈ Times Bold).
+
+    Returns: (font_size, diagnostic_dict)
+        diagnostic_dict = {
+            'heights': list[int],   # raw cap_heights per match
+            'median': int,
+            'mean': float,
+            'std': float,
+            'n': int,
+        }
+
+    Edge cases:
+        - Empty matches: returns (24, dict с empty stats).
+
+    v3.1+ pipeline. Import from КП ЛС АХП case 2026-05-20.
+    """
+    import statistics
+
+    if not target_matches:
+        return 24, {"heights": [], "median": 0, "mean": 0.0, "std": 0.0, "n": 0}
+
+    heights = []
+    for m in target_matches:
+        x, y, w, h = m.bbox_rect()
+        result = smart_cap_height_detect(arr, x, y, w, h)
+        heights.append(int(result["cap_height"]))
+
+    median_h = int(statistics.median(heights))
+    mean_h = float(statistics.mean(heights))
+    std_h = float(statistics.stdev(heights)) if len(heights) > 1 else 0.0
+    font_size = max(10, int(median_h / cap_ratio))
+
+    return font_size, {
+        "heights": heights,
+        "median": median_h,
+        "mean": mean_h,
+        "std": std_h,
+        "n": len(heights),
+    }
+
+
 def find_neighbor_cell_reference(
     matches: Sequence[OcrMatch],
     label_match: OcrMatch,
