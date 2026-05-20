@@ -67,6 +67,26 @@ function Write-Warn { param($m) Write-Host "  [WARN] $m" -ForegroundColor Yellow
 function Write-Err  { param($m) Write-Host "  [ERR]  $m" -ForegroundColor Red }
 function Log        { param($m) "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] setup-extras: $m" | Add-Content -Path $LogFile -ErrorAction SilentlyContinue }
 
+# === Step 0: GitHub bypass-proxy (persistent git config) ===
+#
+# Корп-прокси блокирует CONNECT к github.com на всех наших ПК.
+# Empirical fact (2026-05-20): git push/pull/fetch падают с
+# "Proxy CONNECT aborted". Решение — persistent bypass для github-домена.
+# См. CLAUDE.md раздел "GitHub — обязательный bypass proxy".
+#
+# Идемпотентно: если bypass уже установлен — skip.
+Write-Step "Step 0: GitHub bypass-proxy (persistent git config)"
+$ghBypassHttp = git config --global --get http.https://github.com/.proxy 2>$null
+$ghBypassHttps = git config --global --get https.https://github.com/.proxy 2>$null
+if ($ghBypassHttp -eq "" -and $ghBypassHttps -eq "") {
+    Write-OK "GitHub bypass-proxy already configured"
+} else {
+    git config --global http.https://github.com/.proxy ""
+    git config --global https.https://github.com/.proxy ""
+    Write-OK "Applied: git config --global http.https://github.com/.proxy `"`""
+    Log "Step 0: applied GitHub bypass-proxy persistent config"
+}
+
 # === Pre-flight ===
 if (-not (Test-Path $ManifestPath)) {
     Write-Err "Manifest not found: $ManifestPath"

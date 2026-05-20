@@ -201,6 +201,38 @@ explicitly instructed to do so**». Касается ключей в `env: {…}
 
 **Правильно:** не читать секретные файлы. Если нужны секреты — env-переменные.
 
+### A4.5 git / gh операции к GitHub через корп-прокси
+
+Корп-прокси блокирует CONNECT к github.com. `git push`/`pull`/`fetch`
+и `gh` команды падают с `Proxy CONNECT aborted`. Это наблюдалось на
+всех ПК команды.
+
+**Правильно:**
+
+1. **Persistent fix** (одна команда на ПК, навсегда):
+   ```powershell
+   git config --global http.https://github.com/.proxy ""
+   git config --global https.https://github.com/.proxy ""
+   ```
+   `setup-extras.ps1` Step 0 применяет автоматически на новых ПК.
+
+2. **Если persistent не настроен** — `-c` флаги в каждой команде:
+   ```powershell
+   git -c http.proxy="" -c https.proxy="" push origin main
+   ```
+
+3. **Для `gh` CLI**: `$env:HTTPS_PROXY=""` перед командой.
+
+**Что bypass-ится:** github.com, api.github.com, *.githubusercontent.com.
+
+**Что нормально через прокси:** pypi, npm, huggingface.co (модели).
+
+См. CLAUDE.md раздел «GitHub — обязательный bypass proxy».
+
+**Источник:** session-report 2026-05-20 (kp-ls-ahp-modify-+15)
++ закреплено как правило 2026-05-20 после повторения симптома на
+DANIILPC, DELISEEV-PC, 100226745A.
+
 ## Категория 5. Memory и контекст
 
 ### A5.1 Дублирование CLAUDE.md в memory

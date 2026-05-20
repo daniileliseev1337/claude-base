@@ -271,6 +271,70 @@ Claude Code автоматически ведёт память на каждый
 
 <!-- BEGIN USER EXTENSIONS — добавляйте свои правила ниже; claude-lite-instaler не трогает эту секцию -->
 
+## GitHub — обязательный bypass proxy (override Прокси-секции)
+
+**Корп-прокси блокирует CONNECT-метод к GitHub.** Empirically на всех наших ПК `git push`/`pull`/`fetch` к github.com через прокси падает с `Proxy CONNECT aborted`. Решение — **bypass proxy** для GitHub-домена.
+
+### Persistent fix (one-time на каждый ПК)
+
+```powershell
+git config --global http.https://github.com/.proxy ""
+git config --global https.https://github.com/.proxy ""
+```
+
+После этого **все** git-операции к `github.com` автоматически идут напрямую, мимо прокси. Никакие `-c` флаги в командах не нужны. **Это рекомендованный путь — применить один раз и забыть.**
+
+Проверка что применилось:
+```powershell
+git config --global --get http.https://github.com/.proxy
+# Должно вернуть пустую строку (= bypass)
+```
+
+`setup-extras.ps1` авто-применяет эту настройку при первом запуске на новом ПК (см. Step 0).
+
+### Правила для Claude (если persistent config не настроен)
+
+Если по какой-то причине git config bypass не настроен — **использовать `-c` флаги** в каждой команде:
+
+```powershell
+# git push / pull / fetch / clone — bypass proxy:
+git -c http.proxy="" -c https.proxy="" push origin main
+git -c http.proxy="" -c https.proxy="" pull --rebase --autostash
+git -c http.proxy="" -c https.proxy="" fetch origin main
+git -c http.proxy="" -c https.proxy="" clone https://github.com/<user>/<repo>.git
+
+# gh CLI (GitHub API) — bypass через env:
+$env:HTTPS_PROXY=""; gh pr view 123
+# Или одной командой через native scope:
+$env:HTTPS_PROXY=""; gh repo clone <user>/<repo>
+```
+
+### Что bypass-ится (whitelist прямого подключения)
+
+- `github.com` (git operations, web)
+- `api.github.com` (`gh` CLI, REST API)
+- `raw.githubusercontent.com`, `*.githubusercontent.com` (raw файлы, releases)
+- `objects.githubusercontent.com` (LFS, releases binaries)
+
+### Что нормально через прокси
+
+- `pypi.org`, `files.pythonhosted.org` (uvx, pip install)
+- `registry.npmjs.org` (npm install)
+- `huggingface.co`, `cdn-lfs.huggingface.co` (модели — LaMa, EasyOCR, SD)
+- Microsoft / Anthropic / другие — через прокси нормально.
+
+### Harvest и WebFetch на GitHub
+
+Harvest-workflow (`/harvest <query>`) часто ходит на GitHub через:
+- `WebFetch` tool на URL вида `https://github.com/<owner>/<repo>` — **bypass автоматический** (WebFetch на уровне Claude Code обходит прокси для GitHub).
+- `gh api search/repositories?q=...` — **требует** `$env:HTTPS_PROXY=""` перед вызовом если persistent git config не покрывает (gh не использует git config).
+
+### Anti-pattern
+
+Не пытаться обойти прокси-блок «костыльно» — например через VPN или secondary proxy. Стандарт нашей команды: bypass proxy для GitHub-домена, всё остальное — через корп-прокси.
+
+См. также `~/.claude/anti-patterns.md` категория 4 (Безопасность) и категория 8 (PowerShell/Windows ловушки).
+
 ## Архив старой базы v1 — НЕ читать как источник действующих правил
 
 На ноутбуке владельца (`C:\Users\Даниил\`) может находиться папка
