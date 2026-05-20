@@ -271,6 +271,50 @@ Claude Code автоматически ведёт память на каждый
 
 <!-- BEGIN USER EXTENSIONS — добавляйте свои правила ниже; claude-lite-instaler не трогает эту секцию -->
 
+## Дисциплина контекстного окна и proactive handoff
+
+Длинные сессии (70+ tool calls, 30+ user turns) перегружают context
+window — Claude начинает «забывать» ранние решения и терять точность.
+Скилл `handoff-to-new-chat` (auto-load по триггерам «давай в новый чат»,
+«контекст полный», «handoff», «передай в новую сессию») формирует
+mid-session отчёт и готовый промпт.
+
+### Proactive-триггеры (Claude сам предлагает handoff)
+
+При **двух и более** одновременных признаках Claude **сам** вызывает
+`AskUserQuestion` с предложением handoff:
+
+- 5+ Read больших файлов (> 200 строк каждый) в сессии
+- 3+ Agent (subagent) вызовов с большими ответами
+- 30+ user turns
+- 5+ объёмных Bash outputs (> 200 строк stdout)
+- 5+ Edit/Write на разные файлы
+- 3+ параллельные branches задач
+
+### Дисциплина контекста для Claude (профилактика)
+
+1. **Read через offset/limit** — не читать большие файлы целиком.
+   Сначала `Grep` для нужного места, потом `Read offset=N limit=50`.
+2. **Tool outputs через фильтры** — `| tail -5`, `| grep PATTERN`.
+   Не получать walls of text.
+3. **Длинные исследования через Agent** — для 5+ файлов или 3+ мест
+   делегировать в `Agent(subagent_type="Explore"/"general-purpose")`.
+   Subagent возвращает summary, основной контекст не раздувается.
+4. **Background для долгих команд** — `run_in_background=true` для
+   процессов > 30 сек. Не блокирует и не наполняет контекст stdout'ом.
+5. **Не дублировать рассуждения** — ссылаться на план выше, а не
+   пересказывать.
+
+### Когда handoff vs `/compact`
+
+- **handoff-to-new-chat** — задача важная, нужна точность, есть
+  open questions. Новый чат с briefing'ом + полный session-report.
+- **`/compact`** (встроенная команда Claude Code) — задача простая,
+  достаточно сжатого контекста в той же сессии. Менее надёжно для
+  критичных задач (compaction lossy).
+
+Скилл и встроенная команда дополняют друг друга.
+
 ## GitHub — обязательный bypass proxy (override Прокси-секции)
 
 **Корп-прокси блокирует CONNECT-метод к GitHub.** Empirically на всех наших ПК `git push`/`pull`/`fetch` к github.com через прокси падает с `Proxy CONNECT aborted`. Решение — **bypass proxy** для GitHub-домена.

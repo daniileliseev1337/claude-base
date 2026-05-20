@@ -233,6 +233,72 @@ explicitly instructed to do so**». Касается ключей в `env: {…}
 + закреплено как правило 2026-05-20 после повторения симптома на
 DANIILPC, DELISEEV-PC, 100226745A.
 
+## Категория 6. Дисциплина контекстного окна
+
+Длинные сессии (70+ tool calls) перегружают context window. Claude
+начинает «забывать», повторять рассуждения, терять точность. См. также
+skill `handoff-to-new-chat` для proactive handoff.
+
+### A6.1 Read больших файлов целиком вместо offset/limit
+
+Read `pipeline.py` (1500 строк, 59 KB) целиком когда нужны 30 строк
+функции — съедает 50× context без пользы.
+
+**Правильно:**
+1. `Grep` для нужной функции → найти `:line_number`
+2. `Read offset=<line> limit=50` — только нужный фрагмент
+
+### A6.2 Tool outputs без фильтра tail/grep
+
+`pip install paddlex[ocr]` без `| tail` → 30000 строк stdout с
+progress-bar'ами в контексте. То же с `pytest -v`, `paddleocr stack
+trace`, `npm install`.
+
+**Правильно:**
+```bash
+pip install X 2>&1 | tail -5
+pip install X 2>&1 | grep -E "Successfully|ERROR|conflict"
+pytest 2>&1 | tail -5
+```
+
+### A6.3 Длинные исследования в основном контексте вместо Agent
+
+5+ Read'ов больших файлов + 3+ Bash + анализ — всё в main контекст.
+Раздувает на 30-50%.
+
+**Правильно:** `Agent(subagent_type="Explore" or "general-purpose",
+prompt="...")` — subagent делает research, возвращает только summary.
+См. рекомендацию из CLAUDE.md / karpathy-guidelines §4 о верификации
+делегаций.
+
+### A6.4 Foreground для долгих команд
+
+`pip install` / `pytest --slow` / `python heavy_script.py` в foreground
+блокирует и наполняет контекст stdout'ом в реальном времени.
+
+**Правильно:** `run_in_background=true` для процессов > 30 сек.
+Notification придёт при завершении.
+
+### A6.5 Дублирование рассуждений между ответами
+
+Каждый ответ Claude начинается с пересказа плана из 5 турнов назад.
+Каждый пересказ — еще ~500 токенов.
+
+**Правильно:** ссылаться кратко («по плану выше, шаг 3...»). Не
+повторять fully.
+
+### A6.6 Игнорирование proactive-триггеров handoff
+
+Признаки перегруза (5+ Read'ов > 200 строк, 3+ Agent calls, 30+ turns)
+видны, но Claude продолжает «один step и закроем». Context кончается
+на самом интересном.
+
+**Правильно:** при 2+ признаках одновременно — вызвать
+`AskUserQuestion` с предложением handoff. Лучше передать в новый чат
+**до** деградации, чем после.
+
+См. skill `handoff-to-new-chat` для алгоритма.
+
 ## Категория 5. Memory и контекст
 
 ### A5.1 Дублирование CLAUDE.md в memory
