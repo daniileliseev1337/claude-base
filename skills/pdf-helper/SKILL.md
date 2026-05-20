@@ -15,6 +15,7 @@ description: |
   - "pikepdf", "pypdf", "pdfplumber", "pdf metadata"
   - "перекрасить облачка", "polygon cloud", "аннотации pdf"
   - "сравнить два pdf", "diff pdf"
+  - "чертёж pdf", "штамп чертежа", "слои pdf", "СКС в pdf", "план этажа pdf"
   - сканированный PDF (нет text layer) → авто-routing на OCR pipeline
     из image-text-replace (EasyOCR + smart cap + bbox detection)
 ---
@@ -90,6 +91,27 @@ value = find_neighbor_cell_reference(matches, label, side='right', digits_only=T
 - Confidence per token
 
 Скилл image-text-replace **уже умеет** OCR — image text replace это **второстепенная** функция. Основная — точное распознавание содержимого scan-PDF с координатами.
+
+## Режим чертежей (А3/А1 со штампом и слоями)
+
+Если PDF — это чертёж (альбомный, штамп в правом нижнем углу, векторные слои СКС/СКУД/CCTV/ОПС), используй отдельный workflow — см. `drawings.md` рядом.
+
+Быстрый старт:
+
+```python
+import sys
+sys.path.insert(0, str(Path.home() / ".claude/skills/pdf-helper/scripts"))
+from extract_drawing_meta import extract_text_blocks, find_stamp_data
+import pdfplumber
+
+blocks = extract_text_blocks("plan_floor1.pdf", page=0)
+with pdfplumber.open("plan_floor1.pdf") as pdf:
+    page_size = (pdf.pages[0].width, pdf.pages[0].height)
+stamp = find_stamp_data(blocks, page_size)
+# {'project': '<имя проекта>', 'drawing_no': '5', 'scale': '1:50', 'stage': 'РД', ...}
+```
+
+Извлекает: текстовые блоки с координатами, штамп (правая нижняя четверть страницы), слои PDF через `/OCProperties`, помещения по легенде. Если в PDF только растровое изображение чертежа (скан) — упади на skill `image-text-replace` (EasyOCR). Если есть исходный DWG — используй skill [[cad-reader]] (точнее, читает слои напрямую).
 
 ## Иерархия инструментов (от простого к сложному)
 
@@ -174,6 +196,7 @@ pdf.save("output.pdf")
 
 ## Ловушки
 
+0. **Reportlab + Unicode sub/super дают чёрные квадраты.** Никогда не использовать символы `₀₁₂₃₄₅₆₇₈₉`/`⁰¹²³⁴⁵⁶⁷⁸⁹` в reportlab PDF — built-in шрифты их не содержат, на месте рендерится solid black. Использовать XML-теги в Paragraph: `Paragraph("H<sub>2</sub>O", styles['Normal'])`, `Paragraph("x<super>2</super>", styles['Normal'])`. Для canvas-текста — менять размер/позицию шрифта вручную.
 1. **Большие PDF (>50 МБ)** — `pymupdf` (fitz) часто падает на сложной структуре или ест 4+ ГБ RAM. Использовать связку `pikepdf` (низкоуровневая работа) + `pypdf` (комбинаторика страниц).
 2. **`/AP` в аннотациях** — это закэшированный рендер. После изменения цвета или текста обязательно удалить, иначе PDF-вьюер покажет старое.
 3. **OCR vs текст** — если PDF — скан, `extract_text()` вернёт пусто. Сначала прогнать через OCR (tesseract / cloud API), потом работать.

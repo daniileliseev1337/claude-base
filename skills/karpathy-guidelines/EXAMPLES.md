@@ -1,281 +1,522 @@
-# EXAMPLES - 5 принципов на наших задачах
+# Examples
 
-> Примеры **адаптированы под нашу базу** (строительные + программные
-> задачи). Принципы взяты из `block-behavior.md`. Атрибуция и пояснение
-> почему не копируем оригинал дословно - в `SKILL.md` рядом.
-
-Каждый принцип показан в формате:
-
-- **Что часто делает Claude (плохо):** типовой провал.
-- **Что должно быть (по принципу):** правильное поведение.
+Real-world code examples demonstrating the four principles. Each example shows what LLMs commonly do wrong and how to fix it.
 
 ---
 
-## 1. Думай прежде чем кодить
+## 1. Think Before Coding
 
-### Пример 1.1 - Скрытое допущение про шифр тома
+### Example 1: Hidden Assumptions
 
-**Запрос:** «Собери том ИД по приложению к АОМР».
+**User Request:** "Add a feature to export user data"
 
-**Плохо:** Claude молча выбирает шифр из открытой папки, генерирует
-титул, в номере акта подставляет шифр проекта без суффикса. Получается
-несовпадение с правилом 14 (три уровня шифра: проект / том / приложение).
-
-**По принципу:**
-
-```
-Перед сборкой тома:
-- В открытой папке вижу два шифра-кандидата: <ШИФР>-3 (том) и
-  <ШИФР>-3.2 (приложение). Точно использовать как номер акта - том?
-- В ВСО для приложения нужен <ШИФР>-3.2. Подтверди уровни.
-- Если на титуле должен быть проектный шифр без суффикса (по правилу 14)
-  - укажи строку. Я не выдумываю.
-```
-
-### Пример 1.2 - Скрипт парсинга XLSX
-
-**Запрос:** «Напиши скрипт, который сводит позиции спецификации П в одну
-ведомость».
-
-**Плохо:** Claude сразу пишет 200 строк с поддержкой и `.xlsx`, и `.xlsm`,
-и `.csv`, и автодетектом разделителя - хотя задача про конкретный
-шаблон.
-
-**По принципу:**
-
-```
-Уточняю до старта:
-- Шаблон один: !СО П.xlsx (по триггеру скилла stroy-specs-xlsx). Так?
-- Сводим позиции из всех листов или с конкретных (например только ОВ)?
-- Куда положить результат: новая страница в этом же файле или
-  отдельный xlsx?
-```
-
----
-
-## 2. Простота прежде всего
-
-### Пример 2.1 - Облачка изменений в PDF
-
-**Запрос:** «Перекрась облачка в томе из жёлтого в красный».
-
-**Плохо:** Claude пишет универсальный класс `PDFAnnotationManager` с
-поддержкой всех типов аннотаций, конфигурируемой палитрой через JSON,
-системой логирования и dry-run режимом. Для одноразовой задачи на
-одном томе.
-
-**По принципу:**
+**❌ What LLMs Do (Wrong Assumptions)**
 
 ```python
-# minimal_recolor.py - 30 строк, не класс, не CLI с флагами
-import pikepdf
-src = pikepdf.open("input.pdf")
-for page in src.pages:
-    for annot in page.get("/Annots", []):
-        if annot.get("/Subtype") == "/PolygonCloud":
-            annot["/C"] = [1, 0, 0]      # red
-            annot["/IC"] = [1, 0, 0]
-            if "/AP" in annot:
-                del annot["/AP"]          # ловушка из правила 7.4
-src.save("output.pdf")
+def export_users(format='json'):
+    """Export all users to a file."""
+    users = User.query.all()
+    
+    if format == 'json':
+        with open('users.json', 'w') as f:
+            json.dump([u.to_dict() for u in users], f)
+    elif format == 'csv':
+        with open('users.csv', 'w') as f:
+            writer = csv.DictWriter(f, fieldnames=['id', 'email', 'name'])
+            writer.writeheader()
+            writer.writerows([u.to_dict() for u in users])
+    
+    return f"Exported {len(users)} users"
 ```
 
-Если завтра попросят DRY-run или другие цвета - расширим **тогда**.
+**Problems:**
+- Assumed it should export ALL users (what about pagination? privacy?)
+- Assumed file location without asking
+- Assumed which fields to include
+- Assumed CSV fieldnames without checking actual data structure
 
-### Пример 2.2 - Лист регистрации изменений
-
-**Запрос:** «Сделай лист изменений Изм.2 для нашего тома».
-
-**Плохо:** Claude генерирует механизм версионирования с YAML-конфигом,
-шаблонизатором Jinja2 и поддержкой 5 разных форматов рамок. Для одной
-задачи в одном проекте.
-
-**По принципу:** Один скрипт, читает данные из аргументов, рендерит
-конкретный лист по ГОСТ Р 21.101-2020. Расширение - debrief-driven
-(Волна 9), а не сразу.
-
-### Контрольный вопрос (Karpathy)
-
-**«Сказал бы senior-инженер, что это переусложнено?»** Если да -
-упрощай прямо сейчас, не «потом».
-
----
-
-## 3. Хирургические правки
-
-### Пример 3.1 - Правка пояснительной записки
-
-**Запрос:** «Добавь в ПЗ раздела ОВ упоминание VRF-системы по замечанию
-№3».
-
-**Плохо:** Claude правит указанный абзац, попутно «приводит к единому
-стилю» соседние разделы (нумерация, тире → длинные тире, единицы
-измерения), потому что «они выбиваются». Том уезжает в экспертизу с
-правками, которые **никто не запрашивал**, и потенциально ломает
-согласованность с другими листами.
-
-**По принципу:**
-
-- Правлю **только** абзац про VRF.
-- Если вижу несвязанные ошибки в соседних разделах - **сообщаю**
-  пользователю отдельным пунктом «нашёл ещё это, править?», но не
-  правлю молча.
-- Сохраняю существующий стиль, даже если сделал бы иначе.
-
-### Пример 3.2 - Правка SKILL.md
-
-**Запрос:** «Поправь триггеры в `stroy-pdf-tools`: добавь pikepdf».
-
-**Плохо:** Claude добавляет триггер, но заодно «улучшает» структуру
-файла - переименовывает разделы, меняет markdown-стиль списков,
-добавляет emoji. Diff на 80 строк вместо одной.
-
-**По принципу:** Одна правка - одна строка/строки. Diff трассируется к
-запросу. **Тест Karpathy:** каждая изменённая строка должна напрямую
-указывать на запрос пользователя.
-
-### Пример 3.3 - Сироты от наших правок
-
-**Запрос:** «Удали из агента pdf-rebuilder упоминание pymupdf, мы от
-него отказались».
-
-**По принципу:**
-
-- Удаляем абзац про pymupdf.
-- Если после этого `import fitz` стал лишним в примере кода рядом -
-  удаляем (это **наш** сирота).
-- Если в кейсе `cases/konnosport-manezh.md` есть отдельное упоминание
-  pymupdf, не связанное с этой правкой, - **сообщаем**, но не удаляем
-  (правило «не удаляй ранее существующий мёртвый код, если об этом не
-  просили»).
-
----
-
-## 4. Цели и верификация
-
-### Пример 4.1 - «Исправь баг в скрипте»
-
-**Запрос:** «`calc_water_balance.py` падает на больших домах, разберись».
-
-**Плохо:** Claude правит парсер, переписывает агрегацию, проверяет «вроде
-работает» на одном файле и закрывает задачу. Потом всплывает на ревью.
-
-**По принципу - преобразование в проверяемую цель:**
+**✅ What Should Happen (Surface Assumptions)**
 
 ```
-1. Воспроизвести баг → проверка: написать минимальный тест с
-   входными данными большого дома, тест падает с тем же exception.
-2. Локализовать → проверка: stack trace указывает конкретную функцию,
-   я её цитирую.
-3. Исправить → проверка: тест из шага 1 проходит, и существующие
-   тесты на маленьких домах не сломаны.
-4. Прогон на 3 реальных файлах из _workspace - проверка:
-   результаты совпадают со старыми (если поведение не должно было
-   измениться) или явно отличаются в ожидаемом направлении.
+Before implementing, I need to clarify:
+
+1. **Scope**: Export all users or filtered subset? (privacy implications)
+2. **Format**: You mentioned "export" - did you mean:
+   - Download file in browser?
+   - Background job with email notification?
+   - API endpoint returning data?
+3. **Fields**: Which user fields? (some might be sensitive)
+4. **Volume**: How many users typically? (affects approach)
+
+Simplest approach: Add an API endpoint that returns paginated JSON.
+Would need more info for file-based exports.
+
+What's your preference?
 ```
 
-### Пример 4.2 - «Добавь валидацию в скрипт»
+### Example 2: Multiple Interpretations
 
-**Запрос:** «Добавь валидацию входных данных в `extract_docx_structure.py`».
+**User Request:** "Make the search faster"
 
-**Сильный success criteria:**
+**❌ What LLMs Do (Pick Silently)**
+
+```python
+# Adds caching, database indexes, and async processing
+# without asking which "faster" matters
+@lru_cache(maxsize=1000)
+async def search(query: str) -> List[Result]:
+    # ... 200 lines of optimization code
+```
+
+**✅ What Should Happen**
 
 ```
-1. Тест: пустой файл → понятная ошибка, не traceback.
-2. Тест: файл без секций → корректное предупреждение, не падение.
-3. Тест: корректный файл → результат идентичен текущему (регрессия).
-```
+"Make the search faster" could mean:
 
-**Слабый (не годится):** «сделай чтобы валидация работала».
+1. **Faster response time** (< 100ms instead of 500ms)
+   - Add database indexes
+   - Cache frequent queries
+   - Estimated effort: 2 hours
 
-### Пример 4.3 - Многошаговая задача со сборкой тома ИД
+2. **Handle more concurrent searches** (throughput)
+   - Add async/await
+   - Connection pooling
+   - Estimated effort: 4 hours
 
-```
-1. Собрать список приложений → проверка: count совпадает с реестром.
-2. Сгенерировать титулы → проверка: rendered PDF, ручной просмотр
-   первых 3 шт.
-3. Сшить том → проверка: количество страниц = sum(приложения) + 2
-   (титул + реестр).
-4. Подписать через Acrobat → проверка: digital signature валидна
-   (delegated to user).
+3. **Faster perceived speed** (UX)
+   - Show partial results immediately
+   - Progressive loading
+   - Estimated effort: 3 hours
+
+Current search takes ~500ms for typical queries. 
+Which aspect matters most for your use case?
 ```
 
 ---
 
-## 5. Помощник, а не подхалим
+## 2. Simplicity First
 
-### Пример 5.1 - Сомнительная архитектура решения
+### Example 1: Over-abstraction
 
-**Сценарий:** Пользователь говорит: «Давай хранить всю историю
-замечаний в одном Excel-файле, в столбце "ответ" - длинный текст».
+**User Request:** "Add a function to calculate discount"
 
-**Плохо:** «Хорошая идея, давайте попробуем!» - и Claude молча
-имплементирует, хотя видит, что текст длиной 5000 символов в ячейке
-xlsx будет ломать сортировку и фильтры.
+**❌ What LLMs Do (Overengineered)**
 
-**По принципу:**
+```python
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Protocol, Union
+from dataclasses import dataclass
 
+class DiscountStrategy(ABC):
+    @abstractmethod
+    def calculate(self, amount: float) -> float:
+        pass
+
+class PercentageDiscount(DiscountStrategy):
+    def __init__(self, percentage: float):
+        self.percentage = percentage
+    
+    def calculate(self, amount: float) -> float:
+        return amount * (self.percentage / 100)
+
+class FixedDiscount(DiscountStrategy):
+    def __init__(self, fixed_amount: float):
+        self.fixed_amount = fixed_amount
+    
+    def calculate(self, amount: float) -> float:
+        return min(self.fixed_amount, amount)
+
+@dataclass
+class DiscountConfig:
+    strategy: DiscountStrategy
+    min_purchase: float = 0.0
+    max_discount: float = float('inf')
+
+class DiscountCalculator:
+    def __init__(self, config: DiscountConfig):
+        self.config = config
+    
+    def apply_discount(self, amount: float) -> float:
+        if amount < self.config.min_purchase:
+            return 0
+        discount = self.config.strategy.calculate(amount)
+        return min(discount, self.config.max_discount)
+
+# Usage requires 30+ lines of setup for a simple calculation
 ```
-Возражаю:
-- xlsx плохо работает с длинными текстами в ячейках (ограничение
-  ~32760 символов на ячейку, плюс боль при сортировке/фильтре).
-- Если столбец «ответ» - это полноценный документ, лучше хранить как
-  отдельные .docx и в xlsx держать ссылку или короткий summary.
-- Альтернатива: SQLite + simple Python UI, не нужно Excel.
 
-Если ты всё равно настаиваешь на одном xlsx - скажи, и я сделаю,
-но эта картина повторяет ловушку, по которой xlsx уже отказывался
-работать (см. реальные кейсы базы про мегатаблицы).
+**✅ What Should Happen (Simple)**
+
+```python
+def calculate_discount(amount: float, percent: float) -> float:
+    """Calculate discount amount. percent should be 0-100."""
+    return amount * (percent / 100)
+
+# Usage
+discount = calculate_discount(100.0, 10.0)  # $10 off
 ```
 
-### Пример 5.2 - Запрос «улучшить» работающее
+**When to add complexity:** Only when you actually need multiple discount types. If that requirement comes later, refactor then.
 
-**Сценарий:** Пользователь: «Перепиши `apply_color_rules.py` на
-async/await, должно быть быстрее».
+### Example 2: Speculative Features
 
-**Плохо:** Claude переписывает на async без обсуждения, тратит контекст
-на 200 строк рефакторинга, на выходе скрипт работает так же или хуже
-(IO-bound на pikepdf, async ничего не даёт).
+**User Request:** "Save user preferences to database"
 
-**По принципу:**
+**❌ What LLMs Do (Unnecessary Features)**
 
+```python
+class PreferenceManager:
+    def __init__(self, db, cache=None, validator=None):
+        self.db = db
+        self.cache = cache or InMemoryCache()
+        self.validator = validator or DefaultValidator()
+    
+    def save(self, user_id: int, prefs: dict, 
+             merge: bool = True, 
+             validate: bool = True,
+             notify: bool = False) -> bool:
+        """Save preferences with optional merging, validation, and notifications."""
+        
+        if validate:
+            errors = self.validator.validate(prefs)
+            if errors:
+                raise ValidationError(errors)
+        
+        existing = self.get(user_id) if merge else {}
+        
+        if merge:
+            existing.update(prefs)
+            prefs = existing
+        
+        self.db.execute(
+            "UPDATE users SET preferences = ? WHERE id = ?",
+            (json.dumps(prefs), user_id)
+        )
+        
+        if self.cache:
+            self.cache.set(f"prefs:{user_id}", prefs)
+        
+        if notify:
+            self.notify_preference_change(user_id, prefs)
+        
+        return True
+    
+    def notify_preference_change(self, user_id: int, prefs: dict):
+        # Another 30 lines for a feature nobody asked for
+        pass
 ```
-Возражаю:
-- Текущий скрипт IO-bound на pikepdf, async/await не даст ускорения.
-- Если узкое место - время рендера PDF, лучше профилировать через
-  cProfile сначала и принимать решение по данным.
-- Возможные настоящие причины медленности: pymupdf на больших файлах,
-  отсутствие кэша по уже обработанным аннотациям.
 
-Что измерим до правки?
+**✅ What Should Happen (Just What Was Asked)**
+
+```python
+def save_preferences(db, user_id: int, preferences: dict):
+    """Save user preferences to database."""
+    db.execute(
+        "UPDATE users SET preferences = ? WHERE id = ?",
+        (json.dumps(preferences), user_id)
+    )
 ```
 
-### Контрольный вопрос (Karpathy + наше расширение)
-
-**«Я согласился бы с тем же решением, если бы его предложил коллега,
-а не пользователь?»** Если ответ «не уверен» - значит это
-подхалимство. Возрази.
-
-### Когда НЕ возражать
-
-- Решение пользователя - в зоне его экспертизы (например, выбор
-  норматива по которому делать раздел) и нет фактических противоречий.
-- Выбор стиля / личных предпочтений (наименование переменных,
-  расположение разделов) - не возражаем.
-- Возражение основано на «мне не нравится» без аргумента - молчим.
-
-Возражение должно быть **обоснованным**, не реакторным.
+**Add later if needed:** Caching (when performance matters), validation (when bad data appears), merging (when requirement emerges).
 
 ---
 
-## Связь принципов между собой
+## 3. Surgical Changes
 
-- Принцип 1 (думай) **запрещает** молча выбирать одну интерпретацию
-  → принцип 5 (не подхалим) даёт смелость сказать «а я считаю иначе».
-- Принцип 2 (простота) **связан** с принципом 3 (хирургические правки):
-  оба урезают избыточный код / правки.
-- Принцип 4 (цели) делает принципы 2 и 3 проверяемыми: «эта правка
-  трассируется к критерию X».
+### Example 1: Drive-by Refactoring
 
-При конфликте принципов - приоритет у `block-behavior.md` (см. маяк
-в `CLAUDE-core.md`).
+**User Request:** "Fix the bug where empty emails crash the validator"
+
+**❌ What LLMs Do (Too Much)**
+
+```diff
+  def validate_user(user_data):
+-     # Check email format
+-     if not user_data.get('email'):
++     """Validate user data."""
++     email = user_data.get('email', '').strip()
++     
++     # Validate email
++     if not email:
+          raise ValueError("Email required")
+-     
+-     # Basic email validation
+-     if '@' not in user_data['email']:
++     if '@' not in email or '.' not in email.split('@')[1]:
+          raise ValueError("Invalid email")
+      
+-     # Check username
+-     if not user_data.get('username'):
++     # Validate username
++     username = user_data.get('username', '').strip()
++     if not username:
+          raise ValueError("Username required")
++     if len(username) < 3:
++         raise ValueError("Username too short")
++     if not username.isalnum():
++         raise ValueError("Username must be alphanumeric")
+      
+      return True
+```
+
+**Problems:**
+- "Improved" email validation beyond the bug fix
+- Added username validation nobody asked for
+- Changed comments
+- Added docstring
+
+**✅ What Should Happen (Surgical)**
+
+```diff
+  def validate_user(user_data):
+      # Check email format
+-     if not user_data.get('email'):
++     email = user_data.get('email', '')
++     if not email or not email.strip():
+          raise ValueError("Email required")
+      
+      # Basic email validation
+-     if '@' not in user_data['email']:
++     if '@' not in email:
+          raise ValueError("Invalid email")
+      
+      # Check username
+      if not user_data.get('username'):
+          raise ValueError("Username required")
+      
+      return True
+```
+
+**Only changed:** The specific lines that fix empty email handling.
+
+### Example 2: Style Drift
+
+**User Request:** "Add logging to the upload function"
+
+**❌ What LLMs Do (Reformat Everything)**
+
+```diff
+- def upload_file(file_path, destination):
++ def upload_file(file_path: str, destination: str) -> bool:
++     """Upload file to destination with logging."""
++     logger.info(f"Uploading {file_path} to {destination}")
++     
+      try:
+-         with open(file_path, 'rb') as f:
+-             data = f.read()
+-         
+-         response = requests.post(destination, files={'file': data})
+-         
+-         if response.status_code == 200:
+-             return True
+-         else:
+-             return False
++         with open(file_path, "rb") as f:
++             data = f.read()
++         response = requests.post(destination, files={"file": data})
++         success = response.status_code == 200
++         
++         if success:
++             logger.info(f"Upload successful: {file_path}")
++         else:
++             logger.error(f"Upload failed: {file_path}, status={response.status_code}")
++         
++         return success
+      except Exception as e:
+-         print(f"Error: {e}")
++         logger.exception(f"Upload error for {file_path}: {e}")
+          return False
+```
+
+**Problems:**
+- Changed quote style ('' to "")
+- Added type hints nobody asked for
+- Added docstring
+- Reformatted whitespace
+- Changed boolean return logic
+
+**✅ What Should Happen (Match Existing Style)**
+
+```diff
++ import logging
++ 
++ logger = logging.getLogger(__name__)
++ 
+  def upload_file(file_path, destination):
++     logger.info(f'Starting upload: {file_path}')
+      try:
+          with open(file_path, 'rb') as f:
+              data = f.read()
+          
+          response = requests.post(destination, files={'file': data})
+          
+          if response.status_code == 200:
++             logger.info(f'Upload successful: {file_path}')
+              return True
+          else:
++             logger.error(f'Upload failed: {file_path}, status={response.status_code}')
+              return False
+      except Exception as e:
+-         print(f"Error: {e}")
++         logger.exception(f'Upload error: {file_path}')
+          return False
+```
+
+**Matched:** Single quotes, no type hints, existing boolean pattern, spacing style.
+
+---
+
+## 4. Goal-Driven Execution
+
+### Example 1: Vague vs. Verifiable
+
+**User Request:** "Fix the authentication system"
+
+**❌ What LLMs Do (Vague Approach)**
+
+```
+I'll fix the authentication system by:
+1. Reviewing the code
+2. Identifying issues
+3. Making improvements
+4. Testing the changes
+
+[Proceeds to make changes without clear success criteria]
+```
+
+**✅ What Should Happen (Verifiable Goals)**
+
+```
+To "fix authentication," I need to define success criteria. 
+What specific issue are we solving?
+
+If the issue is "users stay logged in after password change":
+
+Plan:
+1. Write test: Change password → verify old session invalidated
+   Verify: Test fails (reproduces bug)
+
+2. Implement: Invalidate sessions on password change
+   Verify: Test passes
+
+3. Check edge cases: Multiple active sessions, concurrent changes
+   Verify: Additional tests pass
+
+4. Verify no regression: Existing auth tests still pass
+   Verify: Full test suite green
+
+Current test coverage for auth: [shows coverage]
+What's the specific auth issue you're seeing?
+```
+
+### Example 2: Multi-Step with Verification
+
+**User Request:** "Add rate limiting to the API"
+
+**❌ What LLMs Do (All at Once)**
+
+```python
+# Implements full rate limiting with Redis, multiple strategies,
+# configuration system, and monitoring in one 300-line commit
+# No clear verification steps
+```
+
+**✅ What Should Happen (Incremental with Verification)**
+
+```
+Plan for rate limiting:
+
+1. Add basic in-memory rate limiting (single endpoint)
+   Verify: 
+   - Test: 100 requests → first 10 succeed, rest get 429
+   - Manual: curl endpoint 11 times, see rate limit error
+
+2. Extract to middleware (apply to all endpoints)
+   Verify:
+   - Test: Rate limits apply to /users and /posts
+   - Existing endpoint tests still pass
+
+3. Add Redis backend (for multi-server)
+   Verify:
+   - Test: Rate limit persists across app restarts
+   - Test: Two app instances share rate limit counter
+
+4. Add configuration (rates per endpoint)
+   Verify:
+   - Test: /search allows 10/min, /users allows 100/min
+   - Config file parsed correctly
+
+Each step is independently verifiable and deployable.
+Start with step 1?
+```
+
+### Example 3: Test-First Verification
+
+**User Request:** "The sorting breaks when there are duplicate scores"
+
+**❌ What LLMs Do (Fix Without Reproducing)**
+
+```python
+# Immediately changes sort logic without confirming the bug
+def sort_scores(scores):
+    return sorted(scores, key=lambda x: (-x['score'], x['name']))
+```
+
+**✅ What Should Happen (Reproduce First)**
+
+```python
+# 1. First, write a test that reproduces the issue
+def test_sort_with_duplicate_scores():
+    """Test sorting when multiple items have same score."""
+    scores = [
+        {'name': 'Alice', 'score': 100},
+        {'name': 'Bob', 'score': 100},
+        {'name': 'Charlie', 'score': 90},
+    ]
+    
+    result = sort_scores(scores)
+    
+    # The bug: order is non-deterministic for duplicates
+    # Run this test multiple times, it should be consistent
+    assert result[0]['score'] == 100
+    assert result[1]['score'] == 100
+    assert result[2]['score'] == 90
+
+# Verify: Run test 10 times → fails with inconsistent ordering
+
+# 2. Now fix with stable sort
+def sort_scores(scores):
+    """Sort by score descending, then name ascending for ties."""
+    return sorted(scores, key=lambda x: (-x['score'], x['name']))
+
+# Verify: Test passes consistently
+```
+
+---
+
+## Anti-Patterns Summary
+
+| Principle | Anti-Pattern | Fix |
+|-----------|-------------|-----|
+| Think Before Coding | Silently assumes file format, fields, scope | List assumptions explicitly, ask for clarification |
+| Simplicity First | Strategy pattern for single discount calculation | One function until complexity is actually needed |
+| Surgical Changes | Reformats quotes, adds type hints while fixing bug | Only change lines that fix the reported issue |
+| Goal-Driven | "I'll review and improve the code" | "Write test for bug X → make it pass → verify no regressions" |
+
+## Key Insight
+
+The "overcomplicated" examples aren't obviously wrong—they follow design patterns and best practices. The problem is **timing**: they add complexity before it's needed, which:
+
+- Makes code harder to understand
+- Introduces more bugs
+- Takes longer to implement
+- Harder to test
+
+The "simple" versions are:
+- Easier to understand
+- Faster to implement
+- Easier to test
+- Can be refactored later when complexity is actually needed
+
+**Good code is code that solves today's problem simply, not tomorrow's problem prematurely.**

@@ -135,6 +135,60 @@ soffice --headless --convert-to pdf input.docx
 6. **Раздельные секции (sections)** — для верстки альбомных листов или разных колонтитулов. python-docx работает с ними через `doc.sections`.
 7. **Списки и нумерация** — глубокий enchant: `numbering.xml` в docx определяет нумерацию, на одном файле может быть несколько определений. Простая правка через python-docx может не взлететь.
 
+## Read-back verification после генерации (§4 Karpathy)
+
+**Правило:** после любой генерации/правки `.docx` — прочитать обратно ключевые признаки и проверить. Без verify-шага «сгенерировал и забыл» = почти гарантированный мусор: незаменённые `{{placeholder}}`, пустые runs, потерянные стили.
+
+```python
+from docx import Document
+
+# 1. Генерация
+doc.save("output.docx")
+
+# 2. Read-back verification
+verify = Document("output.docx")
+paragraphs = [p.text for p in verify.paragraphs]
+text_full = "\n".join(paragraphs)
+
+# Проверки:
+import re
+unfilled = re.findall(r"\{\{[^}]+\}\}", text_full)
+if unfilled:
+    raise RuntimeError(f"Незаменённые плейсхолдеры: {set(unfilled)}")
+
+if not paragraphs or all(not p.strip() for p in paragraphs):
+    raise RuntimeError("Документ пустой после сохранения")
+
+# Опционально: ожидаемые подстановки реально появились
+for key, value in expected_values.items():
+    if value not in text_full:
+        raise RuntimeError(f"Значение {key}='{value}' не найдено в выводе")
+```
+
+Для критичных шаблонов (фирменные письма К-7, претензии, договоры) — после verify ещё спавнить агента [[word-checker]].
+
+## К-7 фирменный шаблон письма
+
+В `templates/k7_letter_template.docx` лежит фирменный бланк ООО «К-7» с реквизитами (адрес, ИНН, ОГРН, контакты). Использовать для деловых писем от компании.
+
+```python
+from docxtpl import DocxTemplate
+from pathlib import Path
+
+tpl_path = Path.home() / ".claude/skills/word-helper/templates/k7_letter_template.docx"
+tpl = DocxTemplate(str(tpl_path))
+tpl.render({
+    "recipient": "ООО МСУ-1",
+    "subject": "Об оплате счёта № 123",
+    "body": "Уважаемые коллеги, ...",
+    "outgoing_number": "К7-456-26",
+    "date": "20.05.2026",
+})
+tpl.save("output.docx")
+```
+
+Если структура шаблона неизвестна — сначала открыть в Word или прочитать через `markitdown` MCP, посмотреть какие плейсхолдеры реально есть.
+
 ## Когда вызывать агента word-checker
 
 После генерации документа (особенно по шаблону) — спавнить subagent `word-checker`. Он проверит структуру (заголовки, оглавление), таблицы (на повреждения после правки), наличие placeholder'ов которые не заменились (`{{...}}`), форматирование. Выдаст отчёт со списком замечаний.

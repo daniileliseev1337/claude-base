@@ -1,0 +1,175 @@
+---
+name: upd-parser
+description: |
+  Парсинг УПД (Универсальный передаточный документ = счёт-фактура + накладная)
+  от поставщиков в структурированный JSON. Адаптация s2-invoice-parser из AI-Секретаря К-7
+  под российский УПД с учётом наших ловушек (см. [[feedback-upd-pdf-parsing]]).
+
+  Триггеры:
+  - "УПД", "УПД-1", "УПД от поставщика"
+  - "разбери УПД", "распарси УПД", "извлеки из УПД"
+  - "позиции из УПД", "товары из УПД", "что в УПД"
+  - "сверь УПД со спецификацией", "УПД vs спец"
+  - "счёт-фактура", "счёт фактура", "СФ-документ"
+  - "товарная накладная", "накладная ТОРГ-12"
+---
+
+# upd-parser — парсинг УПД от поставщиков
+
+## Когда подключаться
+
+Любая задача с УПД, счёт-фактурой, ТОРГ-12 где надо получить **структурированный список позиций** для дальнейшей сверки/учёта. Если просто посмотреть «что внутри» — markitdown MCP справится без скилла.
+
+## ⚠ Ловушка из памяти
+
+**Не делать выводов о swap'е артикулов без визуальной сверки.** PDF text-extraction (pdfplumber/pdf-mcp) не отражает линейную структуру таблицы — две колонки могут перепутаться местами в текстовом выводе. Перед тем как заявить «поставщик переименовал артикул» — обязательно отрендерить страницу в PNG и посмотреть глазами (`pdf-mcp pdf_render_pages`).
+
+См. [[feedback-upd-pdf-parsing]] для контекста.
+
+## Алгоритм
+
+### Шаг 1 — определить тип PDF (текстовый vs скан)
+
+Стандартная проверка из [[pdf-helper]]:
+
+```python
+import pdfplumber
+with pdfplumber.open(upd_path) as pdf:
+    text_total = sum(len((p.extract_text() or "").strip()) for p in pdf.pages)
+    n_pages = len(pdf.pages)
+is_scan = text_total < 50 * n_pages
+```
+
+- **Текстовый УПД** (обычный e-документ от ЭДО) → шаг 2
+- **Скан УПД** (распечатан + отсканирован) → routing на [[image-text-replace]] EasyOCR pipeline, затем шаг 2 на полученном тексте
+
+### Шаг 2 — извлечь поля шапки
+
+Используй helper:
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path.home() / ".claude/skills/upd-parser/scripts"))
+from parse_upd import parse_header, parse_items, parse_totals
+
+with pdfplumber.open(upd_path) as pdf:
+    full_text = "\n".join(p.extract_text() for p in pdf.pages)
+
+header = parse_header(full_text)
+# {upd_number, upd_date, seller: {name, inn, kpp}, buyer: {name, inn, kpp}, contract_ref}
+```
+
+### Шаг 3 — извлечь таблицу позиций
+
+```python
+items = parse_items(upd_path)
+# [{row, code, name, unit, qty, price, amount, vat_rate, vat_amount, amount_with_vat}, ...]
+```
+
+**Важно:** для табличных данных лучше использовать `pdfplumber.extract_tables()` напрямую (с координатами), чем парсить через текст. Helper это делает.
+
+### Шаг 4 — итоги и НДС
+
+```python
+totals = parse_totals(full_text)
+# {sum_without_vat, vat_total, sum_total, vat_breakdown: {0%: ..., 10%: ..., 20%: ...}}
+```
+
+### Шаг 5 — собрать итоговый JSON и провести valid-check
+
+```python
+result = {
+    "upd_number": header["upd_number"],
+    "upd_date": header["upd_date"],
+    "seller": header["seller"],
+    "buyer": header["buyer"],  # должно совпасть с К-7 (ИНН 7724915051)
+    "contract_ref": header.get("contract_ref"),
+    "items": items,
+    "totals": totals,
+    "source_file": upd_path,
+    "is_scan": is_scan,
+    "warnings": [],
+}
+
+# Verify: buyer = К-7
+if result["buyer"].get("inn") != "7724915051":
+    result["warnings"].append(f"Покупатель не К-7: ИНН {result['buyer'].get('inn')}")
+
+# Verify: сумма items.amount = totals.sum_without_vat (с точностью до копеек)
+items_sum = sum(i["amount"] for i in items if i.get("amount") is not None)
+if abs(items_sum - totals["sum_without_vat"]) > 0.01:
+    result["warnings"].append(
+        f"Сумма позиций {items_sum} ≠ итог {totals['sum_without_vat']}"
+    )
+```
+
+## Output JSON schema
+
+```json
+{
+  "upd_number": "К7-456",
+  "upd_date": "2026-05-15",
+  "seller": {
+    "name": "ООО Поставщик-Х",
+    "inn": "7712345678",
+    "kpp": "771201001",
+    "address": "г. Москва, ..."
+  },
+  "buyer": {
+    "name": "ООО К-7",
+    "inn": "7724915051",
+    "kpp": "772401001"
+  },
+  "contract_ref": "Договор поставки № 12 от 01.04.2026",
+  "items": [
+    {
+      "row": 1,
+      "code": "ABC-123",
+      "name": "Кабель UTP 5e 4x2x0.5",
+      "unit": "м",
+      "qty": 1000.0,
+      "price": 35.50,
+      "amount": 35500.00,
+      "vat_rate": "20%",
+      "vat_amount": 7100.00,
+      "amount_with_vat": 42600.00
+    }
+  ],
+  "totals": {
+    "sum_without_vat": 35500.00,
+    "vat_total": 7100.00,
+    "sum_total": 42600.00,
+    "vat_breakdown": {"0%": 0, "10%": 0, "20%": 42600.00}
+  },
+  "source_file": "C:/.../УПД №К7-456.pdf",
+  "is_scan": false,
+  "warnings": []
+}
+```
+
+## Связь с другими скиллами и нашими процессами
+
+- **Перед парсингом:** [[pdf-helper]] определяет тип (текст vs скан); скан → [[image-text-replace]].
+- **После парсинга — сверка со спецификацией:** загрузить нашу спец через [[excel-helper]], сверить D (артикул) и сумму с UPD items.
+- **При расхождении артикула:** применить правило из [[feedback-article-rename.md]] — заменить D, добавить красным «(Было <старый_артикул>)».
+- **Обновление S/J/I/R:** правило [[feedback-preserve-history]] — НЕ перезаписывать, **прибавлять** к существующему. См. также [[feedback-s-j-mirror]] (S↔J зеркалирование).
+
+## Ошибки и graceful degradation
+
+- Файл не существует → `{"status": "error", "reason": "file not found"}`
+- Не PDF → `{"status": "error", "reason": "unsupported format, expected .pdf"}`
+- Не удалось определить ИНН поставщика → возвращай частичный JSON с `"seller.inn": null`, добавь `warnings: ["seller INN not detected"]`. **Не выдумывай.**
+- Не нашлась таблица позиций → `{"items": [], "warnings": ["items table not found, check PDF structure"]}`
+- Скан очень плохого качества (EasyOCR confidence < 0.5 на ключевых полях) → `warnings: ["low OCR confidence on fields: ..."]`
+
+## Ловушки
+
+1. **Многостраничный УПД** — большая таблица может разрываться. `parse_items` обрабатывает все страницы и склеивает таблицы.
+2. **Объединённые ячейки** в шапке УПД (название → 2 строки) — извлекаются как multi-line строка с `\n` внутри значения. Helper нормализует через `re.sub(r'\s+', ' ', text)`.
+3. **НДС-ставка как «Без НДС»** — в `vat_rate` будет строка `"Без НДС"`, не `"0%"`. В `vat_breakdown` агрегировать в отдельный ключ или обработать.
+4. **Поставщик как ИП** — может не быть КПП, только ИНН (12 цифр вместо 10). Helper это учитывает.
+5. **Различия УПД-1 vs УПД-2** — УПД-2 без шапки счёт-фактуры, только накладная. Парсер не падает, просто `vat_*` поля = null.
+
+## Когда вызывать pdf-reviewer
+
+Если после парсинга есть `warnings` или подозрение на неправильную структуру — спавнить subagent `pdf-reviewer` для визуальной проверки страницы (отрендерит и сверит с парсингом).

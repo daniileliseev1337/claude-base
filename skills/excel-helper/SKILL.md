@@ -223,6 +223,41 @@ wb.save("highlighted.xlsx")
 7. **Большие файлы** — `openpyxl` читает медленно (~1 сек на 10к строк). Для >100к строк — `pandas.read_excel` с движком `openpyxl` или `polars`.
 8. **Запись через openpyxl стирает условное форматирование и сводные**, если их не загрузить с `keep_vba=True` и не пересохранить аккуратно. Лучше править через excel-mcp.
 
+## Read-back verification после генерации (§4 Karpathy)
+
+**Правило:** после `wb.save()` / записи через excel-mcp — открыть файл обратно и проверить ключевые признаки. Без verify-шага легко получить пустой xlsx, потерянные формулы, не те типы данных, или незакомиченные изменения в memory-объекте.
+
+```python
+import openpyxl
+
+# 1. Запись
+wb.save("output.xlsx")
+
+# 2. Read-back verification
+verify_wb = openpyxl.load_workbook("output.xlsx", data_only=False)
+
+# Лист существует
+assert sheet_name in verify_wb.sheetnames, f"Лист {sheet_name} пропал после save"
+ws = verify_wb[sheet_name]
+
+# Количество строк соответствует ожидаемому
+assert ws.max_row == expected_rows, f"Ожидали {expected_rows} строк, в файле {ws.max_row}"
+
+# Формулы сохранились (если писали формулы — data_only=False сохраняет их как строки '=...')
+if expected_formulas:
+    for coord, expected_formula in expected_formulas.items():
+        actual = ws[coord].value
+        assert actual == expected_formula, f"{coord}: ожидали {expected_formula}, получили {actual}"
+
+# Тип данных в ключевых колонках
+for row in ws.iter_rows(min_row=2, max_col=1, values_only=True):
+    assert isinstance(row[0], (int, float)), f"В колонке A нечисло: {row[0]}"
+```
+
+Для критичных файлов (спецификации, реестры на сдачу) — после verify ещё спавнить агента [[excel-validator]] (формулы, дубликаты, расхождения с эталоном).
+
+**Особый случай — формулы:** если файл создан Python и **не** открывался в Excel, `data_only=True` вернёт `None` для всех формул (нет cached значений). Read-back проверяет **строку формулы**, не результат. Для проверки результата — либо открыть руками в Excel, либо использовать `pycel`/`xlcalculator` для пересчёта.
+
 ## Когда вызывать агента excel-validator
 
 После любой правки Excel или перед сдачей файла заказчику — спавнить subagent `excel-validator`. Он проверит формулы (нет ли #REF! / #DIV/0!), типы данных по колонкам, дубликаты, расхождения с эталоном (если эталон передан), и выдаст отчёт со списком замечаний.
