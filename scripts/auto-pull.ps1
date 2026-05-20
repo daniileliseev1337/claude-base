@@ -30,6 +30,18 @@ Push-Location $claudeDir
 try {
     Write-SyncLog "start"
 
+    # === Zero-touch GitHub bypass-proxy (idempotent) ===
+    # Корп-прокси блокирует CONNECT к github.com. Для ручных git/gh операций
+    # пользователю нужен persistent global config bypass. Применяем сами при
+    # первом auto-pull на каждом ПК. Idempotent — если уже настроено, skip.
+    # См. CLAUDE.md раздел "GitHub — обязательный bypass proxy".
+    $ghBypass = & git config --global --get http.https://github.com/.proxy 2>$null
+    if ($null -eq $ghBypass) {
+        & git config --global http.https://github.com/.proxy "" 2>&1 | Out-Null
+        & git config --global https.https://github.com/.proxy "" 2>&1 | Out-Null
+        Write-SyncLog "GitHub bypass-proxy auto-applied (was unset) — manual git/gh ops к GitHub теперь работают без -c флагов"
+    }
+
     $output = & git -c http.proxy="" -c https.proxy="" pull --rebase --autostash 2>&1
     $exit = $LASTEXITCODE
 
