@@ -76,9 +76,15 @@ function Log        { param($m) "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] set
 #
 # Идемпотентно: если bypass уже установлен — skip.
 Write-Step "Step 0: GitHub bypass-proxy (persistent git config)"
-$ghBypassHttp = git config --global --get http.https://github.com/.proxy 2>$null
-$ghBypassHttps = git config --global --get https.https://github.com/.proxy 2>$null
-if ($ghBypassHttp -eq "" -and $ghBypassHttps -eq "") {
+# Проверка через $LASTEXITCODE — однозначно работает в PS 5.1 и PS Core 7.
+# Старая проверка `$x -eq ""` ломалась в PS 5.1, потому что `git config --get`
+# несуществующего ключа возвращает пустую строку (а не $null), и условие
+# ошибочно срабатывает «already configured» на свежем ПК.
+git config --global --get http.https://github.com/.proxy 2>$null | Out-Null
+$httpExit = $LASTEXITCODE
+git config --global --get https.https://github.com/.proxy 2>$null | Out-Null
+$httpsExit = $LASTEXITCODE
+if ($httpExit -eq 0 -and $httpsExit -eq 0) {
     Write-OK "GitHub bypass-proxy already configured"
 } else {
     git config --global http.https://github.com/.proxy ""

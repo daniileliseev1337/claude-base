@@ -75,8 +75,13 @@ try {
     # пользователю нужен persistent global config bypass. Применяем сами при
     # первом auto-pull на каждом ПК. Idempotent — если уже настроено, skip.
     # См. CLAUDE.md раздел "GitHub — обязательный bypass proxy".
-    $ghBypass = & git config --global --get http.https://github.com/.proxy 2>$null
-    if ($null -eq $ghBypass) {
+    # Проверка через $LASTEXITCODE: git config --get выдаёт exit 1 когда
+    # ключ не существует и exit 0 когда существует (даже со значением "").
+    # Это однозначно работает и в PS 5.1, и в PS Core 7 — в отличие от
+    # проверки stdout через `$null -eq $x`, которая ломается в PS 5.1
+    # (там пустой stdout возвращается как "" а не $null).
+    & git config --global --get http.https://github.com/.proxy 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
         & git config --global http.https://github.com/.proxy "" 2>&1 | Out-Null
         & git config --global https.https://github.com/.proxy "" 2>&1 | Out-Null
         Write-SyncLog "GitHub bypass-proxy auto-applied (was unset) — manual git/gh ops к GitHub теперь работают без -c флагов"
