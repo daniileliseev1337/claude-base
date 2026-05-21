@@ -41,6 +41,7 @@ $Managed = @(
     'formatting-templates',
     'CLAUDE.md',
     'README.md',
+    'CHANGELOG.md',
     # === Added 2026-05-20 (gap-fix sync) ===
     # Эти пути ранее не были в whitelist — изменения требовали ручного
     # git commit + push. Теперь auto-push их подхватывает автоматически.

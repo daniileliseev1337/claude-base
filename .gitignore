@@ -22,9 +22,12 @@
 # Корневые файлы базы
 !CLAUDE.md
 !README.md
-!settings.json
+!CHANGELOG.md
 !mcp-manifest.json
 !Карта vault.md
+# NOTE: settings.json теперь gitignored (см. ниже Phase 1 sync-redesign),
+# settings.shared.json в репо вместо него:
+!settings.shared.json
 !anti-patterns.md
 
 # Auto-sync скрипты (запускаются Claude Code как hooks)
