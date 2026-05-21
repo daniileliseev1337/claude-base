@@ -91,22 +91,147 @@ basename: $($f.BaseName)
     Write-FbLog "staged: $newName"
 }
 
-# Если есть config с GitHub репо — push через API (Phase 2 follow-up)
-if (Test-Path $ConfigFile) {
-    try {
-        $cfg = Get-Content $ConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ($cfg.github_repo -and $cfg.token) {
-            Write-FbLog "remote push to $($cfg.github_repo) — not implemented yet (Phase 2 follow-up). Files остаются в staging."
-            # TODO Phase 2-follow-up: push each staging file через GitHub API:
-            # POST /repos/$cfg.github_repo/contents/feedback/<branch>/<filename>
-            # Authorization: token $cfg.token
-            # branch: feedback/${hostname}-${userPrefix}
-        }
-    } catch {
-        Write-FbLog "WARN: .feedback-config.json invalid JSON: $_"
-    }
-} else {
-    Write-FbLog "no .feedback-config.json — feedback staged locally в $StagingDir. Daniil заберёт вручную."
+# === Remote push в private feedback-репо через GitHub API (Phase 2-follow-up) ===
+#
+# Конфиг ~/.claude/.feedback-config.json (gitignored, per-PC) формат:
+# {
+#   "github_repo": "daniileliseev1337/claude-base-feedback",
+#   "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxx",  // PAT с repo scope
+#   "branch": "feedback/${hostname}-${userprefix}"  // optional; default below
+# }
+#
+# Если конфиг отсутствует — файлы остаются в staging локально, Daniil
+# забирает вручную (USB/mail/shared folder).
+#
+if (-not (Test-Path $ConfigFile)) {
+    Write-FbLog "no .feedback-config.json — feedback staged locally. Daniil заберёт вручную."
+    exit 0
 }
 
+try {
+    $cfg = Get-Content $ConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
+} catch {
+    Write-FbLog "WARN: .feedback-config.json invalid JSON: $_"
+    exit 0
+}
+
+if (-not $cfg.github_repo -or -not $cfg.token) {
+    Write-FbLog "WARN: .feedback-config.json missing github_repo or token. Skipping remote push."
+    exit 0
+}
+
+# Default branch name если не задан
+$branch = if ($cfg.branch) { $cfg.branch } else { "feedback/${hostname}-${userPrefix}" }
+$repo = $cfg.github_repo
+$token = $cfg.token
+
+# Каталог для уже-push'нутых файлов
+$PushedDir = Join-Path $StagingDir 'pushed'
+if (-not (Test-Path $PushedDir)) {
+    New-Item -ItemType Directory -Path $PushedDir -Force | Out-Null
+}
+
+# Получить SHA текущего HEAD branch (или main если branch ещё не существует)
+function Get-BranchHeadSha {
+    param([string]$Repo, [string]$Branch, [string]$Token)
+    $headers = @{
+        Authorization = "token $Token"
+        Accept = 'application/vnd.github+json'
+        'X-GitHub-Api-Version' = '2022-11-28'
+    }
+    try {
+        $resp = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/git/refs/heads/$Branch" `
+            -Headers $headers -Method Get -ErrorAction Stop
+        return $resp.object.sha
+    } catch {
+        if ($_.Exception.Response.StatusCode -eq 404) {
+            # Branch не существует — создадим от main
+            $mainResp = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/git/refs/heads/main" `
+                -Headers $headers -Method Get -ErrorAction Stop
+            $createBody = @{
+                ref = "refs/heads/$Branch"
+                sha = $mainResp.object.sha
+            } | ConvertTo-Json
+            Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/git/refs" `
+                -Headers $headers -Method Post -Body $createBody -ContentType 'application/json' -ErrorAction Stop | Out-Null
+            Write-FbLog "created branch '$Branch' от main"
+            return $mainResp.object.sha
+        }
+        throw
+    }
+}
+
+# Push один файл через PUT /contents API
+function Push-FeedbackFile {
+    param(
+        [string]$Repo,
+        [string]$Branch,
+        [string]$Token,
+        [string]$LocalPath,
+        [string]$RemotePath
+    )
+    $headers = @{
+        Authorization = "token $Token"
+        Accept = 'application/vnd.github+json'
+        'X-GitHub-Api-Version' = '2022-11-28'
+    }
+    $bytes = [System.IO.File]::ReadAllBytes($LocalPath)
+    $contentB64 = [Convert]::ToBase64String($bytes)
+    $msg = "feedback: $(Split-Path $LocalPath -Leaf) from $env:COMPUTERNAME"
+
+    # Проверить — существует ли уже файл (нужен SHA для update)
+    $sha = $null
+    try {
+        $existing = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/contents/$RemotePath`?ref=$Branch" `
+            -Headers $headers -Method Get -ErrorAction Stop
+        $sha = $existing.sha
+    } catch {
+        # 404 — файла нет, это новый create
+    }
+
+    $body = @{
+        message = $msg
+        content = $contentB64
+        branch = $Branch
+    }
+    if ($sha) { $body.sha = $sha }
+    $bodyJson = $body | ConvertTo-Json -Depth 5
+
+    Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/contents/$RemotePath" `
+        -Headers $headers -Method Put -Body $bodyJson -ContentType 'application/json' -ErrorAction Stop | Out-Null
+}
+
+# Список файлов в staging для push (исключая pushed/)
+$toPush = @(Get-ChildItem $StagingDir -File -Filter '*.md' -ErrorAction SilentlyContinue)
+if ($toPush.Count -eq 0) {
+    Write-FbLog "no staged files to push to $repo"
+    exit 0
+}
+
+Write-FbLog "pushing $($toPush.Count) file(s) to $repo branch=$branch"
+
+# Гарантируем что branch существует
+try {
+    Get-BranchHeadSha -Repo $repo -Branch $branch -Token $token | Out-Null
+} catch {
+    Write-FbLog "FAILED to ensure branch '$branch' exists: $_"
+    exit 0
+}
+
+$pushedCount = 0
+foreach ($file in $toPush) {
+    $remotePath = "feedback/$($file.Name)"
+    try {
+        Push-FeedbackFile -Repo $repo -Branch $branch -Token $token `
+            -LocalPath $file.FullName -RemotePath $remotePath
+        # Переместить в pushed/
+        Move-Item $file.FullName (Join-Path $PushedDir $file.Name) -Force
+        $pushedCount++
+        Write-FbLog "pushed: $($file.Name)"
+    } catch {
+        Write-FbLog "FAILED push $($file.Name): $_"
+    }
+}
+
+Write-FbLog "remote push complete: $pushedCount/$($toPush.Count) files to $repo / $branch"
 exit 0
