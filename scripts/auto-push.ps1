@@ -111,6 +111,25 @@ try {
         }
     }
 
+    # === Role detection (Phase 2 sync-redesign 2026-05-21) ===
+    # DANIILPC (developer) имеет .developer-marker — push'ит в main как обычно.
+    # Сотрудники без marker'а — consumer mode: запускают feedback-collector
+    # вместо push в main. Это разделяет hub-and-spoke: Daniil = writer, остальные = read+feedback.
+    $isDeveloper = Test-Path (Join-Path $claudeDir '.developer-marker')
+    if (-not $isDeveloper) {
+        Write-SyncLog "consumer mode (no .developer-marker) — running feedback-collector"
+        $feedbackScript = Join-Path $claudeDir 'scripts\feedback-collector.ps1'
+        if (Test-Path $feedbackScript) {
+            & powershell -NoProfile -ExecutionPolicy Bypass -File $feedbackScript 2>&1 | Out-Null
+            Write-SyncLog "feedback-collector finished"
+        } else {
+            Write-SyncLog "feedback-collector.ps1 not found — skip"
+        }
+        Write-SyncLog "DONE (consumer)"
+        Pop-Location
+        exit 0
+    }
+
     Write-SyncLog "start"
 
     # Defense-in-depth: disable interactive credential prompt and clear
