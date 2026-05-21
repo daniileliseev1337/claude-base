@@ -146,6 +146,13 @@ try {
             Write-SyncLog "extras-diff: up-to-date (manifest hash matches marker)"
         }
     }
+    # === Merge shared settings → personal (Phase 1 sync-redesign 2026-05-21) ===
+    # После успешного pull — вливаем shared values в local settings.json.
+    # Идемпотентен: если ничего не изменилось, no-op.
+    $mergeScript = Join-Path $claudeDir 'scripts\merge-shared-settings.ps1'
+    if (Test-Path $mergeScript) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $mergeScript 2>&1 | Out-Null
+    }
 } catch {
     Write-SyncLog "exception: $_"
 } finally {

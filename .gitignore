@@ -95,6 +95,17 @@ _sandbox/*
 # Локальные настройки конкретного ПК
 **/settings.local.json
 
+# settings.json — gitignored с 2026-05-21 (Phase 1 sync-redesign).
+# Причина: Claude Code UI пишет туда сам (theme, viewMode, editorMode и т.п.),
+# что вызывало постоянные merge conflict'ы между ПК. Теперь UI пишет в
+# personal local file, а shared values (autoMode/language/effortLevel/plugins/hooks)
+# лежат в settings.shared.json и вливаются в local через
+# scripts/merge-shared-settings.ps1 при auto-pull.
+settings.json
+**/settings.json
+# Но settings.shared.json — наоборот, в репо (это и есть team-shared):
+!settings.shared.json
+
 # Auto-sync лог (per-PC, append-only, не должен лететь в git)
 **/auto-sync.log
 

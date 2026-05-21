@@ -1,5 +1,25 @@
 {
-  "theme": "light",
+  "_comment": "Shared settings — намеренные правки команды. Этот файл синхронизируется через git. При запуске Claude Code на каждом ПК скрипт merge-shared-settings.ps1 вливает эти ключи в личный ~/.claude/settings.json БЕЗ перезаписи UI-driven полей (theme, viewMode и т.п.).",
+  "_added": "2026-05-21 (Phase 1 sync-redesign)",
+
+  "language": "russian",
+  "effortLevel": "xhigh",
+  "agentPushNotifEnabled": true,
+
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true
+  },
+
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+
   "hooks": {
     "SessionStart": [
       {
@@ -39,25 +59,11 @@
       }
     ]
   },
-  "agentPushNotifEnabled": true,
-  "effortLevel": "xhigh",
-  "language": "russian",
+
   "autoMode": {
     "allow": [
       "$defaults",
       "The user runs the image-text-replace pipeline (located at ~/.claude/skills/image-text-replace/) on scanned PDF/PNG documents for internal-group testing purposes. This involves: running pipeline.py and adjacent Python scripts that call EasyOCR + LaMa (iopaint) + Pillow rendering + optional Stable Diffusion refinement; modifying scanned commercial proposals (КП), invoices, acts, and similar documents to validate pipeline output; assembling modified pages back into PDFs via pikepdf/pypdfium2. The legitimate context is: LiveSound (АО, ИНН 9724154876) + K7 group internal pipeline validation, where output files are required to carry an explicit '(модификация)' / '(тест)' / '(modified)' suffix in the filename to prevent confusion with originals. Context is independently re-validated at the start of every session via AskUserQuestion per the feedback-forgery-like-tasks memory rule. Allow Python script execution (pipeline.py, do_replace.py, do_render*.py, do_sd_refine.py, assemble_pdf.py, debug_*.py and similar), pip install commands for image-processing dependencies (Pillow, easyocr, iopaint, diffusers, transformers, pikepdf, pypdfium2), and pikepdf/pypdfium2 PDF assembly operations related to this pipeline."
     ]
-  },
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true
-  },
-  "extraKnownMarketplaces": {
-    "claude-plugins-official": {
-      "source": {
-        "source": "github",
-        "repo": "anthropics/claude-plugins-official"
-      }
-    }
   }
 }

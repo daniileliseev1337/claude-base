@@ -50,13 +50,14 @@ $Managed = @(
     'scripts',
     'mcp-manifest.json',
     '.gitignore',
-    'settings.json'
-    # NOTE: settings.json теперь shared (решение пользователя 2026-05-20).
-    # autoMode.allow rule если был добавлен на DELISEEV-PC — попадёт
-    # на все ПК через auto-sync. Это намеренное поведение: правило
-    # становится shared между ПК команды.
-    # Если в будущем понадобятся per-PC значения — выносить в
-    # settings.local.json (gitignored, не sync'ится).
+    'settings.shared.json'
+    # NOTE: settings.json больше НЕ в whitelist (2026-05-21 Phase 1).
+    # Причина: Claude Code UI постоянно пишет в settings.json (theme,
+    # viewMode и т.п.) → race conditions между ПК. Теперь:
+    #   ~/.claude/settings.json         — personal, gitignored
+    #   ~/.claude/settings.shared.json  — shared, в репо
+    #   scripts/merge-shared-settings.ps1 — вливает shared в personal
+    # См. design.md в session-reports/2026-05-21_sync-redesign/.
 )
 
 function Write-SyncLog { param($msg)
