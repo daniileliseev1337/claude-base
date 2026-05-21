@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 SessionStart hook: pull latest claude-base into ~/.claude/.
 
@@ -58,6 +58,16 @@ if (-not (Test-Path (Join-Path $claudeDir '.git'))) {
 
 Push-Location $claudeDir
 try {
+    # Pre-flight: проверить не была ли прервана предыдущая операция
+    $lastLines = Get-Content $logFile -Tail 8 -ErrorAction SilentlyContinue
+    if ($lastLines) {
+        $lastEntry = ($lastLines | Where-Object { $_ -match 'auto-(pull|push):' } | Select-Object -Last 1)
+        if ($lastEntry -match 'auto-(pull|push): start' -and
+            $lastEntry -notmatch 'DONE|ok|FAILED|pushed|no managed') {
+            Write-SyncLog "WARN: previous hook was interrupted (last: '$lastEntry'). Возможно timeout или kill."
+        }
+    }
+
     Write-SyncLog "start"
 
     # === Zero-touch GitHub bypass-proxy (idempotent) ===
@@ -72,6 +82,13 @@ try {
         Write-SyncLog "GitHub bypass-proxy auto-applied (was unset) — manual git/gh ops к GitHub теперь работают без -c флагов"
     }
 
+    # Sanity check ДО pull — узнать сколько коммитов мы behind
+    & git fetch --quiet origin main 2>&1 | Out-Null
+    $beforeBehind = & git rev-list --count HEAD..origin/main 2>$null
+    if ($beforeBehind -and [int]$beforeBehind -gt 0) {
+        Write-SyncLog "behind origin by $beforeBehind commit(s), will rebase"
+    }
+
     $pullResult = Invoke-GitPullRetry -MaxAttempts 3 -DelaySec 5
     $output = $pullResult.Output
     $exit = if ($pullResult.Success) { 0 } else { 1 }
@@ -82,7 +99,18 @@ try {
         Write-SyncLog "FAILED after $($pullResult.Attempts) attempt(s), aborting rebase"
         & git rebase --abort 2>&1 | Out-Null
     } else {
-        $tag = if ($pullResult.Attempts -gt 1) { "ok (after $($pullResult.Attempts) attempts)" } else { "ok" }
+        # Sanity check ПОСЛЕ pull — точно ли подтянули
+        $afterBehind = & git rev-list --count HEAD..origin/main 2>$null
+        if ($beforeBehind -and [int]$beforeBehind -gt 0 -and [int]$afterBehind -gt 0) {
+            Write-SyncLog "WARN: pull reported success but HEAD still behind by $afterBehind (something wrong)"
+        }
+        $tag = if ($pullResult.Attempts -gt 1) {
+            "ok (after $($pullResult.Attempts) attempts, pulled $beforeBehind commit(s))"
+        } elseif ([int]$beforeBehind -gt 0) {
+            "ok (pulled $beforeBehind commit(s))"
+        } else {
+            "ok (already up to date)"
+        }
         Write-SyncLog $tag
     }
 
@@ -122,6 +150,7 @@ try {
     Write-SyncLog "exception: $_"
 } finally {
     Pop-Location
+    Write-SyncLog "DONE"
 }
 
 # Always exit 0 -- never block session start

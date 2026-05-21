@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 SessionEnd hook: commit and push managed paths in ~/.claude/ to claude-base.
 
@@ -100,6 +100,16 @@ if (-not (Test-Path (Join-Path $claudeDir '.git'))) {
 
 Push-Location $claudeDir
 try {
+    # Pre-flight: проверить не была ли прервана предыдущая операция
+    $lastLines = Get-Content $logFile -Tail 8 -ErrorAction SilentlyContinue
+    if ($lastLines) {
+        $lastEntry = ($lastLines | Where-Object { $_ -match 'auto-(pull|push):' } | Select-Object -Last 1)
+        if ($lastEntry -match 'auto-(pull|push): start' -and
+            $lastEntry -notmatch 'DONE|ok|FAILED|pushed|no managed') {
+            Write-SyncLog "WARN: previous hook was interrupted (last: '$lastEntry'). Возможно timeout или kill."
+        }
+    }
+
     Write-SyncLog "start"
 
     # Defense-in-depth: disable interactive credential prompt and clear
@@ -212,6 +222,7 @@ try {
     Write-SyncLog "exception: $_"
 } finally {
     Pop-Location
+    Write-SyncLog "DONE"
 }
 
 # Always exit 0 -- never block session end
