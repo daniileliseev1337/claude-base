@@ -40,7 +40,20 @@ $Managed = @(
     'harvested',
     'formatting-templates',
     'CLAUDE.md',
-    'README.md'
+    'README.md',
+    # === Added 2026-05-20 (gap-fix sync) ===
+    # Эти пути ранее не были в whitelist — изменения требовали ручного
+    # git commit + push. Теперь auto-push их подхватывает автоматически.
+    'chains',
+    'evals',
+    'anti-patterns.md',
+    'scripts',
+    'mcp-manifest.json',
+    '.gitignore'
+    # NOTE: 'settings.json' намеренно НЕ в whitelist — может содержать
+    # per-PC autoMode.allow rule. Если хочется shared settings — выносить
+    # per-PC поля в settings.local.json (gitignored), а settings.json
+    # добавлять в whitelist отдельным шагом.
 )
 
 function Write-SyncLog { param($msg)
