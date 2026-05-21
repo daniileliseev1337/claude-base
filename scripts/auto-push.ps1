@@ -49,11 +49,14 @@ $Managed = @(
     'anti-patterns.md',
     'scripts',
     'mcp-manifest.json',
-    '.gitignore'
-    # NOTE: 'settings.json' намеренно НЕ в whitelist — может содержать
-    # per-PC autoMode.allow rule. Если хочется shared settings — выносить
-    # per-PC поля в settings.local.json (gitignored), а settings.json
-    # добавлять в whitelist отдельным шагом.
+    '.gitignore',
+    'settings.json'
+    # NOTE: settings.json теперь shared (решение пользователя 2026-05-20).
+    # autoMode.allow rule если был добавлен на DELISEEV-PC — попадёт
+    # на все ПК через auto-sync. Это намеренное поведение: правило
+    # становится shared между ПК команды.
+    # Если в будущем понадобятся per-PC значения — выносить в
+    # settings.local.json (gitignored, не sync'ится).
 )
 
 function Write-SyncLog { param($msg)
