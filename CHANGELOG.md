@@ -9,6 +9,34 @@ Claude при новой сессии (через правило в CLAUDE.md).
 
 ---
 
+## 2026-05-21 — Phase 2-follow-up: remote feedback
+
+### Добавлено
+
+- **`scripts/feedback-collector.ps1`** расширен GitHub API push:
+  - Авто-создание branch `feedback/<hostname>-<userprefix>` от main
+  - PUT `/repos/.../contents/feedback/<filename>` с PAT auth
+  - После push → файл переезжает в `feedback-staging/pushed/`
+  - Idempotent через GitHub SHA matching
+- **`scripts/pull-feedback.ps1`** — для Daniil'а. Clone/fetch claude-base-feedback,
+  list всех `feedback/*` веток, copy файлов в `~/.claude/feedback-inbox/all/`.
+  Mark NEW vs already-seen.
+- **Документ** `session-reports/2026-05-21_sync-redesign/phase2-followup-feedback-setup.md`:
+  step-by-step что Daniil делает в GitHub UI (создать private repo,
+  add collaborators, выдать PAT, распределить, убрать collaborators из main).
+
+### Что осталось руками для Daniil'а
+
+1. Создать private repo `claude-base-feedback` через GitHub UI
+2. Добавить collaborators с write
+3. Выдать PAT каждому сотруднику
+4. На каждом consumer ПК создать `.feedback-config.json` с repo+token
+5. Убрать collaborators из main `claude-base`
+
+См. полный план в `session-reports/2026-05-21_sync-redesign/phase2-followup-feedback-setup.md`.
+
+---
+
 ## 2026-05-21 — Phase 1+2 sync-redesign
 
 **Архитектурный сдвиг от peer-to-peer git к hub-and-spoke.**

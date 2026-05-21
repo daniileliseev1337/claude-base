@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Скрипт для Daniil'а — забрать новый feedback со всех веток
 claude-base-feedback репо в локальный обзор.
