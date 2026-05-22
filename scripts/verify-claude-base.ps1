@@ -137,10 +137,18 @@ Check "auto-push.ps1 has Invoke-GitPushRetry" {
     $c -match 'Invoke-GitPushRetry'
 }
 
-Check "auto-push whitelist includes chains/evals/settings.json" {
+Check "auto-push whitelist includes chains/evals/settings.shared.json" {
     $c = Get-Content (Join-Path $ClaudeDir 'scripts\auto-push.ps1') -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-    ($c -match "'chains'") -and ($c -match "'evals'") -and ($c -match "'settings\.json'")
-}
+    ($c -match "'chains'") -and ($c -match "'evals'") -and ($c -match "'settings\.shared\.json'")
+} -Hint "Phase 1 sync-redesign 2026-05-21: settings.json вынесен, settings.shared.json вместо него"
+
+Check "settings.json не в auto-push whitelist (стал personal)" {
+    $c = Get-Content (Join-Path $ClaudeDir 'scripts\auto-push.ps1') -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+    # settings.json должен НЕ быть в whitelist отдельной строкой (только в комментариях)
+    $lines = $c -split "`n"
+    $managedLines = $lines | Where-Object { $_ -match "^\s*'[\w\.]+'\s*,?\s*(#.*)?\s*$" }
+    -not ($managedLines | Where-Object { $_ -match "'settings\.json'" })
+} -Hint "settings.json теперь personal (gitignored)"
 
 Check "auto-pull.ps1 auto-applies GitHub bypass-proxy" {
     $c = Get-Content (Join-Path $ClaudeDir 'scripts\auto-pull.ps1') -Raw -Encoding UTF8 -ErrorAction SilentlyContinue

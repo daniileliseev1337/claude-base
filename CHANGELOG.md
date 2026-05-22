@@ -9,6 +9,40 @@ Claude при новой сессии (через правило в CLAUDE.md).
 
 ---
 
+## 2026-05-22 — Updater 2.0 (one-command setup)
+
+### Добавлено
+
+- **`scripts/Update-ClaudeBase.ps1`** — single-command setup для любого ПК.
+  Делает за один запуск:
+    1. Detect role (developer vs consumer)
+    2. git pull origin main (с retry + bypass-proxy)
+    3. merge-shared-settings
+    4. verify-claude-base (22-23 проверки)
+    5. (consumer only) prompt для PAT интерактивно + создание .feedback-config.json
+    6. (consumer only) smoke-test push в claude-base-feedback
+    7. Финальный summary PASS/FAIL по каждому шагу
+- **`scripts/Update-ClaudeBase.bat`** — double-click wrapper. Сотрудник
+  открывает проводник `~/.claude/scripts/`, делает двойной клик на
+  Update-ClaudeBase.bat — всё автоматически.
+
+### Починено
+
+- verify-claude-base.ps1 устарел после Phase 1 — проверял `settings.json`
+  в whitelist (мы его вынесли в gitignored). Заменено на проверку
+  `settings.shared.json` + добавлена inverse check «settings.json **не**
+  в whitelist».
+
+### Как использовать (для сотрудника)
+
+1. Открыть проводник, перейти в `C:\Users\<user>\.claude\scripts\`
+2. Двойной клик на **Update-ClaudeBase.bat**
+3. Если первая установка — скрипт интерактивно спросит PAT (получить
+   от Daniil'а по secure channel).
+4. Финал: либо `✅ Готово` либо `❌ Есть FAIL` с конкретной диагностикой.
+
+---
+
 ## 2026-05-21 — Phase 2-follow-up: remote feedback
 
 ### Добавлено
