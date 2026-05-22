@@ -118,11 +118,21 @@ if (-not (Test-Path $verifyScript)) {
     Write-Host "  [WARN] $verifyScript not found" -ForegroundColor Yellow
     Record "4. Verify" "WARN" "script not found"
 } else {
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $verifyScript 2>&1 | ForEach-Object { Write-Host "  $_" }
+    $verifyOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File $verifyScript 2>&1
+    $verifyOutput | ForEach-Object { Write-Host "  $_" }
     if ($LASTEXITCODE -eq 0) {
         Record "4. Verify" "PASS" "22/22"
     } else {
-        Record "4. Verify" "FAIL" "see output above"
+        # Extract failed check names from verify output for summary
+        $failedChecks = @($verifyOutput | Where-Object { $_ -match '\[FAIL\]\s+(.+)$' } | ForEach-Object {
+            if ($_ -match '\[FAIL\]\s+(.+?)(\s+--.+)?$') { $matches[1].Trim() }
+        })
+        $detail = if ($failedChecks.Count -gt 0) {
+            "failed: " + ($failedChecks -join '; ')
+        } else {
+            "see output above"
+        }
+        Record "4. Verify" "FAIL" $detail
     }
 }
 
@@ -204,14 +214,26 @@ Timestamp: $(Get-Date -Format 'yyyy-MM-ddTHH:mm:sszzz')
 "@
         Set-Content -Path $smokeFile -Value $smokeContent -Encoding UTF8
 
+        # Snapshot лога ДО запуска collector — чтобы потом фильтровать только новые строки
+        # (без этого попадают исторические FAIL из прошлых запусков и smoke-test ложно FAIL'ит)
+        $logFile = Join-Path $ClaudeDir 'auto-sync.log'
+        $linesBefore = if (Test-Path $logFile) {
+            @(Get-Content $logFile -Encoding UTF8 -ErrorAction SilentlyContinue).Count
+        } else { 0 }
+
         $collector = Join-Path $ClaudeDir 'scripts\feedback-collector.ps1'
         & powershell -NoProfile -ExecutionPolicy Bypass -File $collector 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
 
-        # Проверить лог на признак успешного push
-        $logFile = Join-Path $ClaudeDir 'auto-sync.log'
-        $logTail = Get-Content $logFile -Tail 15 -Encoding UTF8 -ErrorAction SilentlyContinue
-        $hasPushed = $logTail | Where-Object { $_ -match 'remote push complete: \d+/\d+' }
-        $hasFailed = $logTail | Where-Object { $_ -match 'feedback-collector.*FAILED' }
+        # Читаем только строки, добавленные ТЕКУЩИМ запуском collector
+        $newLines = @()
+        if (Test-Path $logFile) {
+            $allLines = @(Get-Content $logFile -Encoding UTF8 -ErrorAction SilentlyContinue)
+            if ($allLines.Count -gt $linesBefore) {
+                $newLines = $allLines[$linesBefore..($allLines.Count - 1)]
+            }
+        }
+        $hasPushed = $newLines | Where-Object { $_ -match 'remote push complete: \d+/\d+' }
+        $hasFailed = $newLines | Where-Object { $_ -match 'feedback-collector.*FAILED' }
 
         if ($hasPushed -and -not $hasFailed) {
             Write-Host "  [OK] Push в GitHub API сработал" -ForegroundColor Green
@@ -222,9 +244,14 @@ Timestamp: $(Get-Date -Format 'yyyy-MM-ddTHH:mm:sszzz')
             Record "6. Smoke-test push" "PASS"
         } else {
             Write-Host "  [FAIL] Push в GitHub API не подтверждён" -ForegroundColor Red
-            Write-Host "       Tail auto-sync.log (последние 15 строк):" -ForegroundColor DarkGray
-            $logTail | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkGray }
-            Record "6. Smoke-test push" "FAIL" "no 'remote push complete' in log"
+            Write-Host "       Новые строки лога (от текущего запуска collector):" -ForegroundColor DarkGray
+            if ($newLines.Count -eq 0) {
+                Write-Host "       (collector не дописал ничего в лог — возможно failed на старте)" -ForegroundColor DarkGray
+            } else {
+                $newLines | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkGray }
+            }
+            $reason = if ($hasFailed) { "collector reported FAILED" } else { "no 'remote push complete' in new log lines" }
+            Record "6. Smoke-test push" "FAIL" $reason
         }
     }
 }
