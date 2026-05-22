@@ -112,7 +112,7 @@ if (-not (Test-Path $mergeScript)) {
 # ===================================================================
 # Step 4: Verify
 # ===================================================================
-Section "4. Verify claude-base (22 проверки)"
+Section "4. Verify claude-base"
 $verifyScript = Join-Path $ClaudeDir 'scripts\verify-claude-base.ps1'
 if (-not (Test-Path $verifyScript)) {
     Write-Host "  [WARN] $verifyScript not found" -ForegroundColor Yellow
@@ -121,7 +121,11 @@ if (-not (Test-Path $verifyScript)) {
     $verifyOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File $verifyScript 2>&1
     $verifyOutput | ForEach-Object { Write-Host "  $_" }
     if ($LASTEXITCODE -eq 0) {
-        Record "4. Verify" "PASS" "22/22"
+        # Parse "=== Summary: N/M passed ===" line for an accurate count
+        # instead of hard-coding (verify check list may grow).
+        $summaryLine = $verifyOutput | Where-Object { $_ -match 'Summary:\s*(\d+/\d+)\s+passed' } | Select-Object -First 1
+        $counts = if ($summaryLine -and $summaryLine -match 'Summary:\s*(\d+/\d+)\s+passed') { $matches[1] } else { 'all' }
+        Record "4. Verify" "PASS" $counts
     } else {
         # Extract failed check names from verify output for summary
         $failedChecks = @($verifyOutput | Where-Object { $_ -match '\[FAIL\]\s+(.+)$' } | ForEach-Object {
