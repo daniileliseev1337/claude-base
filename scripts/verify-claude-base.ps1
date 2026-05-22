@@ -190,8 +190,10 @@ Write-Host ""
 Write-Host "[5] GitHub bypass-proxy (persistent git config)" -ForegroundColor Yellow
 
 Check "git config http.https://github.com/.proxy is set" {
-    & git config --global --get http.https://github.com/.proxy 2>$null | Out-Null
-    $LASTEXITCODE -eq 0
+    # NB: --get returns exit 1 for empty values on some git versions.
+    # Use --list + regex to detect key presence regardless of value.
+    $listOut = & git config --global --list 2>$null
+    @($listOut | Where-Object { $_ -match '^http\.https://github\.com/\.proxy=' }).Count -gt 0
 } -Hint "auto-pull.ps1 применит при первом hook'е, или вручную: git config --global http.https://github.com/.proxy `"`""
 
 # === [6] Pytest evals ===
@@ -199,6 +201,18 @@ Write-Host ""
 Write-Host "[6] Pytest evals (regression-тесты скиллов)" -ForegroundColor Yellow
 
 Check "pytest collects + passes (21 tests)" {
+    # pytest evals = regression-тесты для разработки скиллов.
+    # Не требуются на consumer-ПК (там Python+pytest могут отсутствовать).
+    # На developer-ПК (есть .developer-marker) — обязательны.
+    $py = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $py) {
+        $isDeveloper = Test-Path (Join-Path $ClaudeDir '.developer-marker')
+        if (-not $isDeveloper) {
+            Write-Host "         (python not in PATH — consumer PC, skipped)" -ForegroundColor DarkGray
+            return $true
+        }
+        return $false
+    }
     $evalsDir = Join-Path $ClaudeDir 'evals'
     if (-not (Test-Path $evalsDir)) { return $false }
     Push-Location $evalsDir
