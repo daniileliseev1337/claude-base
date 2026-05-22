@@ -1,7 +1,7 @@
 # Session report: тестирование AutoCAD MCP + заполнение таблиц ХОВС конд / ХОВС вент
 
 **Дата начала:** 2026-05-21
-**Дата окончания:** 2026-05-22
+**Дата окончания:** 2026-05-23
 **Host:** DANIILPC
 **Project cwd:** `F:\Работа\Проектирование 2.0\В работе\Объект «Современная Москва»\Revit`
 **Источник:** Claude Code CLI
@@ -197,6 +197,66 @@
 - **Итераций COM-скрипта:** 5 (v1→v5 для ХОВС конд) + 2 (v1→v2 для ХОВС вент)
 - **Тулколлов pdf-mcp:** ~7
 - **Тулколлов fetch:** 2
+
+---
+
+## Правильная архитектура AutoCAD MCP (как должно работать)
+
+**Главный архитектурный вывод сессии**: autocad-mcp поддерживает **два backend'а**. Весь танец с ezdxf-edit MTEXT + последующий обход через прямой `win32com.client` — это **workaround**, а не правильный путь. Нативная архитектура — **File IPC backend через AutoLISP-плагин**, загруженный в AutoCAD через Startup Suite.
+
+### Два backend'а autocad-mcp
+
+| Свойство | File IPC (нативный) | ezdxf (fallback) |
+|---|---|---|
+| **AutoCAD нужен?** | Да, запущен | Нет (headless) |
+| **Формат файлов** | DWG напрямую | Только DXF |
+| **ACAD_TABLE state-edit** | Через AutoLISP — корректно, сохраняется | Только render-cache MTEXT, AutoCAD перетирает при regen |
+| **`execute_lisp`** | Да — произвольный AutoLISP | Запрещён |
+| **Screenshot** | `PrintWindow` Win32 — не отбирает фокус | matplotlib render |
+| **`offset`, `fillet`, `chamfer`** | Да | Нет |
+| **Канал связи** | JSON-файлы в `C:/temp/*.json` + Win32 `PostMessageW(WM_CHAR)` к MDIClient окну AutoCAD, триггерит `(c:mcp-dispatch)` | — |
+| **Env-var** | `AUTOCAD_MCP_BACKEND=file_ipc` или `auto` | `AUTOCAD_MCP_BACKEND=ezdxf` |
+| **LISP-плагины** | `~/.claude/mcp-servers/autocad-mcp/lisp-code/mcp_dispatch.lsp` + `attribute_tools.lsp` | — |
+
+### Что настроено на ПК DANIILPC (2026-05-23)
+
+1. **APPLOAD в AutoCAD**: загружены оба LISP-файла
+   - `C:\Users\Даниил ПК\.claude\mcp-servers\autocad-mcp\lisp-code\mcp_dispatch.lsp`
+   - `C:\Users\Даниил ПК\.claude\mcp-servers\autocad-mcp\lisp-code\attribute_tools.lsp`
+2. **Startup Suite** (в том же APPLOAD-диалоге → «Contents…») — оба файла добавлены. Теперь AutoCAD автоматически загружает их при каждом запуске. Подтверждение в диалоге: «Добавлено файлов в список автозагрузки: 2».
+3. **Env-var `AUTOCAD_MCP_BACKEND`** оставлен `auto` (значение из manifest) — autocad-mcp при auto-detect проверяет наличие File IPC канала и сам переключается.
+
+### Как проверить в следующей сессии
+
+```
+mcp__autocad-mcp__system  operation=status
+```
+Должно вернуть `"backend": "file_ipc"` (а не `"ezdxf"` как в этой сессии).
+
+После этого Claude может **из MCP**:
+- открыть DWG напрямую через `drawing.open` (без конвертации в DXF)
+- выполнить произвольный AutoLISP через `system.execute_lisp` (например `(+ 1 2)` для smoke-теста)
+- редактировать ACAD_TABLE через AutoLISP API — без MTEXT/regen обхода
+- получить screenshot через `view.get_screenshot` (PrintWindow Win32, работает даже когда AutoCAD свёрнут)
+
+### Бонус: автостарт AutoCAD
+
+Если AutoCAD не запущен, Claude может стартовать через COM (`win32com.client.Dispatch("AutoCAD.Application")` или просто Win32 ShellExecute от MCP). После старта Startup Suite автоматически грузит LISP-плагины — File IPC канал становится активным без участия пользователя.
+
+### Урок: что делать НЕ так (наш путь до 23.05)
+
+1. ❌ **ezdxf для редактирования ACAD_TABLE** — правит render-cache блок `*T<id>`, AutoCAD затирает при regen из state. PoC «работает» один раз благодаря кэшу, при следующем открытии regen всё сносит. См. [[feedback-ezdxf-vs-com-acad-table]].
+2. ❌ ezdxf видит «3 ACAD_TABLE» там где одна — extension dictionary entries ошибочно парсятся как отдельные entities.
+3. ✅ Прямой `win32com.client` через pywin32 + `AcadTable.SetText()` — **работает**, мы так залили обе таблицы (`ХОВС конд_NEW.dwg`, `ХОВС вент_NEW.dxf`). Но это **обход MCP** — каждый раз скрипт-обёртка, не нативный канал.
+4. ✅✅ **File IPC backend через AutoLISP-плагин** — **нативный путь** autocad-mcp. После настройки Startup Suite (сделано 2026-05-23) этот путь автоматически выбирается MCP при любом старте сессии Claude.
+
+### TODO для следующей сессии
+
+- Проверить `system status` → `backend: file_ipc`
+- Smoke-тест `execute_lisp` с тривиальным `(+ 1 2)`
+- Если backend всё ещё `ezdxf` — посмотреть env-var в `~/.claude.json` (registration autocad-mcp). Возможно нужно явно выставить `AUTOCAD_MCP_BACKEND=file_ipc` вместо `auto`, или прогреть LISP-канал перед запуском MCP
+- Перезалить ХОВС конд через нативные MCP-вызовы (без pywin32-обёртки) для подтверждения что File IPC работает на нашем кейсе с таблицами
+- На остальных ПК команды (если будут пользователи autocad-mcp) — повторить APPLOAD + Startup Suite. Инструкция выше.
 
 ---
 

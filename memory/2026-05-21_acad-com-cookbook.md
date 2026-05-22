@@ -5,7 +5,9 @@
 
 ## TL;DR
 
-**Для редактирования ACAD_TABLE — только COM через `pywin32`, не `ezdxf`.** `ezdxf` редактирует MTEXT в render-cache блоке, AutoCAD затирает изменения при regen из state. Через COM `AcadTable.SetText(row, col, text)` — state-level правка, сохраняется навсегда.
+**Правильный путь — autocad-mcp File IPC backend через AutoLISP-плагин** (см. секцию «File IPC backend» внизу — добавлено 2026-05-23). Этот документ описывает **обход через прямой `win32com.client`** — он работает и полезен, но это workaround. Когда mcp_dispatch.lsp загружен в AutoCAD через Startup Suite — autocad-mcp сам переключается на File IPC, и большинство ниже описанных хаков уже не нужны.
+
+**Для редактирования ACAD_TABLE — НЕ через `ezdxf`.** `ezdxf` редактирует MTEXT в render-cache блоке, AutoCAD затирает изменения при regen из state. Через COM `AcadTable.SetText(row, col, text)` — state-level правка, сохраняется навсегда.
 
 ---
 
@@ -157,7 +159,55 @@ doc.Close(False)          # don't save changes (уже сохранили в Sav
 
 **Без `time.sleep(2)` после `Documents.Open`** — последующие COM вызовы падают на RPC_E_CALL_REJECTED.
 
+## File IPC backend — правильный путь (добавлено 2026-05-23)
+
+После сессии 21-23.05 выяснилось что **autocad-mcp имеет нативный File IPC backend**, который работает с DWG напрямую через AutoLISP-плагин в AutoCAD. Это устраняет необходимость в прямом `win32com.client` (всё, что описано выше).
+
+### Настройка (one-time per machine)
+
+1. Открыть AutoCAD (любой DWG)
+2. В командной строке: `APPLOAD` → Enter
+3. В диалоге **Load/Unload Applications**:
+   - Browse → выбрать `~/.claude/mcp-servers/autocad-mcp/lisp-code/mcp_dispatch.lsp` → **Load**
+   - То же для `attribute_tools.lsp`
+4. **Startup Suite** (нижняя секция диалога) → **Contents…** → **Add…** → выбрать оба .lsp файла → **Close**
+
+После этого AutoCAD будет автоматически загружать оба плагина при каждом запуске. autocad-mcp с `AUTOCAD_MCP_BACKEND=auto` сам обнаружит активный File IPC канал и переключится с ezdxf на file_ipc.
+
+### Что меняется
+
+| | До (только ezdxf) | После (file_ipc) |
+|---|---|---|
+| Формат файлов | Только DXF | **DWG напрямую** |
+| ACAD_TABLE state-edit | Сломан (regen затирает) | Работает через AutoLISP |
+| `execute_lisp` | Запрещён | **Произвольный AutoLISP** |
+| Screenshot | matplotlib | **PrintWindow** (Win32, не отбирает фокус) |
+| `offset / fillet / chamfer` | Нет | Да |
+
+### Проверка backend
+
+```
+mcp__autocad-mcp__system  operation=status
+# должно вернуть "backend": "file_ipc"
+```
+
+### Канал связи
+
+JSON-файлы в `C:/temp/*.json` + `PostMessageW(WM_CHAR)` к MDIClient окну AutoCAD, триггерит `(c:mcp-dispatch)` в LISP. **Не отбирает фокус** — можно работать в других окнах параллельно.
+
+### Когда использовать прямой `win32com.client` (как описано выше)
+
+Только если:
+- AutoCAD сборка не поддерживает AutoLISP (LT < 2024 на Windows; LT на Mac вообще не поддерживает)
+- Нужны операции которых нет в LISP-плагине mcp_dispatch
+- Тестируется новая функция перед добавлением в LISP-плагин
+
+В **штатном** режиме после настройки Startup Suite — всё идёт через File IPC.
+
+---
+
 ## Связанные
 
-- [[2026-05-21_acad-mcp-hovs-tables]] — session report со всей хронологией и рабочими скриптами (`com_fill_hovs_v5.py`, `com_fill_vent_v2.py`)
+- [[2026-05-21_acad-mcp-hovs-tables]] — session report со всей хронологией и рабочими скриптами (`com_fill_hovs_v5.py`, `com_fill_vent_v2.py`). Также там полная инструкция по настройке Startup Suite.
 - `~/.claude/skills/cad-reader/SKILL.md` — методология чтения DXF через ezdxf (для **чтения**, не редактирования)
+- `~/.claude/mcp-servers/autocad-mcp/lisp-code/mcp_dispatch.lsp` — основной AutoLISP-dispatcher
