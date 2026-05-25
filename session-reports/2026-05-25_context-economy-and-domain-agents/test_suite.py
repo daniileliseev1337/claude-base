@@ -25,12 +25,13 @@ SKILLS_DIR = HOME / '.claude' / 'skills'
 # Файлы для проверки (новые в этой сессии)
 NEW_FILES = ['_TEMPLATE.md', 'pto-engineer.md', 'сметчик.md',
              'снабженец.md', 'audit-rd-section.md',
-             'norm-lookup.md', 'kp-writer.md', 'letter-writer.md']
+             'norm-lookup.md', 'kp-writer.md', 'letter-writer.md',
+             'id-engineer.md', 'expertiza-responder.md', 'rd-coordinator.md']
 
 # Read-only агенты (tools НЕ должны содержать Write/Edit)
 READ_ONLY_AGENTS = {'auditor.md', 'word-checker.md', 'excel-validator.md',
                      'pdf-reviewer.md', 'audit-rd-section.md',
-                     'norm-lookup.md'}
+                     'norm-lookup.md', 'rd-coordinator.md'}
 
 # Известные значения tools (whitelist)
 KNOWN_TOOLS = {'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Bash',
