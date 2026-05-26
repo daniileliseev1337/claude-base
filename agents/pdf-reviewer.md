@@ -10,7 +10,7 @@ description: |
   - "проверь PDF", "ревью PDF", "что-то не так с PDF"
   - "не открывается PDF", "не печатается PDF"
   - после spawned задачи на правку PDF (как perekrestnая проверка)
-tools: Read, Bash, Grep, Glob
+tools: Read, Bash, Grep, Glob, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_read_all, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_get_toc, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_render_pages
 ---
 
 # pdf-reviewer

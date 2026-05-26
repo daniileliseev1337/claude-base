@@ -10,7 +10,7 @@ description: |
   - "проверь docx", "ревью Word", "что-то не так с документом"
   - "проверь шаблон заполнился", "плейсхолдеры в Word"
   - после spawned задачи на правку/генерацию docx (perekrestnая проверка)
-tools: Read, Bash, Grep, Glob
+tools: Read, Bash, Grep, Glob, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__get_document_xml, mcp__word__get_paragraph_text_from_document, mcp__word__find_text_in_document, mcp__word__get_all_comments, mcp__word__list_available_documents, mcp__word__validate_document_footnotes
 ---
 
 # word-checker
