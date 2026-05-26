@@ -14,6 +14,7 @@ tags: [мета, индекс, sessions]
 
 ### 2026-05
 
+- [[2026-05-26_auto-push-fix-consumer-mode/report|auto-push-fix-consumer-mode]] — закрыта системная дыра hub-and-spoke: feedback-collector.ps1 теперь auto-harvest'ит untracked session-reports на consumer-ПК. Триггер — отчёт Deliseev'а про 5 застрявших отчётов 22-26 мая.
 - [[2026-05-26_base-dev-structured-artifacts-skill/report|base-dev-structured-artifacts-skill]] — адоптирован Концепт 2 из gsd-redux как новый скилл [[structured-artifacts]] + housekeeping индексов + зафиксирован backlog alignment 5 старых агентов.
 - [[2026-05-26_team-rollout-and-refactor/report|team-rollout-and-refactor]] — раскатка 10 доменных агентов + рефакторинг CLAUDE.md → memory/ (overhead) + Desktop geo-block.
 - [[2026-05-25_context-economy-and-domain-agents/report|context-economy-and-domain-agents]] — методология доменных агентов + экономия контекста (включает `test_suite.py`).
