@@ -1,4 +1,4 @@
-# 2026-05-26 — Anthropic геоблок на RU IP блокирует Claude Desktop UI
+﻿# 2026-05-26 — Anthropic геоблок на RU IP блокирует Claude Desktop UI
 
 ## TL;DR
 
@@ -180,3 +180,27 @@ GrowthBook (A/B config) **получает HTML** вместо JSON → знач
 
 Сессия 2026-05-26 «Team rollout + рефакторинг базы». DELISEEV-PC лог:
 `%APPDATA%\Claude\logs\main.log` (2026-05-26 15:23:20).
+
+
+---
+
+## Дополнение 2026-05-26 — тест MS Store версии (подтверждение)
+
+**Гипотеза:** возможно MS Store-версия Claude Desktop обходит геоблок
+(другая упаковка, разные network capabilities UWP AppContainer).
+
+**Тест:** на DANIILPC выключили VPN, запустили Claude из MS Store через
+`explorer.exe shell:AppsFolder\Claude_pzs8sxrjxfjjc!Claude`.
+
+**Результат:** **БЕЛЫЙ ЭКРАН** (то же что Direct installer на DELISEEV-PC).
+
+**Вывод:** MS Store не обходит геоблок. Способ установки **не имеет
+значения** — внутри один и тот же `claude.exe`, делает те же сетевые
+запросы с того же IP клиента. Anthropic блочит на server-side по IP.
+
+**Финальный verdict для коллег:** Claude Desktop **требует VPN/non-RU IP**,
+точка. MS Store / direct installer / любая другая упаковка — не помогают.
+
+**Главный workflow для коллег:** VS Code Extension через корп-прокси
+(работает без VPN, использует `/v1/messages` API endpoint который
+geo-permissive в отличие от Desktop UI bootstrap).
