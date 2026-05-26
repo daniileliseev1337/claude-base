@@ -49,9 +49,64 @@ if (-not (Test-Path $StagingDir)) {
     New-Item -ItemType Directory -Path $StagingDir -Force | Out-Null
 }
 if (-not (Test-Path $PendingDir)) {
-    # Нет pending dir — feedback не собирался в эту сессию
-    Write-FbLog "no feedback-pending/ — nothing to collect"
-    exit 0
+    New-Item -ItemType Directory -Path $PendingDir -Force | Out-Null
+}
+
+# === Auto-harvest session-reports от consumer-ПК (Phase 2-follow-up, 2026-05-26) ===
+#
+# Правило CLAUDE.md обязывает каждую сессию писать
+# session-reports/<date>_<тема>/report.md. На consumer-ПК (без
+# .developer-marker) auto-push.ps1 не пушит эти отчёты в claude-base/main
+# (hub-and-spoke). Без этого блока отчёты копились локально и терялись
+# для Daniil'а (см. R-090226727A 2026-05-26 — Deliseev накопил 5 untracked
+# отчётов за 5 дней, потом ошибочно git push origin main → revert).
+#
+# Логика:
+# - Для каждого session-reports/<theme>/report.md проверяем tracked ли он
+#   в git. Tracked = developer уже забрал в main, skip.
+# - Untracked = consumer-side, кандидат на отправку.
+# - Если файл с этим basename уже в feedback-staging/pushed/ — skip
+#   (идемпотентность повторного запуска).
+# - Иначе копируем в feedback-pending/report-<theme>.md, штатный flow
+#   ниже добавит frontmatter, перенесёт в staging, push'нёт через
+#   GitHub API в claude-base-feedback ветку feedback/<host>-<user>.
+$SessionReportsDir = Join-Path $ClaudeDir 'session-reports'
+$PushedDir = Join-Path $StagingDir 'pushed'
+
+if (Test-Path $SessionReportsDir) {
+    $reports = @(Get-ChildItem $SessionReportsDir -Directory -ErrorAction SilentlyContinue)
+    $harvestedCount = 0
+
+    foreach ($reportDir in $reports) {
+        $reportFile = Join-Path $reportDir.FullName 'report.md'
+        if (-not (Test-Path $reportFile)) { continue }
+
+        # Идемпотентность 1: tracked в git → developer уже забрал в main.
+        # ls-files --error-unmatch exit 0 = tracked, exit ≠ 0 = untracked.
+        $relPath = "session-reports/$($reportDir.Name)/report.md"
+        & git -C $ClaudeDir ls-files --error-unmatch -- $relPath 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) { continue }
+
+        # Идемпотентность 2: уже pushed в этой machine?
+        # Формат имени в pushed/: <ts>-<HOST>-<user>-report-<theme>.md
+        $basename = "report-$($reportDir.Name)"
+        if (Test-Path $PushedDir) {
+            $existing = @(Get-ChildItem $PushedDir -File -Filter "*-${basename}.md" -ErrorAction SilentlyContinue)
+            if ($existing.Count -gt 0) { continue }
+        }
+
+        # Идемпотентность 3: уже в pending (этой же сессией)?
+        $pendingTarget = Join-Path $PendingDir "${basename}.md"
+        if (Test-Path $pendingTarget) { continue }
+
+        # Копируем — штатный flow возьмёт дальше.
+        Copy-Item $reportFile $pendingTarget -Force
+        $harvestedCount++
+    }
+
+    if ($harvestedCount -gt 0) {
+        Write-FbLog "auto-harvested $harvestedCount untracked session-report(s) → feedback-pending/"
+    }
 }
 
 $pendingFiles = @(Get-ChildItem $PendingDir -File -Filter '*.md' -ErrorAction SilentlyContinue)
