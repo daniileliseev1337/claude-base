@@ -161,6 +161,46 @@ orientation/dimensions/поля через `python-docx` (не доверять 
 
 **Правильно:** всегда прогонять `word-checker` перед сдачей DOCX.
 
+### A3.5 PyMuPDF apply_redactions/show_pdf_page для замены штампа
+
+PyMuPDF `page.apply_redactions(graphics=2)` **не удаляет** содержимое
+внутри Form XObjects и nested content stream операторы (cm+Tj/TJ
+многослойных штампов). `page.show_pdf_page()` копирует целевую
+страницу **целиком**, clip работает только как окно отображения,
+не как физический вырез.
+
+**Симптом:** двойной слой — старый штамп виден поверх нового.
+Обнаруживается **только** при визуальной проверке готового PDF
+на ВСЕХ страницах (не «3-4 удобных»).
+
+❌ **Плохо:**
+```python
+page.add_redact_annot(rect, fill=(1,1,1))
+page.apply_redactions(graphics=2)   # белый прямоугольник, но содержимое осталось
+page.show_pdf_page(rect, stamp_doc, 0, clip=stamp_rect)
+```
+
+✅ **Правильно:** для **физического выреза** старого содержимого —
+[[pikepdf]] с инъекцией clip-path оператора в content stream
+(even-odd clipping rule). См.
+[[harvested/pdf/pikepdf|harvested/pdf/pikepdf.md]] минимальный пример.
+
+**Дополнительные ловушки PyMuPDF:**
+
+- `search_for` возвращает координаты в **MediaBox**, не visual.
+  На страницах с `/Rotate=270` все расчёты bbox смещены.
+  Нужно rotation-aware преобразование.
+- Удаление XObject из `/Resources` оставляет объект в PDF до GC.
+  Для очистки — `pdf.save(..., garbage=4)` или `mutool clean`.
+- После pdfcpu stamp add — Acrobat может выдать ошибку «Type1
+  шрифт без `/FirstChar`, `/Widths`». Лечится финальным
+  `doc.save(out, garbage=4, clean=True, deflate=True, deflate_fonts=True)`
+  через PyMuPDF.
+
+**Источник:** session-report `2026-05-22_ahp-stamp-overlay` от
+R-090226727A — 11 итераций (v6-v11) на 57 листов АХП Балашиха,
+закрылась только pikepdf clip-path v11.
+
 ## Категория 4. Безопасность
 
 ### A4.1 Self-modification settings.json без согласия

@@ -22,7 +22,7 @@ CAD-инструменты. Главный индекс — [[_INDEX]] в пап
 
 ### PDF ([[pdf|pdf/]])
 
-PDF-инструменты для извлечения / OCR / редактирования. [[pdfplumber]] (наш fallback к pdf-mcp), [[pypdfium2]], [[PyMuPDF]], [[pymupdf4llm]], [[OCRmyPDF]], [[PaddleOCR]], [[EasyOCR]], [[surya]], [[marker]], [[camelot-dev]] (таблицы), [[docling]], [[unstructured]], [[jztan-pdf-mcp]], [[rsp2k-mcp-pdf]].
+PDF-инструменты для извлечения / OCR / редактирования. [[pdfplumber]] (наш fallback к pdf-mcp), [[pypdfium2]], [[PyMuPDF]], [[pymupdf4llm]], [[OCRmyPDF]], [[PaddleOCR]], [[EasyOCR]], [[surya]], [[marker]], [[camelot-dev]] (таблицы), [[docling]], [[unstructured]], [[jztan-pdf-mcp]], [[rsp2k-mcp-pdf]], [[pikepdf]] (низкоуровневое редактирование content stream, clip-path inject — закрывает дыру PyMuPDF apply_redactions; adopted 2026-05-22).
 
 ### Прочее (корень)
 
