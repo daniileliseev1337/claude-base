@@ -9,6 +9,50 @@ Claude при новой сессии (через правило в CLAUDE.md).
 
 ---
 
+## 2026-05-26 — Безопасность + надёжность инфры
+
+### Починено
+
+- **Hub-and-spoke дыра** (`scripts/feedback-collector.ps1`):
+  consumer-ПК теперь auto-harvest'ит untracked `session-reports/*/report.md`
+  и шлёт их через GitHub API в `claude-base-feedback`. Раньше отчёты
+  сотрудников копились локально и терялись (см. `session-reports/2026-05-26_auto-push-fix-consumer-mode/`).
+
+### Добавлено
+
+- **`scripts/Set-FeedbackToken.ps1`** — шифрование GitHub PAT в `.feedback-config.json`
+  через Windows DPAPI CurrentUser scope. PAT больше не лежит в plaintext.
+- **`skills/structured-artifacts/`** — методология выноса контекста крупных
+  задач (3+ фазы, multi-agent) в md-файлы ROADMAP/STATE/PLAN/REVIEW/DECISIONS.
+  Адаптация Концепта 2 из gsd-redux.
+- **`harvested/pdf/pikepdf.md`** — заметка про pikepdf (низкоуровневое
+  редактирование PDF content stream, физический вырез старого штампа
+  через clip-path inject).
+- **anti-patterns.md A3.5** — PyMuPDF apply_redactions/show_pdf_page
+  не удаляет Form XObjects (закрывает класс ловушек «двойной слой»).
+- **anti-patterns.md A4.3a** — PAT в plaintext конфигах → DPAPI.
+- **karpathy-guidelines: harvest-first правило** — 2 итерации без
+  рабочего результата → `/harvest` ПРЕЖДЕ обходных подходов.
+
+### Сотруднику сделать (на каждом consumer-ПК)
+
+После следующего `auto-pull` (запустится при следующей сессии Claude
+Code) — один раз запустить шифрование PAT:
+
+```powershell
+& "$env:USERPROFILE\.claude\scripts\Set-FeedbackToken.ps1"
+```
+
+Скрипт спросит PAT (текущий, тот же что в `~/.claude/.feedback-config.json`
+поле `token`). Зашифрует через DPAPI, обнулит plain token. После этого
+плэйнтекст PAT нигде не хранится. Старый plain token продолжит работать
+до миграции (WARN в auto-sync.log), так что fail-safe есть.
+
+При переустановке Windows / переносе профиля — запустить скрипт заново
+(DPAPI ключ привязан к user+machine).
+
+---
+
 ## 2026-05-22 — Updater 2.0 (one-command setup)
 
 ### Добавлено

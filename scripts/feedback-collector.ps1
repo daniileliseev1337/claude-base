@@ -170,15 +170,41 @@ try {
     exit 0
 }
 
-if (-not $cfg.github_repo -or -not $cfg.token) {
-    Write-FbLog "WARN: .feedback-config.json missing github_repo or token. Skipping remote push."
+if (-not $cfg.github_repo) {
+    Write-FbLog "WARN: .feedback-config.json missing github_repo. Skipping remote push."
+    exit 0
+}
+
+# === DPAPI decrypt (2026-05-26) ===
+# Приоритет: token_encrypted (зашифрован через scripts/Set-FeedbackToken.ps1)
+# > token (legacy plaintext, оставлен для backward compat пока сотрудники
+# не мигрировали через Set-FeedbackToken.ps1).
+#
+# token_encrypted шифруется DPAPI CurrentUser scope — расшифровать может
+# ТОЛЬКО тот же Windows-пользователь на той же машине. Защищает от
+# случайной утечки .feedback-config.json в git / в чат-историю / в логи.
+$token = $null
+if ($cfg.token_encrypted) {
+    try {
+        $secStr = ConvertTo-SecureString -String $cfg.token_encrypted -ErrorAction Stop
+        $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secStr)
+        $token = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+    } catch {
+        Write-FbLog "WARN: token_encrypted не расшифровывается (другой user/machine?). Запустить scripts/Set-FeedbackToken.ps1 на этом ПК."
+        exit 0
+    }
+} elseif ($cfg.token) {
+    Write-FbLog "WARN: .feedback-config.json использует plain token (legacy). Рекомендуется запустить scripts/Set-FeedbackToken.ps1 для шифрования через DPAPI."
+    $token = $cfg.token
+} else {
+    Write-FbLog "WARN: .feedback-config.json missing both token_encrypted and token. Skipping remote push."
     exit 0
 }
 
 # Default branch name если не задан
 $branch = if ($cfg.branch) { $cfg.branch } else { "feedback/${hostname}-${userPrefix}" }
 $repo = $cfg.github_repo
-$token = $cfg.token
 
 # Каталог для уже-push'нутых файлов
 $PushedDir = Join-Path $StagingDir 'pushed'

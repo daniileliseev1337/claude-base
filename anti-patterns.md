@@ -224,6 +224,39 @@ explicitly instructed to do so**». Касается ключей в `env: {…}
 **Правильно:** просить пользователя добавлять env-переменные вручную
 или явное «разреши править env: XYZ».
 
+### A4.3a PAT / API-токены в plaintext конфигах
+
+GitHub PAT / API-токены / ключи хранить в файлах в открытом виде —
+даже если файл в `.gitignore` — антипаттерн.
+
+❌ **Плохо:** `~/.claude/.feedback-config.json` с полем
+`"token": "github_pat_11CA..."` в открытом виде. Утечка возможна:
+случайный коммит мимо whitelist, screen recorder, утилиты дампа конфигов,
+человек смотрит файл через VS Code, копирование на чужой ПК.
+
+✅ **Правильно:** шифрование через Windows DPAPI CurrentUser scope.
+
+```powershell
+# Шифрование (one-time setup или при ротации PAT):
+& "$env:USERPROFILE\.claude\scripts\Set-FeedbackToken.ps1"
+
+# Расшифровка (используется внутри feedback-collector.ps1):
+$secStr = ConvertTo-SecureString -String $cfg.token_encrypted
+$bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secStr)
+$token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+```
+
+**Защищает от:** случайной утечки конфига (расшифровать может только
+тот же Windows user на той же машине).
+
+**НЕ защищает от:** malware работающего под этим же user (приемлемо для
+feedback-PAT — repo scope, не критическая privilege).
+
+**Источник:** 2026-05-26 — рефакторинг `.feedback-config.json`, помог
+Deliseev своим feedback-отчётом ([[2026-05-26_auto-push-stuck-consumer-mode]]
+параграф «PAT в plaintext»).
+
 ### A4.3 TLS отключение / plain passwords в .mcp.json
 
 В К-7 базе:
