@@ -9,6 +9,76 @@ Claude при новой сессии (через правило в CLAUDE.md).
 
 ---
 
+## 2026-05-26 — Knowledge library (база ГОСТ/СП/СНиП/постановлений)
+
+### Добавлено
+
+- **`library/`** — каркас локальной библиотеки нормативных документов:
+  INDEX.md + 8 категорий (spds/ov/vk/eo/ss/ppr/prikazy/shablony) + README.
+  Закрывает класс ошибок 2026-05-25 (выдумывание норм по памяти агентами:
+  сметчик ПДВ/НДС, audit-rd-section СП 76 vs СП 256, маркировка П/В).
+- **`scripts/Set-LibraryRoot.ps1`** — интерактивный per-PC setup helper
+  для регистрации пути до shared папки на Я.Диске.
+- **`agents/norm-lookup.md`** — расширен под библиотеку: 8 новых
+  `mcp__pdf-mcp__*` и `mcp__word__*` read-only tools, алгоритм поиска
+  по INDEX, **10 структурированных failure modes**: `NO_CONFIG`,
+  `NO_INVITE`, `SYNC_IN_PROGRESS`, `NOT_IN_INDEX`, `NOT_DOWNLOADED`,
+  `NO_TEXT_LAYER`, `WEBFETCH_BLOCKED`, `CANCELLED`, `SUPERSEDED`,
+  `NOT_FOUND`. **Запрет выдумывания** усилен.
+- **`CLAUDE.md` правило #7** — «нормы только через `norm-lookup`».
+- **`.gitignore`** — whitelist `library/` + hard-block
+  `.library-config.json` (per-PC, никогда в git).
+- **Spec:** `docs/superpowers/specs/2026-05-26-knowledge-library-design.md`.
+- **Plan:** `docs/superpowers/plans/2026-05-26-knowledge-library.md`.
+
+### Сотруднику сделать (one-time setup)
+
+После следующего auto-pull тебе нужно сделать **3 шага** руками:
+
+**1. Принять invite от Daniil** на папку `Claude_Library` в веб-интерфейсе
+Яндекс.Диска. Раздел «Доступы» → принять. На твоём Я.Диске появится
+shared папка (возможно с префиксом «От Даниила» или похожим именем).
+
+**2. Дождаться окончания первичного sync** Яндекс.Диск-клиента на твоём
+ПК (10-30 минут в зависимости от размера библиотеки на момент инвайта).
+В трее Я.Диска должно перестать крутиться «Синхронизация...».
+
+**3. Запустить helper:**
+
+```powershell
+& "$env:USERPROFILE\.claude\scripts\Set-LibraryRoot.ps1"
+```
+
+Скрипт спросит полный путь до Claude_Library на твоём ПК. Default —
+`C:\Users\<имя>\YandexDisk\Claude_Library`, но если shared папка имеет
+другое имя — введи её полный путь. Скрипт проверит существование, посчитает
+PDF, запишет `~/.claude/.library-config.json`.
+
+**4. (Опционально, но рекомендую) Restart Claude Code** — чтобы агент
+`norm-lookup` подхватил новые tools (`mcp__pdf-mcp__*` и `mcp__word__*`).
+Без restart агент работает по старому whitelist'у.
+
+### Что изменится после setup
+
+Любой нормативный запрос (например «что говорит ГОСТ 21.101 про штамп»?)
+будет автоматически идти через `norm-lookup`. Агент:
+
+1. Прочитает локальный INDEX.md.
+2. Найдёт нужную норму.
+3. Прочитает PDF из shared папки через MCP.
+4. Вернёт **дословную цитату** + номер пункта + редакцию + источник.
+
+Никаких выдумок «по памяти» — только проверяемые цитаты.
+
+### Backward compat
+
+Пока библиотека не наполнена (Daniel добавляет нормы постепенно) —
+`norm-lookup` будет отвечать `NOT_IN_INDEX` и пробовать WebFetch на
+cntd.ru. По мере наполнения — всё больше запросов будет обслуживаться
+локально из библиотеки.
+
+---
+
 ## 2026-05-26 — Безопасность + надёжность инфры
 
 ### Починено
