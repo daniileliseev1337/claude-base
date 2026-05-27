@@ -79,6 +79,12 @@
 !docs/
 !docs/**
 
+# Локальная библиотека норм (knowledge library) — INDEX + categories + README.
+# Сами PDF лежат на Я.Диске, в git только метаданные/индекс/аннотации.
+# См. docs/superpowers/specs/2026-05-26-knowledge-library-design.md
+!library/
+!library/**
+
 # _sandbox/ есть в репо как папка с README, но содержимое НЕ пушится
 !_sandbox/
 !_sandbox/README.md
