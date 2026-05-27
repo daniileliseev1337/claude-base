@@ -576,6 +576,35 @@ UnicodeEncodeError.
 
 **Правильно:** запускать python через `PYTHONIOENCODING=utf-8 python …`.
 
+### A8.5 PS 5.1 `Join-Path` принимает только 2 параметра
+
+Windows PowerShell 5.1: `Join-Path $base 'a' 'b' 'c'` → `A positional
+parameter cannot be found that accepts argument 'c'`. На PS 7+
+работает (3+ параметров допустимо). Скрипты которые тестировались только
+на PS 7 ломаются на consumer-ПК с 5.1.
+
+**Правильно:** для совместимости с обеими editions — nested calls:
+`Join-Path (Join-Path $base 'a') 'b'`. Или для длинных путей —
+`[System.IO.Path]::Combine($base, 'a', 'b', 'c')` (всегда multi-arg).
+
+**Источник:** `scripts/pull-feedback.ps1` fix 2026-05-27 (после года
+работы скрипт впервые запустился на этом ПК и сразу нашёл ловушку).
+
+### A8.6 `2>&1 | Out-Null` на native exe валит script на PS 5.1
+
+`& git clone ... 2>&1 | Out-Null` в Windows PowerShell 5.1 заворачивает
+stderr-строки в `ErrorRecord` (NativeCommandError) — `$?` становится
+`$false` и `$ErrorActionPreference='Stop'` бросает terminating error
+даже если git exit code = 0 (Cloning into ... это нормальный output git
+в stderr). На PS 7+ обрабатывается мягче.
+
+**Правильно:** `$ErrorActionPreference='Continue'` для скрипта + явный
+`2>$null` для подавления stderr. ИЛИ обернуть в `try { ... } catch {}`.
+Никогда не глотать stderr нативного exe через `2>&1 | Out-Null` если
+`$ErrorActionPreference='Stop'`.
+
+**Источник:** там же — `scripts/pull-feedback.ps1`.
+
 ## Категория 9. Документация и отчётность
 
 ### A9.1 Молчание ≠ всё хорошо
