@@ -74,6 +74,11 @@
 !evals/
 !evals/**
 
+# Дизайн-спецификации (output из superpowers:brainstorming skill).
+# Каждая крупная задача → spec в docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
+!docs/
+!docs/**
+
 # _sandbox/ есть в репо как папка с README, но содержимое НЕ пушится
 !_sandbox/
 !_sandbox/README.md

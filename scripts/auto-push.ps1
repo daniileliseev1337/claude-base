@@ -51,7 +51,12 @@ $Managed = @(
     'scripts',
     'mcp-manifest.json',
     '.gitignore',
-    'settings.shared.json'
+    'settings.shared.json',
+    # === Added 2026-05-26 ===
+    # docs/ — дизайн-спецификации (output из superpowers:brainstorming skill).
+    # Крупная задача → spec в docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
+    # → план → имплементация. Spec'и в git, видны всей команде.
+    'docs'
     # NOTE: settings.json больше НЕ в whitelist (2026-05-21 Phase 1).
     # Причина: Claude Code UI постоянно пишет в settings.json (theme,
     # viewMode и т.п.) → race conditions между ПК. Теперь:
