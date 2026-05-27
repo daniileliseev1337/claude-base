@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Helper для шифрования PAT GitHub feedback-репо через Windows DPAPI.
 

@@ -302,6 +302,53 @@ Deliseev своим feedback-отчётом ([[2026-05-26_auto-push-stuck-consum
 
 См. CLAUDE.md раздел «GitHub — обязательный bypass proxy».
 
+### A4.6 Yandex.Disk API через корп-прокси
+
+Те же грабли что с GitHub (A4.5) — корп-прокси может блокировать
+`disk.yandex.ru`, `cloud-api.yandex.net`, `wiki.yandex.ru` через
+CONNECT-метод и/или TLS handshake.
+
+**Контекст:** knowledge library (2026-05-26 commit `fdad0bb`+) хранит
+PDF норм на Я.Диске. Сам `norm-lookup` агент работает с **локальной
+файловой системой** (Я.Диск-клиент уже синхронизировал файлы) —
+**проксирование не требуется**. НО при будущих расширениях (Я.Диск
+REST API для метаданных, Я.Wiki API для индекса) — обращения наружу
+**должны идти bypass прокси**.
+
+❌ **Плохо** (через корп-прокси упадёт):
+```powershell
+Invoke-RestMethod -Uri "https://cloud-api.yandex.net/v1/disk/resources?path=Claude_Library"
+```
+
+✅ **Правильно** (bypass):
+```powershell
+$savedProxy = $env:HTTPS_PROXY
+$env:HTTPS_PROXY = ""
+try {
+    $resp = Invoke-RestMethod -Uri "https://cloud-api.yandex.net/v1/disk/resources?path=Claude_Library" -Headers @{Authorization="OAuth $token"}
+} finally {
+    $env:HTTPS_PROXY = $savedProxy
+}
+```
+
+Или persistent через git config-стиль глобально для домена (если
+HttpClient.DefaultProxy подхватывает — зависит от .NET runtime; для
+PowerShell 5.1 безопаснее env-var bypass).
+
+**Whitelist прямого подключения** (если расширим библиотеку до API):
+- `disk.yandex.ru`, `*.yandex.ru` — web интерфейс Я.Диска
+- `cloud-api.yandex.net` — REST API для resources/uploads/shares
+- `wiki.yandex.ru`, `*.wiki.yandex` — Я.Wiki API
+
+**Сам Я.Диск-клиент** (программа в трее Windows) — отдельная история,
+он использует системный прокси через WPAD/PAC или явные настройки.
+Это **не наша забота** — клиент работает с прокси штатно, потому что
+интегрирован в Windows networking stack. Наша забота — `Invoke-RestMethod`
+вызовы из PowerShell hooks/скриптов.
+
+См. CLAUDE.md раздел «GitHub — обязательный bypass proxy» — та же
+методология применима к Я.Диск-домену.
+
 **Источник:** session-report 2026-05-20 (kp-ls-ahp-modify-+15)
 + закреплено как правило 2026-05-20 после повторения симптома на
 DANIILPC, DELISEEV-PC, 100226745A.
