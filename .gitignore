@@ -109,6 +109,11 @@ _sandbox/*
 # Локальные настройки конкретного ПК
 **/settings.local.json
 
+# Per-PC configs с secrets / per-machine путями (никогда в git)
+**/.feedback-config.json
+**/.library-config.json
+**/.developer-marker
+
 # settings.json — gitignored с 2026-05-21 (Phase 1 sync-redesign).
 # Причина: Claude Code UI пишет туда сам (theme, viewMode, editorMode и т.п.),
 # что вызывало постоянные merge conflict'ы между ПК. Теперь UI пишет в
