@@ -4,7 +4,9 @@
 - [x] **Codeburn** прогон — метрики собраны (Health F, Adobe 0%, pdf-mcp retry)
 - [x] **domain-grilling** skill создан → `~/.claude/skills/domain-grilling/` (на тесте)
 - [x] **Exa MCP** добавлен (local scope, ✓ Connected без ключа)
-- [x] **Codex CLI** установлен глобально (codex-cli 0.135.0)
+- [!] **Codex CLI** — НЕ установлен на реальный ПК (моя tool-установка ушла
+      в изолированное окружение, см. feedback_tool_sandbox_isolation.md).
+      Ставить ВРУЧНУЮ на каждом ПК: `npm install -g @openai/codex`
 
 ## ✅ Уже было (auto-installed через claude-plugins-official)
 - [x] **skill-creator** (#5.1) — есть, начать использовать Eval/Benchmark

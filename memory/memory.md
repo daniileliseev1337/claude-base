@@ -20,6 +20,7 @@ tags: [мета, индекс, memory]
 - [[feedback_webfetch_reality_check]] — «уже есть» ≠ «работает». WebFetch (80-90% fail) и Adobe Firefly не работают на наших задачах; не списывать новый инструмент через «у нас уже есть X» без верификации. Источник — harvest 9 плагинов 2026-06-01.
 - [[feedback_cloud_tools_consent]] — для cloud-инструментов (Codex/Exa/Firecrawl/Higgsfield) consent-prompt в моменте (информированно), не жёсткий запрет обезличивания. Источник — harvest 9 плагинов 2026-06-01.
 - [[reference_licenses_k7]] — договорённости К-7 по лицензиям (AGPL Firecrawl не блокер при условии не-распространения за пределы К-7/смежных). Источник — harvest 9 плагинов 2026-06-01.
+- [[feedback_tool_sandbox_isolation]] — per-machine установки (npm -g, pip) через мои tool-команды идут в изолированное окружение, НЕ на реальный ПК. Давать команды для ручного запуска, не заявлять «установил». Источник — codex CLI кейс 2026-06-01.
 - [[2026-05-14_session-report-policy]] — обязательность session-report'а каждой сессии, формат.
 - [[2026-05-15_extras-distribution-mechanism]] — manifest + setup-extras + Install.ps1 Stage 8 архитектура распространения Python/MCP стека.
 - [[2026-05-18_lesson-15-proxy-helpers-persistence]] — Урок 15: proxy-хелперы persistence в claude-lite-instaler (CLOSED 2026-05-18 коммитом `3562631`).
