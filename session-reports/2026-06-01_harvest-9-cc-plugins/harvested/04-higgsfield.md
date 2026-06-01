@@ -6,11 +6,23 @@
 - Прислал пользователь как «4-я позиция» подборки 9
 
 ## Метаданные
-- Тип: Cloud SaaS + MCP интерфейс
-- Pricing: **Credit-based**, без free tier (детали не раскрыты)
+- Тип: Cloud SaaS + MCP интерфейс. **НЕ GitHub repo** (единственный в подборке
+  9 кто ведёт на коммерческий сайт higgsfield.ai, не github.com).
+- Pricing: **Credit-based** по их сайту, НО точные тарифы и наличие free tier
+  **не подтверждены** — WebFetch на higgsfield.ai/pricing провалился
+  (JS-рендер, тот самый кейс из feedback_webfetch_reality_check).
+  Цитата с MCP-страницы: «Each generation costs credits based on the model
+  and resolution. Your existing Higgsfield plan credits work seamlessly.»
 - API key: не требуется (auth через higgsfield.ai аккаунт)
 - License: proprietary (closed-source)
 - Models under hood: 30+ (Soul, Kling, Seedance, **Veo** — Google's top video model)
+
+## ⚠ Constraint К-7: подписки не покупаются
+Пользователь (2026-06-01): «подписок никаких нет и приобретаться не будут».
+→ Higgsfield пройдёт **только если есть free tier** с достаточными credits
+для нашего объёма (image ~раз в неделю). Проверить при установке.
+Если free tier нет / недостаточен → Higgsfield отпадает, искать
+open-source/self-host альтернативу для image/video generation.
 
 ## Что делает
 - Image generation (up to 4K, любые соотношения)
