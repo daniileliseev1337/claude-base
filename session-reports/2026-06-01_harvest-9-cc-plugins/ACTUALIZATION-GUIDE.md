@@ -16,7 +16,7 @@
 | **domain-grilling** skill | git ✅ | `Update-ClaudeBase.bat` (или `git -C ~/.claude pull`) |
 | memory (уроки), отчёты | git ✅ | то же |
 | **Exa MCP** | per-machine ❗ | `claude mcp add --transport http exa https://mcp.exa.ai/mcp` |
-| **Codex** CLI+plugin | per-machine ❗ | `npm i -g @openai/codex` → `codex login` → `/plugin install codex@openai-codex` |
+| ~~**Codex** CLI+plugin~~ | ⚫ ОТПАЛ | ChatGPT auth недоступен в РФ — НЕ ставить. Идея cross-model review → backlog РФ-модели |
 | frontend-design, skill-creator, security-guidance | auto ✅ | официальный marketplace ставит сам. Проверить `/plugin` |
 | **Codeburn** (метрики) | per-machine (опц) | `npx codeburn` (без установки) |
 | **Compound Engineering** | per-machine | `/plugin install compound-engineering` — ТОЛЬКО developer-ПК |
