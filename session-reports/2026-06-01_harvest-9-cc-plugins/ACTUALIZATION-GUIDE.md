@@ -5,7 +5,7 @@
 ## TL;DR — минимум для всех ПК
 ```
 1. ~/.claude/scripts/Update-ClaudeBase.bat      # git-синк базы
-2. claude mcp add --transport http exa https://mcp.exa.ai/mcp   # per-machine
+2. claude mcp add --transport http exa https://mcp.exa.ai/mcp --scope user   # per-machine
 ```
 Этого достаточно чтобы получить `domain-grilling` + Exa. Остальное — опционально.
 
@@ -15,7 +15,7 @@
 |---|---|---|
 | **domain-grilling** skill | git ✅ | `Update-ClaudeBase.bat` (или `git -C ~/.claude pull`) |
 | memory (уроки), отчёты | git ✅ | то же |
-| **Exa MCP** | per-machine ❗ | `claude mcp add --transport http exa https://mcp.exa.ai/mcp` |
+| **Exa MCP** | per-machine ❗ | `claude mcp add --transport http exa https://mcp.exa.ai/mcp --scope user` |
 | ~~**Codex** CLI+plugin~~ | ⚫ ОТПАЛ | ChatGPT auth недоступен в РФ — НЕ ставить. Идея cross-model review → backlog РФ-модели |
 | frontend-design, skill-creator, security-guidance | auto ✅ | официальный marketplace ставит сам. Проверить `/plugin` |
 | **Codeburn** (метрики) | per-machine (опц) | `npx codeburn` (без установки) |
@@ -27,7 +27,7 @@
 
 ### Все 9 ПК (базовый набор)
 1. `Update-ClaudeBase.bat` — получить domain-grilling + memory + отчёты
-2. `claude mcp add --transport http exa https://mcp.exa.ai/mcp` — Exa
+2. `claude mcp add --transport http exa https://mcp.exa.ai/mcp --scope user` — Exa
 3. (опц) `npx codeburn` — глянуть свой расход токенов
 4. Codex (опц, для cross-model review): `npm i -g @openai/codex` + `codex login` + plugin
 5. Проверить что frontend-design/skill-creator/security-guidance активны (`/plugin`)
