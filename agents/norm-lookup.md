@@ -5,7 +5,8 @@ description: |
   ПУЭ, постановления, приказы). Цель — найти **точную цитату** + ссылку
   на пункт + дату редакции для подтверждения нормативной отсылки в
   проектных артефактах. Источники: локальная база норм (если есть) +
-  WebFetch на cntd.ru / docs.cntd.ru.
+  Exa (web_search_exa / web_fetch_exa) на cntd.ru — основной веб-путь;
+  WebFetch — fallback (часто фейлит на 80-90% сайтов, см. memory).
 
   Триггеры:
   - «что говорит ГОСТ ... по ...»
@@ -13,7 +14,7 @@ description: |
   - «ссылка на пункт», «цитата из СНиП/СП/МДС»
   - «есть ли в нормах ...», «требования по ...»
   - запрос точного пункта норматива от другого агента (designer / pto-engineer / audit-rd-section)
-tools: Read, Bash, Grep, Glob, WebFetch, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_get_toc, mcp__pdf-mcp__pdf_render_pages, mcp__word__get_document_text, mcp__word__find_text_in_document, mcp__word__get_document_outline
+tools: Read, Bash, Grep, Glob, WebFetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_get_toc, mcp__pdf-mcp__pdf_render_pages, mcp__word__get_document_text, mcp__word__find_text_in_document, mcp__word__get_document_outline
 ---
 
 # norm-lookup — поисковик по нормативной базе РФ
