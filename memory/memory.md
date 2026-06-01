@@ -30,6 +30,7 @@ tags: [мета, индекс, memory]
 - [[backlog_promptfoo_semantic_tests]] — backlog promptfoo для семантических тестов LLM-агентов. Триггер — потребность тестировать вывод designer/word-checker на эталонах. Сейчас покрытие через pytest (см. `~/.claude/evals/`). Источник — аудит К-7 от 2026-05-20.
 - [[backlog_teammate_mode_tmux]] — backlog teammateMode tmux + AGENT_TEAMS (4.7 из roadmap'а). tmux отсутствует на Windows DANIILPC + env-правки требуют явного согласия. Альтернатива — `teammateMode: in-process`. Источник — аудит К-7 от 2026-05-20.
 - [[rd_plugins_test_plan]] — R&D test plan для свежеустановленных плагинов superpowers и claude-md-management (4.6, 4.8). Активны после перезапуска Claude Code. Источник — аудит К-7 от 2026-05-20.
+- [[backlog_tools_layer_migration]] — миграция скриптов skills в слой `tools/` по Правилу 2 (skill-development). Инкрементально при касании, НЕ массовый рефактор. Источник — внедрение 4 правил Anthropic 2026-06-01.
 
 ### Доменные кейсы (проектирование)
 
