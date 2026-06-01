@@ -68,7 +68,7 @@
 | **Codex** + consent | все 9 | cross-model review (новый capability) |
 | **Codeburn** | все 9 | метрики токенов, zero overhead |
 | **Skill Creator** | уже стоит | Eval/Benchmark наших skills |
-| **Security Guidance** | developer-ПК | уязвимости Python перед раскатом |
+| **Security Guidance** | ✅ уже auto-installed | уязвимости Python перед раскатом |
 | **Compound Engineering** | developer-ПК | meta-dev claude-base |
 | **Higgsfield + ComfyUI** | 🗣 не завершено | image/video generation (дыра) |
 
