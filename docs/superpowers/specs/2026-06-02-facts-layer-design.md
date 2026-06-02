@@ -95,7 +95,10 @@ last_updated: 2026-06-02
 1. `skills/facts-layer/references/FACTS.template.md` — шаблон.
 2. `skills/facts-layer/SKILL.md` — методология: когда создавать, как грилить факты,
    read-first, change-handling, границы (не путать с CLAUDE.md/DECISIONS/memory).
-3. CLAUDE.md — правило-триггер (1 строка/мини-секция).
+3. CLAUDE.md — правило-триггер: **ОДНА строка, НЕ секция** (CLAUDE.md только что
+   де-водизирован — не перегружать). Детали методологии — в skill `facts-layer`.
+   Формулировка ~ «Если в папке проекта есть `FACTS.md` — читать первым, факты
+   править только там (skill `facts-layer`)».
 4. `agents/_TEMPLATE.md` — строка «читать FACTS.md первым» (для будущих агентов).
 
 ## Обработка ошибок
