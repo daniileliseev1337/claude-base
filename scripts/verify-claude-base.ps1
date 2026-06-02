@@ -201,16 +201,19 @@ Write-Host ""
 Write-Host "[6] Pytest evals (regression-тесты скиллов)" -ForegroundColor Yellow
 
 Check "pytest collects + passes (21 tests)" {
-    # pytest evals = regression-тесты для разработки скиллов.
-    # Не требуются на consumer-ПК (там Python+pytest могут отсутствовать).
-    # На developer-ПК (есть .developer-marker) — обязательны.
+    # pytest evals = regression-тесты для РАЗРАБОТКИ скиллов.
+    # Обязательны ТОЛЬКО на developer-ПК (есть .developer-marker).
+    # На consumer-ПК пропускаем ВСЕГДА — это dev-инструмент, не нужен для
+    # работы (даже если python в PATH есть для других задач). Иначе consumer
+    # с python но без pytest давал ложный FAIL.
+    $isDeveloper = Test-Path (Join-Path $ClaudeDir '.developer-marker')
+    if (-not $isDeveloper) {
+        Write-Host "         (consumer PC — pytest evals не требуются, skipped)" -ForegroundColor DarkGray
+        return $true
+    }
     $py = Get-Command python -ErrorAction SilentlyContinue
     if (-not $py) {
-        $isDeveloper = Test-Path (Join-Path $ClaudeDir '.developer-marker')
-        if (-not $isDeveloper) {
-            Write-Host "         (python not in PATH — consumer PC, skipped)" -ForegroundColor DarkGray
-            return $true
-        }
+        Write-Host "         (developer PC, python не в PATH — нужен Python+pytest)" -ForegroundColor Yellow
         return $false
     }
     $evalsDir = Join-Path $ClaudeDir 'evals'
