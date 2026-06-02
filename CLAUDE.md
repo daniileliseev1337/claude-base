@@ -90,6 +90,16 @@
 
 Скиллы загружаются автоматически по триггерам (Read SKILL.md → действие).
 
+## Feedback (consumer → hub)
+
+Роль определяется маркером `~/.claude/.developer-marker`:
+- **Хаб (маркер есть):** правки в main claude-base как обычно; в начале сессии — `pull-feedback.ps1` (собрать feedback сотрудников).
+- **Consumer (маркера НЕТ):** НЕ коммитить в main. Урок / правку / косяк базы → записать в `~/.claude/feedback-pending/<тема>.md` (обезличенно, Why + How to apply). Auto-collector отправит в feedback-канал. Детали — `memory/feedback_workflow.md`.
+
+## Конец сессии — обязательный отчёт
+
+Перед завершением — написать `session-reports/<YYYY-MM-DD>_<тема>/report.md` (обезличенно: что сделал, источники, где сломался, уроки). **Без отчёта auto-push пушить нечего** — сессия уходит «в никуда». Это последний шаг, не пропускать. Детали — `memory/sessions_policy.md`.
+
 ## Справочник (cascade-load по триггеру, `~/.claude/memory/`)
 
 - **Sessions-отчёты** каждой сессии → `sessions_policy.md`, `2026-05-14_session-report-policy.md`.
