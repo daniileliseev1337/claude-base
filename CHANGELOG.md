@@ -9,6 +9,38 @@ Claude при новой сессии (через правило в CLAUDE.md).
 
 ---
 
+## 2026-06-02 — PRO-контекст, методы Word/PDF, facts-layer, feedback, установщик
+
+### Починено
+- **`CLAUDE.md` — mojibake-кодировка** (хранился в double-encoded UTF8→CP1251).
+  Переписан в чистый UTF-8 + де-водизирован: 64 KB→10 KB, 489→111 строк. На PRO-окне
+  (200K) это **−15% окна** (раньше старый CLAUDE.md ел ~17% = ~34k токенов). **Лечение
+  всем: `/sync-base`.** Если контекста по-прежнему не хватает — обнови Claude Code
+  (нужна версия с tool-search/deferred MCP) и проверь `$env:ENABLE_TOOL_SEARCH` ≠ false.
+- **Feedback-триггер** восстановлен в `CLAUDE.md` (секция Feedback) — был потерян,
+  поэтому consumer-Claude не писал `feedback-pending` и все коммитили в main. Правило:
+  **dev→main, consumer→feedback-канал** (по `.developer-marker`).
+- **Ритуал отчёта сессии** возвращён в `CLAUDE.md` (де-водизация его ослабила).
+
+### Добавлено
+- **skill `facts-layer`** — единый источник правды по проекту `FACTS.md`
+  (ключ→значение→источник). Доменные агенты читают первым; факт правится в одном
+  месте → нет рассинхрона между спецификацией/КП/сметой. + `CLAUDE.md` правило #9.
+- **`pdf-helper`** — вшит **ВЕРИФИЦИРОВАННЫЙ** метод правки вектор-PDF (Inkscape:
+  Внутренний импорт → выделить → Delete/move → export, проверка рендером). Inkscape
+  ставится **отдельно** руками (`winget install Inkscape.Inkscape`).
+- **`word-helper`** — метод правки существующих docx без слома структуры/underline
+  (дамп структуры → inline-шапка → не трогать табы → verify-гейт PDF-рендером).
+- **`CLAUDE.md` правило #8** — оформление деловых docx/xlsx **нейтральное**, без
+  декоративного синего «Claude-стиля». Детали — `word-helper`/`excel-helper`.
+- **`memory/`** — `feedback_workflow.md`, `reference_docx_editing_failures.md`,
+  `proxy_github.md`, `harvest_workflow.md`, `auto_memory_policy.md`, `named_chains.md`,
+  `context_discipline.md`, `archive_v1.md` (вынос из CLAUDE.md).
+
+### Установщик (claude-lite-instaler)
+- **Feedback** из «опционально в тексте» → **заметный prompted-шаг** в конце установки.
+- Визуальный апгрейд: banner, стилизованные секции, `✓` финал, UTF-8 вывод.
+
 ## 2026-05-26 — Knowledge library (база ГОСТ/СП/СНиП/постановлений)
 
 ### Добавлено
