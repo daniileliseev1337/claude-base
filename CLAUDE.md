@@ -18,10 +18,10 @@
    `document-loader`, `word`, `excel`, `pdf-mcp`, `sequential-thinking`, `fetch`,
    `time`, `adeu` (+ опц. `autocad-mcp`, `exa`). Если какого-то нет/статус `✗` —
    **первой строкой** предупредить: `⚠ MCP не подключены: <имена>. Прогрев: uvx <name> --help`.
-3. **Агенты.** Сверить available agents с эталоном 15 (`~/.claude/agents/`,
+3. **Агенты.** Сверить available agents с эталоном 16 (`~/.claude/agents/`,
    детали — `memory/reference_agents.md`). Не подгрузились — restart (hot-reload нет).
 4. **Применять 5 принципов Karpathy** и **MCP-роутинг по расширениям** (таблицы ниже).
-5. **Подтвердить** одной строкой: `✓ прочитан CLAUDE.md (MCP: X/9, agents: Y/15)`.
+5. **Подтвердить** одной строкой: `✓ прочитан CLAUDE.md (MCP: X/9, agents: Y/16)`.
 
 ## 5 принципов Karpathy (выжимка; полная — скилл `karpathy-guidelines`)
 

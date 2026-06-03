@@ -59,7 +59,32 @@ host: DANIILPC (hub, .developer-marker)
 - hostname'ы (R-090226727A и пр.) оставлены — они уже открыты в feedback-репо как
   идентификаторы машин, не PII.
 
+## Догон: агент pyrevit-engineer (по запросу пользователя)
+
+После внедрения 6 элементов пользователь попросил отдельного **агента** для PyRevit
+(вместо memory-only решения), «работает хорошо + экономит токены».
+
+- Создан `agents/pyrevit-engineer.md` (16-й агент) по `_TEMPLATE.md` v1.0.
+- **Экономия токенов — дизайном, не слабой моделью:** узкий tools-набор
+  (Read/Write/Edit/Glob/Grep/Bash, без MCP-вееров), cascade-load одного reference,
+  отдельная секция «Token economy» (Grep→offset/limit, хирургический Edit, фильтр
+  Bash-вывода, сжатый возврат). Модель НЕ фиксирована (наследует Opus) — на Revit API
+  ошибка в .NET-сигнатуре = переделка = больше токенов, слабая модель контрпродуктивна.
+- **auditor:** первый прогон NOT PASSED (claim «порядок фаз недетерминирован» подан как
+  факт; `Document.Phases` упорядочен). Исправлено в агенте и в reference_pyrevit_k7.md
+  (привязка к `Document.Phases` + `# TODO verify`). Остальные 6 свойств — PASS.
+- Обновлены: `CLAUDE.md` (эталон 15→16, agents: Y/16), `agents/agents.md` (+строка).
+- ⚠ **Подхватится после restart Claude Code** (hot-reload агентов нет).
+
 ## Открытые вопросы / backlog
+
+- **`memory/reference_agents.md` — double-encoded mojibake** (как был CLAUDE.md). Нужна
+  перекодировка UTF-8 + добавление строки №16 (pyrevit-engineer). Не трогал частично,
+  чтобы не смешать кодировки. Отдельная арка (как CLAUDE.md mojibake fix).
+- **`agents/agents.md` — неполный индекс** (5 из 16 агентов; доменные от 2026-05-25 не
+  внесены). Backlog на дозаполнение.
+- **CLAUDE.md CORE-секция** (эталон агентов) управляется installer — при апдейте
+  claude-lite-instaler отразить 16 и там, иначе следующий install откатит на 15.
 
 - **autocad-mcp фиксы** (из feedback): `drawing plot_pdf` не пишет файл; рецепт
   прозрачности зон при печати DWG→PDF. Зафиксировано в reference_autocad_pdf_overlay_mcp.
