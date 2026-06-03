@@ -34,10 +34,23 @@ tags: [мета, индекс, memory]
 - [[backlog_tools_layer_migration]] — миграция скриптов skills в слой `tools/` по Правилу 2 (skill-development). Инкрементально при касании, НЕ массовый рефактор. Источник — внедрение 4 правил Anthropic 2026-06-01.
 - [[backlog_cross_model_review_rf]] — cross-model review на РФ-доступной модели (Codex отпал — ChatGPT геоблок РФ). Кандидаты: GigaChat/YandexGPT (приватность) / DeepSeek/Qwen. Источник — harvest #6 2026-06-01.
 
+### Редактирование PDF / чертежей
+
+- [[reference_inkscape_pdf_editing]] — ВЕРИФИЦИРОВАННЫЙ метод: удалить/подвинуть штамп
+  или объект в вектор-PDF через Inkscape (Внутренний импорт → Delete/move → PDF →
+  рендер-проверка). Замена провалившимся белым заливкам / content-stream surgery.
+- [[reference_autocad_pdf_svg_markup]] — перерисовать **нанесённую графику** (разметка
+  CCTV/СС/ЭО) на AutoCAD-PDF чистым PyMuPDF через SVG-слой, БЕЗ AutoCAD. Когда DWG на
+  выходе не нужен. Верифицировано 2026-06-03.
+- [[reference_autocad_pdf_overlay_mcp]] — то же через autocad-mcp / живой AutoCAD
+  (PDFIMPORT + entmake + vla-PlotToFile), когда нужен DWG. Backend init, ловушки печати.
+
 ### Доменные кейсы (проектирование)
 
 - [[2026-05-07-pnr-ventilation]] — пуско-наладка вентиляции.
 - [[2026-05-08_pnr-cooling-9vs8]] — пуско-наладка холодоснабжения, кейс «9 vs 8 единиц».
+- [[reference_pyrevit_k7]] — PyRevit-плагины К-7 (IronPython + Revit .NET API): ловушки
+  WorksetTable/транзакций/фаз, генерация иконок. Новый домен (с 2026-05-28).
 
 ## Когда писать в memory
 

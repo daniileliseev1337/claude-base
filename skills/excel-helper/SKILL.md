@@ -27,7 +27,8 @@ description: |
 
 | Задача | Инструмент | Заметка |
 |--------|------------|---------|
-| CRUD ячеек, листов, форматов | `excel-mcp-server` | Стандартный путь, через Claude напрямую |
+| CRUD ячеек, листов, форматов | `excel-mcp-server` | Стандартный путь для **малых** диапазонов (<50 строк × 10 кол.) |
+| Чтение/анализ **больших** таблиц | Python `openpyxl` / PS | excel MCP read раздувает JSON и упирается в token-лимit — см. ловушку 9 |
 | Анализ всего файла, агрегации | Python `openpyxl` | Когда нужны цикл/условия/перебор сотен строк |
 | Сравнение двух файлов | Python `pandas` | DataFrame.compare() или merge + diff |
 | Большие файлы (>100к строк) | Python `pandas` с `chunksize` или `polars` | openpyxl читает медленно |
@@ -237,6 +238,18 @@ wb.save("highlighted.xlsx")
 6. **Объединённые ячейки (merged)** — значение хранится только в верхней-левой ячейке диапазона; остальные `None`. Для итерации `for row in ws.iter_rows()` придётся unmerge или пробрасывать значение из якоря.
 7. **Большие файлы** — `openpyxl` читает медленно (~1 сек на 10к строк). Для >100к строк — `pandas.read_excel` с движком `openpyxl` или `polars`.
 8. **Запись через openpyxl стирает условное форматирование и сводные**, если их не загрузить с `keep_vba=True` и не пересохранить аккуратно. Лучше править через excel-mcp.
+9. **excel MCP read на больших таблицах → «exceeds maximum tokens».** `mcp__excel__read_data_from_excel` раздувает JSON метаданными валидации/формул и упирается в token-лимит (наблюдалось **64–74K токенов на один лист**). Подтверждено независимо ≥3 раза (замечания Химки, серия ПНР+ВОР Сит-Центр, СОТ). **Правило: >50 строк → читать через openpyxl напрямую или PowerShell + `ConvertFrom-Json`, НЕ через MCP read.** MCP read оставлять для малых диапазонов (<50×10), где он удобнее.
+
+```powershell
+# Большой лист через openpyxl (UTF-8 stdout обязательно):
+$env:PYTHONIOENCODING="utf-8"; python -c @"
+import sys; sys.stdout.reconfigure(encoding='utf-8')
+from openpyxl import load_workbook
+ws = load_workbook(r'path.xlsx', data_only=False)['ВОР']
+for r, row in enumerate(ws.iter_rows(values_only=True), 1):
+    if any(c is not None for c in row): print(f'{r}:', row)
+"@
+```
 
 ## Read-back verification после генерации (§4 Karpathy)
 

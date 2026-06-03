@@ -1,0 +1,66 @@
+---
+created: 2026-06-03
+updated: 2026-06-03
+status: active
+owner: Даниил
+tags: [reference, pyrevit, revit, ironpython, plugin, новый-домен]
+related:
+  - [[karpathy-guidelines]]
+  - [[rd_plugins_test_plan]]
+---
+
+# PyRevit-плагины К-7 (IronPython + Revit .NET API) — новый домен
+
+Загружать по триггерам: «PyRevit», «скрипт Revit», «pushbutton/pulldown», «Revit
+API», «workset/рабочий набор», «IronPython», правка `.extension` К-7.
+
+## Статус домена
+
+**Новый домен с 2026-05-28.** В команде появился сотрудник, который ведёт PyRevit-
+расширение `<...>_Отладка.extension` (панель инструментов для Revit: упорядочить
+оси/уровни, удалить лишние рабочие наборы, упорядочить связи, обновить пространства,
+скрыть оси/уровни связей). Пока **отдельного агента/скилла НЕТ** (Karpathy #2:
+простота — не плодить инфраструктуру под один отчёт). Этот файл — накопитель ловушек;
+при 2-м касании домена вырастет в скилл `pyrevit-helper` (skill-development,
+инкремент). Машина автора: `R-090226731A`, user `<сотрудник>`.
+
+## Ловушки Revit .NET API (через IronPython)
+
+- **`WorksetTable.RenameWorkset` — статический метод .NET** с сигнатурой
+  `(Document, WorksetId, string)`. Вызов через инстанс
+  `doc.GetWorksetTable().RenameWorkset(id, name)` падает с
+  `RenameWorkset() takes exactly 3 arguments (2 given)`.
+  ✅ `WorksetTable.RenameWorkset(doc, similar[0].Id, target_name)` + импорт
+  `from Autodesk.Revit.DB import WorksetTable`.
+- **Транзакции:** checkout рабочего набора НЕ должен прерывать активную транзакцию;
+  `DeleteWorksetSettings` требует аргументов; после `RollBack` — stale reference на
+  элементы (перечитывать заново).
+- **Фазы:** фильтр по фазе при `phase = None` падает; `get_last_phase`
+  недетерминированный — сортировать явно; пустой `room_number` обрабатывать.
+- **regex worksets:** `[^_]+` слишком жадно/узко для имён с `_` → `.+` где нужно
+  всё имя; `get_section_code` не должен возвращать заглушку `XX` молча.
+- **`processed_types.add`** пропускался при `continue` в цикле — добавлять ДО ветвлений.
+
+## Генерация иконок для кнопок (pushbutton/pulldown)
+
+- Pillow: рисовать на холсте 96×96, `LANCZOS` downscale → 32×32, фон прозрачный.
+- Палитра К-7: `DARK = (7, 30, 34)`, `ORANGE = (252, 73, 18)`.
+- `icon.png` кладётся в папку каждого `.pushbutton` / `.pulldown`.
+
+## Структура расширения
+
+`<tab>.tab / <panel>.panel / <button>.pushbutton/ {script.py, icon.png, <doc>.md}`.
+Переименование папок `.tab`/`.extension` — менять согласованно; при смене путей
+проверять `bundle.yaml`.
+
+## Открыто
+
+- Тестов на реальных моделях Revit нет (скрипты исправлены, но не прогнаны на живых
+  моделях) — см. [[rd_plugins_test_plan]] как образец плана тестирования плагинов.
+- При 2-м касании — поднять в скилл `pyrevit-helper` (3 слоя: SKILL.md + tools/ с
+  сниппетами API-ловушек + генератором иконок).
+
+## Источник
+
+feedback `2026-05-28_k7-pyrevit-fixes-docs` от R-090226731A (16 багфиксов за 2 сессии,
+6 итераций отчёта).

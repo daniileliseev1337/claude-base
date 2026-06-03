@@ -201,6 +201,48 @@ page.show_pdf_page(rect, stamp_doc, 0, clip=stamp_rect)
 R-090226727A — 11 итераций (v6-v11) на 57 листов АХП Балашиха,
 закрылась только pikepdf clip-path v11.
 
+### A3.6 Content-stream surgery для НАНЕСЁННОЙ разметки на AutoCAD-PDF
+
+Расширение A3.5 для класса «перерисовать наложение (CCTV/СС/ЭО) на чертеже,
+пришедшем только в PDF». Те же методы (content-stream поиск, redaction) проваливаются
+по **трём** дополнительным причинам:
+
+- **«Толстая» линия = пучок тонких `0 w` штрихов.** В AutoCAD-PDF (печать
+  `pdfplotNN.hdi`) визуально толстый луч — это не один `w`-штрих, а множество тонких
+  с мастер-масштабом `matrix(.12,0,0,-.12,0,1684)` + Y-flip. Поиск «6 w» в потоке
+  даёт **0 совпадений** — толщина не вычисляется линейно.
+- **Цвет нанесённого = родному.** Красная разметка совпадает по цвету с родным
+  красным плана (граница участка, кресты сноса) → по цвету нанесённое от подложки
+  НЕ отделить.
+- **`apply_redactions(REMOVE_IF_COVERED)`** на плотном чертеже сносит базу под
+  диагональными bbox и саму разметку не убирает.
+
+✅ **Правильно:** маска нанесённого из `get_drawings()` по **цвет+толщина в
+page-space** → затем либо удаление SVG-узлов (lxml) + новый слой
+([[reference_autocad_pdf_svg_markup]], без AutoCAD), либо построение заново в AutoCAD
+([[reference_autocad_pdf_overlay_mcp]], если нужен DWG).
+
+**Источник:** feedback `2026-06-03_autocad-pdf-svg-markup-edit` /
+`2026-06-03_autocad-mcp-pdf-overlay-edit` от R-090226727A.
+
+### A3.7 autocad-mcp: backend, печать PDF, EXPORTPDF
+
+Ловушки живого AutoCAD через autocad-mcp (file_ipc):
+
+- **Backend выбирается при СТАРТЕ сервера.** AutoCAD запущен позже Claude Code →
+  `system status` = `backend=ezdxf` (нет PDFIMPORT, `can_plot_pdf:false`, нет
+  `execute_lisp`). **Всегда проверять и при ezdxf делать `system init`** → `file_ipc`.
+- **MCP `drawing plot_pdf` молча НЕ создаёт файл** (возвращает ok+путь, файла нет).
+  Печатать через `(vla-PlotToFile (vla-get-Plot doc) path "DWG To PDF.pc3")`.
+- **`EXPORTPDF` открывает МОДАЛЬНЫЙ диалог даже при `FILEDIA=0` → IPC виснет
+  (Timeout).** Восстановление — PowerShell `WScript.Shell.AppActivate($acadPid)` +
+  `SendKeys("{ESC}")`. Не использовать EXPORTPDF в автоматизации.
+- **PDFIMPORT разрушает толстое наложение** (тесселляция в SOLID/HATCH, цвет в
+  ByLayer) → наложение не редактировать в импорте, строить заново (`entmake`).
+
+**Источник:** feedback `2026-06-03_autocad-mcp-pdf-overlay-edit` от R-090226727A.
+Детали — [[reference_autocad_pdf_overlay_mcp]], [[2026-05-21_acad-com-cookbook]].
+
 ## Категория 4. Безопасность
 
 ### A4.1 Self-modification settings.json без согласия
