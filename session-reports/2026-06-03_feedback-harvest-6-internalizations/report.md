@@ -117,6 +117,36 @@ ahp-replies-v2, blsh-tf, polozhenie-dms и др., через делегацию 
 - Мета-урок (мой): не переносить наработку в базу по бодрой самооценке отчёта-исполнителя
   без сверки реального исхода у пользователя. Зафиксирован как A10.5.
 
+## Догон 3: аудит базы + Obsidian + чистка ПК (2026-06-04)
+
+**Анализ claude-base** (через агента): 16 агентов на месте, git чист, скиллы валидны.
+Найдено и исправлено:
+- 🔴 **9 mojibake-файлов в memory/** (двойная кодировка от Phase 1 refactoring 26.05):
+  reference_agents/reference_mcp/auto_sync/harvest_proactive/profanity_marker/role_detection/
+  sessions_policy/token_economy/updater_v2. **Починены** связкой `ftfy.fix_encoding`
+  (трудные байты) + посегментный `cp1251→utf-8` (короткие аббревиатуры) + целевая замена
+  mojibake-спецсимволов (⚠✓«»). Grep-проверка чистая. Скрипт-помощник удалён после прогона.
+- `reference_agents.md`: эталон 15→16 (+pyrevit-engineer), счётчики agents Y/16.
+- `agents/agents.md` +10 агентов, `skills/skills.md` +10 скиллов, `vault-hub.md` — свежие активы.
+- Коммит `5883df8`.
+
+**Obsidian** = сам ~/.claude (индексирует .md). Актуализация = починка индексов + hub (выше).
+
+**Чистка ПК** (согласованные зоны):
+- Temp: удалены 37 осиротевших `.py` + 2 пустых `claude-settings.json` (явный мусор, rm).
+- Desktop: 92 МБ старья → **карантин** `Desktop/_КОРЗИНА_2026-06-04` (не rm — пользователь
+  проверит сам): `_pdf_surgery_session` (78 МБ, пробы провального штампа), `claude-stroy-base`
+  (13 МБ v1), `_work`+`.zip`, `claude-lite-instaler-main`(+`.OLD`), `claude-stroy-v2`.
+- НЕ тронуты: `claude-base` clone (рабочий, синхронен), `claude-lite-instaler` (текущий), `_ARCHIVE_*`.
+- Корень `C:\Users\Даниил` — оказался системным (NTUSER.DAT/junction-папки), не мусор; чистить нечего.
+
+## Backlog (новое из аудита)
+- **`reference_mcp.md` vs CLAUDE.md рассинхрон:** reference_mcp говорит «эталон 10 серверов»,
+  CLAUDE.md STOP — «9». Свериться, привести к одному числу (не трогал — отдельная сверка).
+- **Downloads 3.8 ГБ** — не разбирали (пользователь не выбрал зону).
+- `.claude.json.backup` (29 КБ) — старый бэкап в корне, можно удалить.
+- `MEMORY.md` — каталог ~24/43 (часть покрыта справочником CLAUDE.md); дозаполнить при желании.
+
 ## Открытые вопросы / backlog
 
 - **`memory/reference_agents.md` — double-encoded mojibake** (как был CLAUDE.md). Нужна
