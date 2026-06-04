@@ -56,8 +56,10 @@ tags: [мета, индекс, memory]
 - [[reference_docx_table_reformat]] — переформат docx-таблиц актов (ВСО/ИД) под новую шапку:
   трансформер python-docx (рекурсия cell.tables), словарь вместо regex, серийники с рукописных
   чертежей не угадывать. Скилл `vso-reformatter` — при 2-м кейсе.
-- [[reference_acad_apartments_rd]] — **СКЕЛЕТ-накопитель**: РД квартир через AutoCAD MCP.
-  Этапы (статус-трекер) + грабли + план инкремента memory→скилл→агенты. Наполняется по обучению.
+- [[reference_acad_ov_dwg_recreation]] — **накопитель**: воссоздание ОВ-проекта квартиры из PDF
+  в DWG через autocad-mcp (8 этапов + статус-трекер + рецепты + Phase-3 архитектура агентов). Наполняется.
+- [[reference_autocad_mcp_cyrillic]] — общий урок autocad-mcp: кириллица вход(Unicode)/выход(cp1251),
+  `drawing open` врёт → COM vla-Open. Полезно на любых AutoCAD-задачах.
 - [[reference_workflow_tool]] — инструмент Workflow (Opus 4.8, мультиагентная оркестрация):
   что это, когда оправдан, кандидаты в named-workflow. Правило проактивного предложения — в CLAUDE.md.
 
