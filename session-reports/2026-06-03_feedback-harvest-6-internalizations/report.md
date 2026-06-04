@@ -76,6 +76,33 @@ host: DANIILPC (hub, .developer-marker)
 - Обновлены: `CLAUDE.md` (эталон 15→16, agents: Y/16), `agents/agents.md` (+строка).
 - ⚠ **Подхватится после restart Claude Code** (hot-reload агентов нет).
 
+## Догон 2: вторая пачка отчётов (7 новых, изучены + внедрены)
+
+После fetch появились новые ветки: **MSI-ZAHAROV** (новый сотрудник, AV/мультимедиа) и
+свежий **NB-HP-LQ6G** (04.06). Изучены 4 содержательных (muzey-spartak AV, КОК-СКС,
+text-edit-letter, aho-review) + ранее непрочитанные R-090226727A (pdf-stamp-pipeline,
+ahp-replies-v2, blsh-tf, polozhenie-dms и др., через делегацию general-purpose).
+
+**Снято с кандидатов (проверка окупилась):** «ревьюеры без MCP» (топ-1 из сводки) —
+**уже закрыт** коммитом `6d79b4f`; у word-checker/excel-validator/pdf-reviewer свои
+`mcp__*` в frontmatter. Отчёты MSI-ZAHAROV про это — со **старой несинхронизированной
+базы** (его лечение — `/sync-base`, не правка базы). Norm-lookup-правило по той же
+причине не усиливал (есть в CLAUDE.md).
+
+**Внедрено (вторая пачка):**
+
+| Что | Файл |
+|---|---|
+| Excel-ловушки 10-13 (apply_formula, RU-запятая, .xls→xlrd, INDIRECT/donor-pattern, блочная запись) | `skills/excel-helper/SKILL.md` |
+| PDF-ловушки 7-8 (сдвиг колонок таблиц нагрузок; CID/PScript→рендер 180dpi) | `skills/pdf-helper/SKILL.md` |
+| anti-patterns A1.5/A5.5/A9.4/A10.4 (запрет юзера; memory по 1 письму; verify на всех; harvest first) | `anti-patterns.md` |
+| AV/мультимедиа reference (новый домен Захарова) + индекс | `memory/reference_av_multimedia.md` |
+| Скилл `pdf-stamp-pipeline` (pdfcpu+pikepdf) + decision-таблица методов + Replace-TitleBlock.ps1 | `skills/pdf-stamp-pipeline/` |
+
+**Ключевое решение по pdf-stamp:** скилл несёт **decision-таблицу консолидации** 5 методов
+правки PDF (pdfcpu overlay / Inkscape / pikepdf clip / SVG-PyMuPDF / autocad-mcp) — чтобы
+не плодить конфликтующие рекомендации. AV — memory+harvest (инкремент), агент позже.
+
 ## Открытые вопросы / backlog
 
 - **`memory/reference_agents.md` — double-encoded mojibake** (как был CLAUDE.md). Нужна
