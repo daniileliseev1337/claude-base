@@ -15,10 +15,19 @@
 
 **Ключевые скиллы:**
 - [[karpathy-guidelines]] — 5 поведенческих принципов (приоритетнее всех правил при конфликте)
+- [[skill-development]] — 4 правила накопления активов (3 слоя, код в tools/)
 - [[excel-helper]], [[word-helper]], [[pdf-helper]], [[stroy-formatting]]
+- [[pnr-vor-helper]], [[spec-writer]], [[facts-layer]] — доменные строительные
 
 **Ключевые агенты:**
 - [[designer]], [[auditor]], [[excel-validator]], [[word-checker]], [[pdf-reviewer]]
+- [[pto-engineer]], [[norm-lookup]], [[pyrevit-engineer]] (16-й, PyRevit-домен)
+
+**Доменные reference (2026-06):**
+- [[reference_autocad_pdf_svg_markup]], [[reference_autocad_pdf_overlay_mcp]] — правка/перерисовка графики на PDF-чертежах (CCTV-кейс, verified)
+- [[reference_inkscape_pdf_editing]] — удаление/перемещение объекта в вектор-PDF (verified)
+- [[reference_pyrevit_k7]] — Revit-плагины (IronPython + .NET API)
+- [[reference_av_multimedia]] — AV/мультимедиа-инсталляции (новый домен)
 
 **Главные уроки:**
 - [[2026-05-09_hooks-debugging]] — 16 ловушек hooks-debugging (Урок 16 мета)
