@@ -97,11 +97,25 @@ ahp-replies-v2, blsh-tf, polozhenie-dms и др., через делегацию 
 | PDF-ловушки 7-8 (сдвиг колонок таблиц нагрузок; CID/PScript→рендер 180dpi) | `skills/pdf-helper/SKILL.md` |
 | anti-patterns A1.5/A5.5/A9.4/A10.4 (запрет юзера; memory по 1 письму; verify на всех; harvest first) | `anti-patterns.md` |
 | AV/мультимедиа reference (новый домен Захарова) + индекс | `memory/reference_av_multimedia.md` |
-| Скилл `pdf-stamp-pipeline` (pdfcpu+pikepdf) + decision-таблица методов + Replace-TitleBlock.ps1 | `skills/pdf-stamp-pipeline/` |
+| ~~Скилл `pdf-stamp-pipeline`~~ — **ОТКАЧЕН** (см. ниже) | — |
 
-**Ключевое решение по pdf-stamp:** скилл несёт **decision-таблицу консолидации** 5 методов
-правки PDF (pdfcpu overlay / Inkscape / pikepdf clip / SVG-PyMuPDF / autocad-mcp) — чтобы
-не плодить конфликтующие рекомендации. AV — memory+harvest (инкремент), агент позже.
+**Ключевое решение по AV:** memory+harvest (инкремент), агент `av-engineer` позже.
+
+## ОТКАТ скилла pdf-stamp-pipeline (коррекция пользователя 2026-06-04)
+
+Изначально создал скилл `pdf-stamp-pipeline` (pdfcpu+pikepdf, batch-замена штампа) на
+основе feedback-отчёта `2026-05-25_pdf-stamp-pipeline` (`working-prototype-ready`).
+**Пользователь скорректировал: задача со штампами провальная, реального результата не
+было** (прототип «работал» лишь на 1 тестовом листе; `ahp-stamp-overlay` — прямой провал).
+Единственный реально успешный PDF-кейс — **перерисовка схемы расположения камер (CCTV)**,
+уже в `reference_autocad_pdf_svg_markup`/`overlay_mcp` (verified, «заказчик доволен»).
+
+**Сделано:**
+- `git rm` скилла `pdf-stamp-pipeline` целиком.
+- `anti-patterns.md`: A10.4 переписан (убран ложный «успех pdfcpu/1.3 сек/лист»);
+  добавлен **A10.5 «самооценка отчёта ≠ подтверждённый результат»**.
+- Мета-урок (мой): не переносить наработку в базу по бодрой самооценке отчёта-исполнителя
+  без сверки реального исхода у пользователя. Зафиксирован как A10.5.
 
 ## Открытые вопросы / backlog
 
