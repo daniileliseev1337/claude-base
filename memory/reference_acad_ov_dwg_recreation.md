@@ -5,6 +5,7 @@ status: active (наполняется по мере обучения)
 owner: Даниил
 tags: [reference, autocad, autocad-mcp, ОВ, dwg, квартиры, recreation, накопитель]
 related:
+  - [[acad-recreation]]
   - [[reference_autocad_mcp_cyrillic]]
   - [[2026-05-21_acad-com-cookbook]]
   - [[reference_autocad_pdf_overlay_mcp]]

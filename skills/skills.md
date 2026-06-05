@@ -24,6 +24,7 @@ tags: [мета, индекс, skills]
 
 - [[spec-writer]] — генерация Excel-спецификации по объектам (стиль S/J/I/R, «Спец. N»).
 - [[pnr-vor-helper]] — комплект ПНР+ВОР по разделу ПД/РД (5 профилей систем, 9-шаговый pipeline). Не путать со spec-writer.
+- [[acad-recreation]] — воссоздание чертежей (ОВ-проекты квартир) PDF→DWG через autocad-mcp: усиленный toolkit (LISP dynblock + multi-view PDF + cp1251-патч + batch cherry-pick) поверх puran-water.
 - [[upd-parser]] — парсинг УПД поставщиков в JSON.
 - [[cad-reader]] — чтение CAD/DWG (К-7).
 - [[facts-layer]] — единый источник правды проекта (FACTS.md: ключ→значение→источник).
