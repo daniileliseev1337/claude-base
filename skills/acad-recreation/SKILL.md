@@ -25,6 +25,21 @@ description: |
 Любая задача воссоздания/правки чертежа через живой AutoCAD (autocad-mcp, backend file_ipc).
 Сначала `system status` → при `ezdxf` сделать `system init` (нужен file_ipc для живого AutoCAD).
 
+## Установка на ПК (для команды)
+
+Запустить **один раз** (и после каждой переустановки сервера через setup-extras):
+```powershell
+powershell -File "$env:USERPROFILE\.claude\skills\acad-recreation\tools\install.ps1"
+```
+Скрипт (idempotent): копирует toolkit в `C:\ProgramData\K7-acad` (ASCII-путь, т.к. профиль
+бывает кириллический), применяет **cp1251-патч** к `file_ipc.py` (+ бэкап), печатает строку
+автозагрузки для `acad.lsp`. **После патча — перезапустить Claude Code.** Автозагрузку toolkit
+в `acad.lsp` прописать вручную (скрипт даёт готовую строку; чужой acad.lsp вслепую не трогаем).
+
+> Проверка после установки (в живом AutoCAD): `execute_lisp (type LM:getdynprops)` → `SUBR`.
+> ⚠ Персистентность сервер-патча: при переустановке сервера upstream-zip затрёт — повторить install.ps1.
+> Долгосрочно — вендор-снапшот сервера (backlog).
+
 ## Слой tools/ (наш усиленный инструментарий)
 
 | Файл | Что | Статус |
