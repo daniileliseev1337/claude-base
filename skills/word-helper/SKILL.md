@@ -175,6 +175,20 @@ soffice --headless --convert-to pdf input.docx
 5. **Сохранение в .doc (старый формат)** — `python-docx` НЕ умеет, только .docx. Для .doc — конвертировать через LibreOffice headless.
 6. **Раздельные секции (sections)** — для верстки альбомных листов или разных колонтитулов. python-docx работает с ними через `doc.sections`.
 7. **Списки и нумерация** — глубокий enchant: `numbering.xml` в docx определяет нумерацию, на одном файле может быть несколько определений. Простая правка через python-docx может не взлететь.
+8. **⚠ `mcp__word__search_and_replace` ДУБЛИРУЕТ текст в таблицах** (anti-patterns A3.8). На ячейке с `gridSpan`/merge рапортует «N occurrences» и вставляет replace N× в один run → задвоение, документ испорчен. **Акт ИД = одна таблица — особо опасно.** НЕ использовать для текста внутри таблиц. Надёжный путь — in-place правка `word/document.xml` через ZipArchive:
+   ```powershell
+   Add-Type -AssemblyName System.IO.Compression
+   $zip = [IO.Compression.ZipFile]::Open($docx,'Update'); $e=$zip.GetEntry('word/document.xml')
+   $r=New-Object IO.StreamReader($e.Open(),[Text.Encoding]::UTF8); $xml=$r.ReadToEnd(); $r.Dispose()
+   if (([regex]::Matches($xml,[regex]::Escape($find))).Count -eq 1){   # count ДО замены!
+       $xml=$xml.Replace($find,$replace)
+       $s=$e.Open(); $s.SetLength(0)
+       $w=New-Object IO.StreamWriter($s,(New-Object Text.UTF8Encoding($false)))  # UTF-8 без BOM
+       $w.Write($xml); $w.Dispose() }
+   $zip.Dispose()
+   ```
+   Целиться в **целый run** (`<w:t>…</w:t>`); cross-run фрагмент `.Replace` не возьмёт. Бэкап до правки. (Источник: акты ИД, R-090226727A 2026-06-05.)
+9. **Метаданные python-docx** — новый docx получает `author: python-docx`, `created/modified: 2013-12-23` (артефакт библиотеки). Перед сдачей заполнять `core_properties` (author/title/created) или хотя бы знать, что дата 2013 — не баг данных. (Источник: collaborative-excel-tools, ПНР-серия.)
 
 ## Read-back verification после генерации (§4 Karpathy)
 
