@@ -81,10 +81,27 @@ related:
 - **Отдавать человеку (не автоматизировать слепо):** финальная приёмка стиля, разводка по растру
   без вектора (приблизительно), спорные «оставить/удалить» (подсветка цветом → решение человека).
 
+## Заимствования из harvest 2026-06-04 (backlog, остаёмся на puran-water)
+
+Harvest 11 инструментов (Workflow) → вердикт **остаёмся на puran-water**, забрать приёмы:
+- **P0 batch-инструменты** `draw_*_batch` из `prumputira/autocad-mcp` v5.0 (Apache, эволюция
+  нашей же базы) — cherry-pick кодом, −60-70% API-вызовов. + `excel_export` (мост к ВОР/спекам).
+- **P0 multi-view 9-tile PDF препроцессинг** (overview + 2×2 + угловые deep-zoom) — Python pdf2image+crop.
+- **P0 capture_screenshot живого AutoCAD** — точнее ezdxf-рендера; feedback-loop сверки.
+- ⚠ **P1 cp1251-fix в `file_ipc.py`** — сейчас fallback cp1252 (БАГ), нужен cp1251.
+- **P1 Lee Mac dynblock-LISP как `tools/`-слой** (LM:setdynpropvalue и др.).
+- **P2** канонический LISP-скелет (UNDO GROUP→LAYER M→геометрия→END+ZOOM E) + safety-блоклист;
+  5-фазный протокол + two-pass verify; keyword pre-router; prompt caching system-промпта.
+- **Риск:** наш COM держится на execute_lisp (README puran-water = LT без COM) → вендор-снапшот
+  + тесты COM-пути; cherry-pick из prumputira (Apache), не слепое следование upstream.
+
+Полный harvest: `session-reports/2026-06-04_autocad-mcp-harvest/report.md`.
+
 ## Открытые вопросы
 
 - Схема вентиляции часто РАСТРОВАЯ (вектора/DWG нет) → разводка приблизительная, человек подвинет.
 - Где граница «Claude делает» vs «человек доделывает» по каждому этапу.
+- Реализация P0/P1-заимствований (cherry-pick prumputira, cp1251-fix) — на рабочем ПК с AutoCAD.
 
 ## Источник
 
