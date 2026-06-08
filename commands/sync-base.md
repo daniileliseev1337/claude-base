@@ -51,6 +51,8 @@ git -C "$HOME/.claude" log --oneline -10
 echo "=== Exa MCP ==="; claude mcp list 2>&1 | grep -i exa || echo "НЕТ — доустановить"
 echo "=== Codex CLI ==="; codex --version 2>&1 || echo "НЕТ — опционально"
 echo "=== Inkscape (правка вектор-PDF, pdf-helper) ==="; inkscape --version 2>&1 | head -1 || echo "НЕТ — доустановить (нужен для правки чертежей-PDF)"
+echo "=== graphify (граф кода/docs больших папок — опц.) ==="; graphify --version 2>&1 | head -1 || echo "НЕТ — опционально"
+echo "=== Ollama (локальный LLM-бэкенд graphify для docs-графа — опц.) ==="; ollama --version 2>&1 | head -1 || echo "НЕТ — опционально"
 ```
 
 ### Шаг 5. Доклад пользователю
@@ -65,6 +67,9 @@ echo "=== Inkscape (правка вектор-PDF, pdf-helper) ==="; inkscape --
   (или inkscape.org, нужна версия 1.x). ⚠ Медленный на слабом железе/без GPU.
   GPL-3.0 — используется как внешняя программа, не в коде. После установки —
   перезапуск терминала, чтобы `inkscape` появился в PATH.
+- graphify (опц., граф кода/docs — для разбора больших папок: проекты, ИД-том, кодовые базы): `uv tool install graphifyy` → `graphify install --platform claude` (даёт `/graphify`). Для **кода** работает offline (бесплатно). Для **docs/PDF** нужен LLM-бэкенд (Ollama ниже, или `GEMINI_API_KEY`/`ANTHROPIC_API_KEY`). MIT.
+- Ollama (опц., локальный LLM для graphify docs/PDF-графа конфиденц. данных — данные не уходят в облако): `winget install Ollama.Ollama` → `ollama pull qwen2.5:7b` (~5 ГБ). ⚠ Без GPU медленно (ночные/пакетные прогоны). Для кода graphify работает и без Ollama.
+- glif-mcp (опц., ⚠ archived — визуальные AI-workflow glif.app, узкая ниша): `claude mcp add glif -s user -e GLIF_API_KEY=<key> -- npx -y @glifxyz/glif-mcp-server`. Нужен `GLIF_API_KEY` (glif.app). Ставить только если реально нужно.
 
 **🔲 Веб (claude.ai), проверить разово:**
 - Adobe MCP отключён? (Settings → Connectors → Adobe → Disconnect) — 0% использования
