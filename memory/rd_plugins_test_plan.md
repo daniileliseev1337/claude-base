@@ -12,7 +12,7 @@ tags: [R&D, plugins, settings, тест-план]
 
 ## Контекст
 
-В рамках импорта из К-7 аудита (см. `~/Desktop/K-7_audit_report.docx`,
+В рамках импорта из К-7 аудита (см. аудит К-7 (от 2026-05-20, отчёт архивирован),
 разделы 4.6 и 4.8) на 2026-05-20 в `~/.claude/settings.json` добавлены
 два официальных плагина Anthropic:
 
@@ -123,7 +123,7 @@ metrics добавлять в session-report»).
 - [[backlog_teammate_mode_tmux]] — третий R&D-плагин из roadmap'а
   (4.7), отложен из-за отсутствия tmux
 - [[backlog_promptfoo_semantic_tests]] — backlog promptfoo
-- К-7 отчёт `~/Desktop/K-7_audit_report.docx`, разделы 4.6 и 4.8
+- К-7 отчёт аудит К-7 (от 2026-05-20, отчёт архивирован), разделы 4.6 и 4.8
 
 ## История
 

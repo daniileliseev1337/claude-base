@@ -254,7 +254,7 @@ for r, row in enumerate(ws.iter_rows(values_only=True), 1):
     Если записать `=J96*0.2` через `write_data_to_excel`, оно сохранится как **строка-текст**,
     не формула. Использовать `mcp__excel__apply_formula`. И ещё — **RU-запятая ломает
     формулу:** `=J96*0,2` (запятая) не парсится как формула → писать с **точкой**
-    (`=J96*0.2`), Excel сам отобразит по локали. (Источник: muzey-spartak, R-090226727A.)
+    (`=J96*0.2`), Excel сам отобразит по локали. (Источник: muzey-spartak, <шифр>.)
 11. **Старый `.xls` (BIFF) — читать `xlrd`, не openpyxl.** openpyxl работает только с
     `.xlsx` (OOXML). Для `.xls` (Excel 97-2003) — `xlrd` (`import xlrd; xlrd.open_workbook(...)`).
     Источники спецификаций нередко приходят в старом `.xls`.
@@ -270,7 +270,7 @@ for r, row in enumerate(ws.iter_rows(values_only=True), 1):
 14. **OnlyOffice / Р7-Офис НЕ выполняют Power Query и LAMBDA** (импортозамещение). Сложные
     xlsx с PQ/динамическими массивами/LAMBDA в них ломаются/не считаются. Если файл
     заказчика на этих движках — проверить, нет ли PQ/LAMBDA; критичную логику дублировать
-    обычными формулами. M365 — тянет; OnlyOffice — нет. (Источник: collaborative-excel-tools, NB-HP-LQ6G.)
+    обычными формулами. M365 — тянет; OnlyOffice — нет. (Источник: collaborative-excel-tools, <шифр>.)
 
 ## Read-back verification после генерации (§4 Karpathy)
 

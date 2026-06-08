@@ -80,7 +80,7 @@ from docx import Document
 doc = Document("input.docx")
 
 replacements = {
-    "{{ИМЯ}}": "Иванов И.И.",
+    "{{ИМЯ}}": "<ФИО>",
     "{{ДАТА}}": "07.05.2026",
 }
 
@@ -117,7 +117,7 @@ doc.save("output.docx")
 ```python
 from docxtpl import DocxTemplate
 tpl = DocxTemplate("template.docx")
-tpl.render({"name": "Иванов И.И.", "date": "07.05.2026"})
+tpl.render({"name": "<ФИО>", "date": "07.05.2026"})
 tpl.save("filled.docx")
 ```
 
@@ -187,7 +187,7 @@ soffice --headless --convert-to pdf input.docx
        $w.Write($xml); $w.Dispose() }
    $zip.Dispose()
    ```
-   Целиться в **целый run** (`<w:t>…</w:t>`); cross-run фрагмент `.Replace` не возьмёт. Бэкап до правки. (Источник: акты ИД, R-090226727A 2026-06-05.)
+   Целиться в **целый run** (`<w:t>…</w:t>`); cross-run фрагмент `.Replace` не возьмёт. Бэкап до правки. (Источник: акты ИД, <шифр> 2026-06-05.)
 9. **Метаданные python-docx** — новый docx получает `author: python-docx`, `created/modified: 2013-12-23` (артефакт библиотеки). Перед сдачей заполнять `core_properties` (author/title/created) или хотя бы знать, что дата 2013 — не баг данных. (Источник: collaborative-excel-tools, ПНР-серия.)
 
 ## Read-back verification после генерации (§4 Karpathy)
@@ -220,11 +220,11 @@ for key, value in expected_values.items():
         raise RuntimeError(f"Значение {key}='{value}' не найдено в выводе")
 ```
 
-Для критичных шаблонов (фирменные письма К-7, претензии, договоры) — после verify ещё спавнить агента [[word-checker]].
+Для критичных шаблонов (фирменные письма <организация>, претензии, договоры) — после verify ещё спавнить агента [[word-checker]].
 
-## К-7 фирменный шаблон письма
+## Фирменный шаблон письма
 
-В `templates/k7_letter_template.docx` лежит фирменный бланк ООО «К-7» с реквизитами (адрес, ИНН, ОГРН, контакты). Использовать для деловых писем от компании.
+В `templates/k7_letter_template.docx` лежит фирменный бланк <организация> с реквизитами (адрес, ИНН, ОГРН, контакты). Использовать для деловых писем от компании.
 
 ```python
 from docxtpl import DocxTemplate
@@ -233,10 +233,10 @@ from pathlib import Path
 tpl_path = Path.home() / ".claude/skills/word-helper/templates/k7_letter_template.docx"
 tpl = DocxTemplate(str(tpl_path))
 tpl.render({
-    "recipient": "ООО МСУ-1",
+    "recipient": "<организация-получатель>",
     "subject": "Об оплате счёта № 123",
     "body": "Уважаемые коллеги, ...",
-    "outgoing_number": "К7-456-26",
+    "outgoing_number": "<исх-номер>",
     "date": "20.05.2026",
 })
 tpl.save("output.docx")

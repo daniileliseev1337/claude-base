@@ -3,7 +3,7 @@ name: cad-reader
 description: Use this skill whenever you need to read CAD drawings (DWG, DXF). Extracts layers, text labels, room boundaries, equipment blocks, and stamp data (project name, drawing number, scale). DWG is auto-converted to DXF via ODA File Converter. К-7 specifically: works with floor plans for low-current systems (СКС, СКУД, CCTV) — separate layer per system. Does NOT support Revit/IFC/Compass-3D — those need separate skills.
 ---
 
-# CAD Reader Skill (К-7)
+# CAD Reader Skill (<организация>)
 
 ## ⚠ Предусловия
 
@@ -72,10 +72,20 @@ blocks = list_blocks("plan.dxf")
 ## Установка ODA File Converter
 См. `INSTALL.md`.
 
-## Стандартные слои в проектах К-7
+## Стандартные слои в проектах <организация>
 
 - `SKS` или `СКС` — структурированная кабельная система
 - `SKUD` или `СКУД` — контроль доступа
 - `CCTV` или `Видеонаблюдение`
 - `OPS` или `ОПС` — пожарная сигнализация
 - `LVS` или `ЛВС` — локальная сеть
+
+## Tools (слой 3)
+
+Папка `scripts/` — это 3-й слой стандарта скиллов (Description + Instructions + **Tools**): детерминированные Python-скрипты, к которым обращаются примеры выше.
+
+- `extract_dxf.py` — чтение DXF через `ezdxf`: `list_layers`, `extract_text_entities`, `find_stamp`, `list_blocks`.
+- `dwg_to_dxf.py` — конвертация `.dwg` → `.dxf` через ODA File Converter (`dwg_to_dxf`, `find_oda_executable`).
+- `test_extract_dxf.py` — тесты для `extract_dxf`.
+
+Скрипты остаются в `scripts/` (не переименовывать в `tools/`).

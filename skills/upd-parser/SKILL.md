@@ -24,8 +24,6 @@ description: |
 
 **Не делать выводов о swap'е артикулов без визуальной сверки.** PDF text-extraction (pdfplumber/pdf-mcp) не отражает линейную структуру таблицы — две колонки могут перепутаться местами в текстовом выводе. Перед тем как заявить «поставщик переименовал артикул» — обязательно отрендерить страницу в PNG и посмотреть глазами (`pdf-mcp pdf_render_pages`).
 
-См. [[feedback-upd-pdf-parsing]] для контекста.
-
 ## Алгоритм
 
 ### Шаг 1 — определить тип PDF (текстовый vs скан)
@@ -82,7 +80,7 @@ result = {
     "upd_number": header["upd_number"],
     "upd_date": header["upd_date"],
     "seller": header["seller"],
-    "buyer": header["buyer"],  # должно совпасть с К-7 (ИНН 7724915051)
+    "buyer": header["buyer"],  # должно совпасть с нашей организацией (ИНН <ИНН>)
     "contract_ref": header.get("contract_ref"),
     "items": items,
     "totals": totals,
@@ -91,9 +89,10 @@ result = {
     "warnings": [],
 }
 
-# Verify: buyer = К-7
-if result["buyer"].get("inn") != "7724915051":
-    result["warnings"].append(f"Покупатель не К-7: ИНН {result['buyer'].get('inn')}")
+# Verify: buyer = наша организация
+OUR_INN = "<ИНН>"  # подставить ИНН своей организации
+if result["buyer"].get("inn") != OUR_INN:
+    result["warnings"].append(f"Покупатель не наша организация: ИНН {result['buyer'].get('inn')}")
 
 # Verify: сумма items.amount = totals.sum_without_vat (с точностью до копеек)
 items_sum = sum(i["amount"] for i in items if i.get("amount") is not None)
@@ -107,7 +106,7 @@ if abs(items_sum - totals["sum_without_vat"]) > 0.01:
 
 ```json
 {
-  "upd_number": "К7-456",
+  "upd_number": "УПД-456",
   "upd_date": "2026-05-15",
   "seller": {
     "name": "ООО Поставщик-Х",
@@ -116,8 +115,8 @@ if abs(items_sum - totals["sum_without_vat"]) > 0.01:
     "address": "г. Москва, ..."
   },
   "buyer": {
-    "name": "ООО К-7",
-    "inn": "7724915051",
+    "name": "ООО <организация>",
+    "inn": "<ИНН>",
     "kpp": "772401001"
   },
   "contract_ref": "Договор поставки № 12 от 01.04.2026",
@@ -141,7 +140,7 @@ if abs(items_sum - totals["sum_without_vat"]) > 0.01:
     "sum_total": 42600.00,
     "vat_breakdown": {"0%": 0, "10%": 0, "20%": 42600.00}
   },
-  "source_file": "C:/.../УПД №К7-456.pdf",
+  "source_file": "C:/.../УПД №УПД-456.pdf",
   "is_scan": false,
   "warnings": []
 }
@@ -151,8 +150,8 @@ if abs(items_sum - totals["sum_without_vat"]) > 0.01:
 
 - **Перед парсингом:** [[pdf-helper]] определяет тип (текст vs скан); скан → [[image-text-replace]].
 - **После парсинга — сверка со спецификацией:** загрузить нашу спец через [[excel-helper]], сверить D (артикул) и сумму с UPD items.
-- **При расхождении артикула:** применить правило из [[feedback-article-rename.md]] — заменить D, добавить красным «(Было <старый_артикул>)».
-- **Обновление S/J/I/R:** правило [[feedback-preserve-history]] — НЕ перезаписывать, **прибавлять** к существующему. См. также [[feedback-s-j-mirror]] (S↔J зеркалирование).
+- **При расхождении артикула:** заменить артикул в колонке D, а в эту же ячейку добавить **красным** пометку «(Было <старый_артикул>)» — чтобы сохранить историю переименования, а не затереть её молча.
+- **Обновление S/J/I/R:** НЕ перезаписывать накопленные значения, а **прибавлять** новое к существующему (история поставок сохраняется). При этом колонки S и J держать зеркальными: изменение в S отражать в J (S↔J зеркалирование), иначе расхождение между листами.
 
 ## Ошибки и graceful degradation
 
@@ -173,3 +172,9 @@ if abs(items_sum - totals["sum_without_vat"]) > 0.01:
 ## Когда вызывать pdf-reviewer
 
 Если после парсинга есть `warnings` или подозрение на неправильную структуру — спавнить subagent `pdf-reviewer` для визуальной проверки страницы (отрендерит и сверит с парсингом).
+
+## Tools (слой 3)
+
+Папка `scripts/` содержит детерминированные скрипты скилла — это 3-й слой стандарта скиллов (Description + Instructions + **Tools**). Здесь живёт повторяемая логика, которую не нужно переписывать в каждой сессии:
+
+- `scripts/parse_upd.py` — helper-функции `parse_header` / `parse_items` / `parse_totals` (см. Шаги 2-4). Подключается через `sys.path.insert(0, str(Path.home() / ".claude/skills/upd-parser/scripts"))`.

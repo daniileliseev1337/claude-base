@@ -15,7 +15,7 @@ tags: [backlog, R&D, teammates, tmux, settings]
 ## Контекст
 
 Источник идеи — аудит чужой базы Claude Code «К-7 (агенты)» от 2026-05-20
-(см. отчёт `~/Desktop/K-7_audit_report.docx`, раздел 4.7). У них в
+(см. отчёт аудит К-7 (от 2026-05-20, отчёт архивирован), раздел 4.7). У них в
 settings.json:
 
 ```json
@@ -91,7 +91,7 @@ schema settings.json допускает три значения:
 
 - [[project_designer_decomposition]] — основной триггер (stage-decomposition)
 - [[backlog_promptfoo_semantic_tests]] — параллельный backlog
-- К-7 отчёт `~/Desktop/K-7_audit_report.docx`, раздел 4.7
+- К-7 отчёт аудит К-7 (от 2026-05-20, отчёт архивирован), раздел 4.7
 
 ## История
 

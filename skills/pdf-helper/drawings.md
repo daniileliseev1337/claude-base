@@ -11,7 +11,7 @@ PDF, которые на самом деле чертежи:
 
 ```python
 import sys
-sys.path.insert(0, ".claude/skills/pdf-advanced/scripts")
+sys.path.insert(0, ".claude/skills/pdf-helper/scripts")
 from extract_drawing_meta import extract_text_blocks
 
 blocks = extract_text_blocks("plan_floor1.pdf", page=0)
@@ -59,5 +59,5 @@ for ocg in oc_groups:
 
 ## Дальше
 
-- Если в PDF только растровое изображение чертежа — используй skill `ocr`
+- Если в PDF только растровое изображение чертежа — используй skill `image-text-replace`
 - Если есть исходный DWG — лучше используй skill `cad-reader` (точнее)

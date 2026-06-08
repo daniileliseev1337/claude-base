@@ -34,5 +34,5 @@ metadata:
 обязательно (CLAUDE.md правило 6). Consent-подход касается **отправки в
 сторонние AI-сервисы по запросу пользователя**, не публикации в репозиторий.
 
-**Связано:** [[feedback-webfetch-reality-check]] (тоже про cloud-инструменты),
+**Связано:** [[feedback_webfetch_reality_check]] (тоже про cloud-инструменты),
 `session-reports/2026-06-01_harvest-9-cc-plugins/harvested/06-codex-plugin-cc.md`.

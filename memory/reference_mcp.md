@@ -27,6 +27,7 @@ CORE-секция CLAUDE.md (STOP-процедура, шаг 2) ссылаетс
 | Имя | Когда нужен |
 |-----|-------------|
 | `autocad-mcp` | ПК с установленным AutoCAD (через manifest, github-zip-uv) |
+| `exa` | Веб-поиск/выкачка (web_search_exa / web_fetch_exa); per-machine, для norm-lookup и harvest |
 
 **Правило для STOP-процедуры:**
 - В шаге 2 сверять с **9 стандартными** именами + опциональным `autocad-mcp` если ПК с AutoCAD.
@@ -36,4 +37,5 @@ CORE-секция CLAUDE.md (STOP-процедура, шаг 2) ссылаетс
 **Дополнительный портативный бинарь (не MCP, для subprocess):**
 - `diff-pdf v0.5.3` (GPL-2.0): `~/.claude/bin/diff-pdf/diff-pdf.exe` —
   визуальный page-diff двух PDF. Использовать через subprocess, **код не
-  копировать**.
+  копировать**. _Опционально (ставится через setup-extras); на DANIILPC сейчас
+  ОТСУТСТВУЕТ — проверять наличие перед вызовом._

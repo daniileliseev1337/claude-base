@@ -11,7 +11,7 @@ description: |
 
   **2. Замена/вставка текста (secondary use):**
   OCR → mask → LaMa inpaint → Times Bold render → SD img2img strength=0.10
-  полировка. v3.0 — production-ready после 16 итераций (КП К7 АХП case).
+  полировка. v3.0 — production-ready после 16 итераций (КП <организация> АХП case).
 
   Триггеры (OCR, primary):
   - "разбери скан", "что в этом скане", "извлеки данные из скана"
@@ -50,14 +50,14 @@ options:
   - label: "Да, шрифт известен"
     description: "Указать font path в --font параметре pipeline (например C:/Windows/Fonts/timesbd.ttf)."
   - label: "Пропускаем, default Times Bold"
-    description: "Понимаю риск: К-7 АХП case — 8 итераций на Arial; LS АХП case — 3 итерации на Bold vs Regular."
+    description: "Понимаю риск: <организация> АХП case — 8 итераций на Arial; LS АХП case — 3 итерации на Bold vs Regular."
 ```
 
 **Без явного ответа пользователя — Шаг 2 (pipeline) не запускать.**
 
 **Почему правило-«пометка» в LESSONS-LEARNED не сработала:** пропуск
 калибровки **повторился в LS АХП case** (2026-05-20) несмотря на
-урок из К-7 АХП case (2026-05-19). Жёсткий guard через AskUserQuestion
+урок из <организация> АХП case (2026-05-19). Жёсткий guard через AskUserQuestion
 защищает от повторения как у `stroy-formatting` со стилями.
 
 **Исключение** — если пользователь **явно** в запросе указал
@@ -222,11 +222,10 @@ snapshot_download(
 
 ## Связанные
 
-- [[LESSONS-LEARNED]] — 16-итераций retrospective + anti-patterns
-- [[ROADMAP-heavy-options]] — 4 heavy techniques (PSF, Borrow, SD, CNN)
-- [[skills/skills|skills]] — каталог
-- [[pdf-helper]] — связка PDF → image → этот скилл → PDF
-- harvest: [[Appt-OCR]], [[IOPaint]], [[PaddleOCR]]
+- `LESSONS-LEARNED.md` (в папке скилла) — 16-итераций retrospective + anti-patterns
+- `ROADMAP-heavy-options.md` (в папке скилла) — 4 heavy techniques (PSF, Borrow, SD, CNN)
+- скилл `pdf-helper` — связка PDF → image → этот скилл → PDF
+- harvest-источники см. в секции «Источники (harvest)» ниже (Appt-OCR, IOPaint, PaddleOCR)
 
 ## Источники (harvest)
 
@@ -243,5 +242,16 @@ snapshot_download(
 - v0.6: glyph borrowing (Option 4) — opt-in helper
 - v1.4: cap-height font sizing — integrated
 - v2.3: Times Bold default — integrated
-- v3.0: SD scan-ification — production stack (КП К7 АХП case, 2026-05-19)
+- v3.0: SD scan-ification — production stack (КП <организация> АХП case, 2026-05-19)
 - **v3.1**: hard calibration guard через AskUserQuestion + `refine_bg_with_diffusion` preference для буквенных ячеек (импорт из КП ЛС АХП case, 2026-05-20)
+
+## Tools (слой 3)
+
+В папке скилла лежат детерминированные скрипты — это 3-й слой стандарта
+скиллов (Description + Instructions + **Tools**): повторяемая логика вынесена
+в код, а не пересобирается моделью каждый раз.
+
+- `pipeline.py` — основной OCR → mask → LaMa inpaint → render → SD-refine pipeline (Шаг 2).
+- `calibration.py` — font calibration: render эталонной строки в 12 шрифтах для визуального подбора (Шаг 1).
+
+Скрипты вызываются как `python ~/.claude/skills/image-text-replace/<script>.py` (см. Workflow выше).

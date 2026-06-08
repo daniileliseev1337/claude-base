@@ -122,7 +122,7 @@ stamp = find_stamp_data(blocks, page_size)
 НЕ через content-stream surgery (PyMuPDF redact / pikepdf clip — провалено, прячет а
 не удаляет, см. `anti-patterns.md` §A3.5).
 
-**ВЕРИФИЦИРОВАНО 2026-06-02** на реальном К-7 чертеже (чистое удаление штампа,
+**ВЕРИФИЦИРОВАНО 2026-06-02** на реальном чертеже <организация> (чистое удаление штампа,
 0 растеризации, чертёж цел). Полный метод + ловушки + caveat'ы:
 см. `~/.claude/memory/reference_inkscape_pdf_editing.md`.
 
@@ -249,26 +249,32 @@ pdf.save("output.pdf")
 4. **Сравнение «что изменилось» между двумя PDF** — бинарный diff бесполезен. Лучший путь: отрендерить страницы в PNG (`pdftoppm`) и сравнить через perceptual hash (imagehash) или multimodal vision.
 5. **Шрифты при редактировании** — если меняешь текст в PDF и нужный шрифт не embedded, текст потеряется. Проверять через `reader.metadata` или `pikepdf` perms.
 6. **Сжатие при сохранении** — `pikepdf.save()` по умолчанию пересжимает. Для минимальных правок передать `linearize=True` или ничего, а вот `compress_streams=False` сохранит исходные потоки.
-7. **Сдвиг колонок при извлечении таблиц нагрузок.** При экспорте PDF из расчётных программ/CAD числовые таблицы (Pр, Sр, мощности по щитам) могут «съезжать» на колонку при `extract_tables()`/`find_tables()` — значение попадает не в свой столбец. **Любые числа из таблиц нагрузок/мощностей сверять с оригиналом** (рендер страницы глазами или соседний столбец-сумма), не доверять плоскому парсу. Особенно при аудите «ТЧ vs спецификация». (Источник: аудит АХО, NB-HP-LQ6G.)
-8. **CID / PScript-Distiller PDF — читать рендером, не текстовым слоем.** PDF, прошедшие через PostScript-принтер + Acrobat Distiller (Producer `PScript5`/`Acrobat Distiller`), часто имеют CID-шрифты без ToUnicode → `extract_text()` отдаёт мусор/пусто. Не биться об текст — сразу **рендер ≥180 dpi** (`pdf_render_pages` / PyMuPDF `get_pixmap(dpi=180)`) + читать визуально/OCR. (Источник: blsh-tf-corrections.)
+7. **Сдвиг колонок при извлечении таблиц нагрузок.** При экспорте PDF из расчётных программ/CAD числовые таблицы (Pр, Sр, мощности по щитам) могут «съезжать» на колонку при `extract_tables()`/`find_tables()` — значение попадает не в свой столбец. **Любые числа из таблиц нагрузок/мощностей сверять с оригиналом** (рендер страницы глазами или соседний столбец-сумма), не доверять плоскому парсу. Особенно при аудите «ТЧ vs спецификация». (Источник: аудит <объект>, шифр <шифр>.)
+8. **CID / PScript-Distiller PDF — читать рендером, не текстовым слоем.** PDF, прошедшие через PostScript-принтер + Acrobat Distiller (Producer `PScript5`/`Acrobat Distiller`), часто имеют CID-шрифты без ToUnicode → `extract_text()` отдаёт мусор/пусто. Не биться об текст — сразу **рендер ≥180 dpi** (`pdf_render_pages` / PyMuPDF `get_pixmap(dpi=180)`) + читать визуально/OCR. (Источник: проект <шифр>.)
 
 ## Когда вызывать агента pdf-reviewer
 
 После любой существенной правки PDF (удалили страницы, добавили аннотации, изменили формы) — спавнить subagent `pdf-reviewer` с задачей «проверь итоговый PDF на сохранность структуры». Агент сам проверит количество страниц, метаданные, целостность аннотаций, выдаст отчёт.
 
-## Визуальный diff двух PDF через diff-pdf
+## Визуальный diff двух PDF
 
-Бинарь `diff-pdf.exe v0.5.3` лежит в `~/.claude/bin/diff-pdf/diff-pdf.exe` (portable, не требует админа). Подсвечивает отличающиеся места попиксельно.
+⚠ **Портативный `diff-pdf.exe` НЕ установлен** в `~/.claude/bin/` (раньше ожидался в
+`bin/diff-pdf/` — каталога нет). Пока бинарь не доставлен вручную, визуальный diff делаем
+**рендером страниц в PNG + сравнением** (это и есть рабочий путь по умолчанию, см. «Ловушки» п.4):
 
-```powershell
-# Просто отчёт о различиях (exit code 0 — идентичны, 1 — отличаются):
-& "$HOME\.claude\bin\diff-pdf\diff-pdf.exe" v1.pdf v2.pdf
-
-# С визуальным выходом в PDF (наложение красным):
-& "$HOME\.claude\bin\diff-pdf\diff-pdf.exe" --output-diff=diff.pdf v1.pdf v2.pdf
+```python
+# Рендер обеих версий и сравнение через perceptual hash / multimodal vision
+import fitz  # PyMuPDF
+for v in ("v1.pdf", "v2.pdf"):
+    doc = fitz.open(v)
+    for i, page in enumerate(doc):
+        page.get_pixmap(dpi=150).save(f"{v}_p{i}.png")
+# далее imagehash.phash() попарно или показать страницы vision-модели
 ```
 
-Лицензия GPL-2.0 — допустимо как **внешний бинарь** через subprocess, **код не копировать** в наши инструменты.
+Если позже доставите портативный `diff-pdf.exe` (GPL-2.0, допустим как **внешний бинарь**
+через subprocess, **код не копировать**): `& diff-pdf.exe v1.pdf v2.pdf` даёт exit 0 (идентичны)
+/ 1 (отличаются), флаг `--output-diff=diff.pdf` пишет наложение красным.
 
 ## Редактирование PDF — pikepdf/pypdf напрямую
 
@@ -296,4 +302,17 @@ pdf.save("output.pdf")
 | Редактирование (merge/split/rotate/watermark) | (нет MCP) | pikepdf + pypdf + reportlab |
 | AcroForm заполнение | (нет MCP) | pypdf.update_page_form_field_values |
 | Аннотации (перекрашивание) | (нет MCP) | pikepdf низкоуровневый |
-| Визуальный diff | (нет MCP) | `diff-pdf.exe` portable |
+| Визуальный diff | (нет MCP) | рендер PNG + perceptual hash / vision (diff-pdf.exe не установлен) |
+
+## Tools (слой 3)
+
+Папка `scripts/` рядом с этим SKILL.md — 3-й слой стандарта скиллов
+(Description + Instructions + **Tools**): детерминированные скрипты, которые не нужно
+переписывать каждый раз, импортируются напрямую (`sys.path.insert(0, ".../pdf-helper/scripts")`).
+
+- `extract_drawing_meta.py` — `extract_text_blocks()` (текстовые блоки с bbox) и
+  `find_stamp_data()` (разбор штампа в правой нижней четверти страницы). Используется
+  режимом чертежей выше.
+- `test_extract_drawing_meta.py` — тесты к нему.
+
+Это `scripts/`, а не `tools/` — каталог намеренно не переименовываем (исторически прижилось).

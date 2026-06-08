@@ -3,13 +3,13 @@ name: yandex-disk-uploader
 description: Use this skill whenever you need to upload a file to К-7 Yandex Disk (project archive). Automatically routes to the correct subfolder based on file type — contracts go to 02_Договор/, invoices to 03_Финансы/, drawings to 05_Чертежи/, etc. Use after generating any artifact (DOCX, XLSX, PDF) that should be archived per-project.
 ---
 
-# Yandex Disk Uploader Skill (К-7)
+# Yandex Disk Uploader Skill (<организация>)
 
 ## ⚠ Предусловия
 
 Перед использованием в `.env` (cwd проекта или `~/.claude/.env`) должны быть **credentials Я.Диска**:
 ```
-YANDEX_DISK_USER=<email_от_k-7.tech>
+YANDEX_DISK_USER=<email_организации>
 YANDEX_DISK_PASS=<пароль_приложения_Yandex_360>
 ```
 (альтернативные имена: `WEBDAV_USERNAME` / `WEBDAV_PASSWORD`)
@@ -76,8 +76,16 @@ upload_file(
 
 ## Альтернатива: webdav MCP
 
-Можно использовать MCP `webdav` (см. `.mcp.json`) через инструменты:
+Если подключён опциональный MCP `webdav`, можно заливать файлы через его инструменты:
 - `mcp__webdav__webdav_create_remote_file`
 - `mcp__webdav__webdav_create_remote_directory`
 
-Но для скриптовой автоматизации (например, в Stage 4 агенте disk-uploader) — прямой Python из этого skill надёжнее.
+Этот MCP не входит в стандартный набор и в конфиге может отсутствовать — проверь `claude mcp list`. Для скриптовой автоматизации (batch-выгрузка после генерации артефактов) прямой Python из этого skill надёжнее.
+
+## Tools (слой 3)
+
+`scripts/` — детерминированные скрипты этого скилла, 3-й слой стандарта (Description + Instructions + **Tools**):
+- `upload.py` — загрузка файла на Я.Диск по WebDAV + маршрутизация в подпапку (`upload_file`, `resolve_target_path`, `FileType`, `load_credentials`).
+- `test_upload.py` — проверка загрузки.
+
+Повторяемая логика вынесена в код; модель отвечает только за выбор `FileType` и путь.

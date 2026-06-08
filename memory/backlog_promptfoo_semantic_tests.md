@@ -15,7 +15,7 @@ tags: [backlog, tests, promptfoo, LLM]
 ## Контекст
 
 Источник идеи — аудит чужой базы Claude Code «К-7 (агенты)» от 2026-05-20
-(см. отчёт `~/Desktop/K-7_audit_report.docx`, раздел 4.4). У них
+(см. отчёт аудит К-7 (от 2026-05-20, отчёт архивирован), раздел 4.4). У них
 promptfoo использован для regression-тестов LLM-вызовов через
 Anthropic API: golden-set с эталонными prompt/response парами,
 ассерты на структуру вывода.
@@ -91,7 +91,7 @@ Anthropic API: golden-set с эталонными prompt/response парами,
 
 - `~/.claude/evals/README.md` — общий entry point для тестов
 - `~/.claude/evals/test_image_text_replace.py` — текущий pytest-набор
-- К-7 отчёт `~/Desktop/K-7_audit_report.docx`, раздел 4.4
+- К-7 отчёт аудит К-7 (от 2026-05-20, отчёт архивирован), раздел 4.4
 
 ## История
 

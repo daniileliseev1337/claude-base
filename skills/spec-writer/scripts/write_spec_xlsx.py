@@ -1,7 +1,7 @@
-"""Запись нового листа «Спец. N» в существующий xlsx-реестр объекта К-7.
+"""Запись нового листа «Спец. N» в существующий xlsx-реестр объекта <организация>.
 
 Минимально достаточный helper:
-- открывает существующий workbook (реестр Сит-центра / Балашихи и т.д.)
+- открывает существующий workbook (реестр <объект> / <объект> и т.д.)
 - копирует структуру с template-листа (если задан): заголовки, ширины колонок, стили шапки
 - записывает позиции из items
 - read-back verify
@@ -10,7 +10,7 @@
     from write_spec_xlsx import write_spec_sheet, verify_spec_sheet
 
     write_spec_sheet(
-        workbook_path="Реестр_Сит-центр.xlsx",
+        workbook_path="Реестр_<объект>.xlsx",
         sheet_name="Спец. 5",
         items=[
             {"D": "ABC-123", "E": "м", "qty": 1000, "price": 35.50},
@@ -21,7 +21,7 @@
         data_start_row=2,
     )
 
-    issues = verify_spec_sheet("Реестр_Сит-центр.xlsx", "Спец. 5", expected_rows=2)
+    issues = verify_spec_sheet("Реестр_<объект>.xlsx", "Спец. 5", expected_rows=2)
 """
 from __future__ import annotations
 from pathlib import Path
