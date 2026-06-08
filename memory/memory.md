@@ -24,6 +24,7 @@ tags: [мета, индекс, memory]
 - [[2026-05-14_session-report-policy]] — обязательность session-report'а каждой сессии, формат.
 - [[2026-05-15_extras-distribution-mechanism]] — manifest + setup-extras + Install.ps1 Stage 8 архитектура распространения Python/MCP стека.
 - [[2026-05-18_lesson-15-proxy-helpers-persistence]] — Урок 15: proxy-хелперы persistence в claude-lite-instaler (CLOSED 2026-05-18 коммитом `3562631`).
+- [[2026-05-26_anthropic_geoblock_ru]] — Anthropic геоблокирует RU IP на уровне backend API → `app-unavailable-in-region` HTML вместо JSON → Claude Desktop defensive-блок → `accountId=null` → белый экран. Не корп-прокси, не TLS MITM.
 
 ### Архитектурные backlog'и (из аудитов чужих баз)
 
@@ -44,6 +45,9 @@ tags: [мета, индекс, memory]
   выходе не нужен. Верифицировано 2026-06-03.
 - [[reference_autocad_pdf_overlay_mcp]] — то же через autocad-mcp / живой AutoCAD
   (PDFIMPORT + entmake + vla-PlotToFile), когда нужен DWG. Backend init, ловушки печати.
+- [[2026-05-21_acad-com-cookbook]] — AutoCAD COM cookbook: DXF/ACAD_TABLE через pywin32.
+  File IPC backend (mcp_dispatch.lsp) — правильный путь; ezdxf затирает ACAD_TABLE при regen,
+  COM `AcadTable.SetText` — state-level правка. Полезно на autocad-mcp задачах.
 
 ### Доменные кейсы (проектирование)
 
@@ -56,6 +60,9 @@ tags: [мета, индекс, memory]
 - [[reference_docx_table_reformat]] — переформат docx-таблиц актов (ВСО/ИД) под новую шапку:
   трансформер python-docx (рекурсия cell.tables), словарь вместо regex, серийники с рукописных
   чертежей не угадывать. Скилл `vso-reformatter` — при 2-м кейсе.
+- [[reference_docx_editing_failures]] — правка существующих docx с шапкой/полями: провалы и
+  рабочий метод (кейс «бланк колледжа» 2026-06-01, 3-4 провала с уверенным «готово»). Триггеры:
+  дописать в шаблон / заполнить бланк / шапка-логотип / подчёркивания-табы в Word.
 - [[reference_acad_ov_dwg_recreation]] — **накопитель**: воссоздание ОВ-проекта квартиры из PDF
   в DWG через autocad-mcp (8 этапов + статус-трекер + рецепты + Phase-3 архитектура агентов). Наполняется.
 - [[reference_autocad_mcp_cyrillic]] — общий урок autocad-mcp: кириллица вход(Unicode)/выход(cp1251),
