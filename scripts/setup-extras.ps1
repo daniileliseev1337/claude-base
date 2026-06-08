@@ -246,8 +246,8 @@ foreach ($srv in $mcpSrvs) {
     Write-Host ""
     Write-Host "  Installing $name (method=$($srv.method))..."
 
-    if ($srv.method -eq 'uvx') {
-        # Just register -- uvx will fetch package on first use
+    if ($srv.method -eq 'uvx' -or $srv.method -eq 'npx') {
+        # Just register -- uvx/npx will fetch package on first use
         $regArgs = @('mcp', 'add', $name) + $srv.register_args
         & claude $regArgs 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {

@@ -1,7 +1,7 @@
 {
   "$schema_version": 1,
   "$schema_doc": "Manifest of MCP servers and Python user-packages used across the team. Read by scripts/setup-extras.ps1 to install/register missing items on the local machine. Read by scripts/auto-pull.ps1 to notify user about pending diff between manifest and local state. WHEN ADDING A NEW MCP SERVER OR PACKAGE: edit this file, commit + push -- auto-sync will distribute it. Other PCs will see notification 'extras-diff: N pending' in auto-sync.log and the user can run setup-extras.ps1 to apply.",
-  "$last_updated": "2026-05-19",
+  "$last_updated": "2026-06-08",
 
   "python_user_packages": [
     {
@@ -191,6 +191,16 @@
       "register_args": ["-s", "user", "--", "uvx", "--from", "adeu", "adeu-server"],
       "size_mb": 10,
       "post_install_note": "Прогрев первый раз: uvx --from adeu adeu-server --help (затем restart Claude session)."
+    },
+    {
+      "name": "playwright",
+      "purpose": "Браузерная автоматизация (Microsoft Playwright MCP): навигация, клики, формы, скриншоты рендеренных JS-страниц. Локально, без API-ключа. Дополняет веб-доступ (см. r.jina.ai fallback).",
+      "method": "npx",
+      "install_args": ["@playwright/mcp@latest"],
+      "register_args": ["-s", "user", "--", "npx", "-y", "@playwright/mcp@latest"],
+      "size_mb": 50,
+      "requires_internet": true,
+      "post_install_note": "Первый запуск npx скачает пакет (~50MB); браузеры Playwright качаются при первом использовании. Restart Claude Code для появления tools."
     }
   ]
 }

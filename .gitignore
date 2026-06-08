@@ -161,3 +161,6 @@ sessions/
 
 # Рабочая область ИД-сессии — необезличенное сырьё, НЕ пушить в claude-base
 work/
+
+# graphify generated output
+graphify-out/
