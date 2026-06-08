@@ -2,7 +2,7 @@
 """Font calibration sheet — render same text in multiple fonts to
 visually pick the one matching a scanned document.
 
-Lesson from КП К7 АХП case: 8 итераций потрачены на tuning Arial когда
+Lesson from КП <организация> АХП case: 8 итераций потрачены на tuning Arial когда
 реальный font scan'a был Times Bold. **ALWAYS run calibration first**
 для нового типа документа.
 

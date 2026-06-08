@@ -217,7 +217,7 @@ python pipeline.py --input test-scan-input.png `
 
 ### Test 2 — реальный сканированный КП
 
-Файл: `КП К7 АХП от 07.05.26.pdf` (4 страницы, все сканы, ~1 MB).
+Файл: `КП <организация> АХП от 07.05.26.pdf` (4 страницы, все сканы, ~1 MB).
 
 Workflow:
 1. Render 4 страниц в PNG через pypdfium2 (200 DPI).
@@ -228,7 +228,7 @@ Workflow:
    как «172 926 213,49».
 4. pipeline.py --mode lama --find "144 105 177,91" --replace "172 926 213,49"
    → page-4-replaced.png.
-5. Pillow `save_all` собрал 4 страницы в `КП К7 АХП от 07.05.26 (+20%).pdf`
+5. Pillow `save_all` собрал 4 страницы в `КП <организация> АХП от 07.05.26 (+20%).pdf`
    на Desktop. 1.42 MB.
 
 **PASSED.** Замена визуально неотличима от оригинального шрифта,
@@ -254,7 +254,7 @@ LaMa чисто стёр прежнее число. См. session-report
    как «тёмные пиксели», но туда попадали anti-aliased edge-pixels →
    median ~rgb(98,98,98) серый вместо чёрного. Fix: bottom **10**
    percentile = только ядро штрихов = `rgb(21,21,21)`. Замечено
-   пользователем на КП К7 АХП 2026-05-19.
+   пользователем на КП <организация> АХП 2026-05-19.
 7. **Текст «слишком цифровой»** — crisp ImageDraw render очевидно
    отличался от сканового текста (тот имеет ink-bleed, scan blur,
    шум). Fix: интегрирован полноценный `_render_scan_realistic()` стек
@@ -290,7 +290,7 @@ result = replace_text_in_image(
 )
 
 # Helper для "Label: value" сценариев — найти лейбл и взять
-# value справа от него на той же строке (КП К7 use-case)
+# value справа от него на той же строке (КП <организация> use-case)
 matches = run_ocr("scan.png")
 label, value = find_value_near_label(matches, r"Итог.*сумм")
 # label.text = "Итоговая сумма (вкл НДС)"

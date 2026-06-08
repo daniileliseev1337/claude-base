@@ -654,7 +654,7 @@ def refine_text_region_with_diffusion(
     Returns:
         modified rendered_arr (in-place) with SD-refined region.
 
-    v3.0 — финальная итерация после 16 шагов на КП К7 АХП case.
+    v3.0 — финальная итерация после 16 шагов на КП <организация> АХП case.
     """
     import numpy as np
     from PIL import Image

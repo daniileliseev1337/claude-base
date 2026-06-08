@@ -13,7 +13,7 @@
 | v0.7 | A4 — pixel-precise anchor positioning (не OCR bbox) | ✅ |
 | v0.8 | **B2 (Texture transfer)** — high-freq texture residual из соседнего text→synthesized | ✅ default-on |
 
-Эта комбинация даёт ~95% scan-realism для типичных сканов document. На КП К7 АХП — visually indistinguishable insertion при normal viewing distance.
+Эта комбинация даёт ~95% scan-realism для типичных сканов document. На КП <организация> АХП — visually indistinguishable insertion при normal viewing distance.
 
 ---
 
@@ -140,7 +140,7 @@ roadmap doc становится actionable. До тех пор — backlog.
 
 - Накопится ≥50 пар clean+scan на нашем основном принтере/сканере
 - Один конкретный тип документа повторяется часто (e.g., все КП от
-  К7 в одинаковом сканировании)
+  <организация> в одинаковом сканировании)
 - Текущий v0.8 на каком-то документе показывает явный «cut-and-paste look»
 
 До этого момента — Pix2Pix overkill, статистические методы v0.8 достаточны.
@@ -148,7 +148,7 @@ roadmap doc становится actionable. До тех пор — backlog.
 ### Implementation план (на отдельную фазу, не сессию)
 
 1. Сбор данных: попросить пользователя дать N сканов того же типа (КП от
-   К7, акты, и т.д.). Извлечь text patches.
+   <организация>, акты, и т.д.). Извлечь text patches.
 2. Synthesized clean → render через v0.5 (с известным шрифтом)
 3. Pair-align через template matching (clean шрифт vs OCR'd scan word)
 4. Crop 256×256 patches

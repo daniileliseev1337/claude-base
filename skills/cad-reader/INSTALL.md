@@ -19,7 +19,7 @@
    "
    ```
 
-## Текущий статус (К-7)
+## Текущий статус (<организация>)
 
 ODA File Converter 27.1.0 установлен в:
 `C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe`
