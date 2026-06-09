@@ -1,38 +1,42 @@
 {
   "$schema_version": 1,
-  "$schema_doc": "Manifest of MCP servers and Python user-packages used across the team. Read by scripts/setup-extras.ps1 to install/register missing items on the local machine. Read by scripts/auto-pull.ps1 to notify user about pending diff between manifest and local state. WHEN ADDING A NEW MCP SERVER OR PACKAGE: edit this file, commit + push -- auto-sync will distribute it. Other PCs will see notification 'extras-diff: N pending' in auto-sync.log and the user can run setup-extras.ps1 to apply.",
-  "$last_updated": "2026-06-08",
-
+  "$schema_doc": "Manifest of MCP servers and Python user-packages used across the team. Read by scripts/setup-extras.ps1 to install/register missing items on the local machine. Read by scripts/auto-pull.ps1 to notify user about pending diff between manifest and local state. WHEN ADDING A NEW MCP SERVER OR PACKAGE: edit this file, commit + push -- auto-sync will distribute it. Other PCs will see notification 'extras-diff: N pending' in auto-sync.log and the user can run setup-extras.ps1 to apply. FIELDS (2026-06-09): 'tier'='core'|'optional' -- core ставится /sync-base молча, optional предлагается пользователю (отказ пишется в .local-state/declined.json, но в инвентаре /sync-base показывается ВСЕГДА); 'needs_admin' -- требует админ-прав (на корп-ПК пропускать с пометкой); 'needs_key' -- требует API-ключ (без ключа честно сообщать 'нужен ключ от разработчика', не пропускать молча). setup-extras.ps1 интерпретацию tier получит при следующей правке на dev-ПК; до тех пор поля инертны (unknown method -> skip уже поддержан).",
+  "$last_updated": "2026-06-09",
   "python_user_packages": [
     {
       "name": "matplotlib",
       "purpose": "Network/structure diagrams (handoff 2026-05-15)",
       "min_python": "3.10",
-      "max_python": "3.12"
+      "max_python": "3.12",
+      "tier": "core"
     },
     {
       "name": "networkx",
       "purpose": "Graph layout for structure diagrams",
       "min_python": "3.10",
-      "max_python": "3.12"
+      "max_python": "3.12",
+      "tier": "core"
     },
     {
       "name": "ezdxf",
       "purpose": "DXF generation and reading (AutoCAD interop without GUI)",
       "min_python": "3.10",
-      "max_python": "3.12"
+      "max_python": "3.12",
+      "tier": "core"
     },
     {
       "name": "pypdfium2",
       "purpose": "PDF rendering without 2000x2000 limit of pdf-mcp",
       "min_python": "3.10",
-      "max_python": "3.12"
+      "max_python": "3.12",
+      "tier": "core"
     },
     {
       "name": "pdfplumber",
       "purpose": "Table extraction from vector PDFs",
       "min_python": "3.10",
-      "max_python": "3.12"
+      "max_python": "3.12",
+      "tier": "core"
     },
     {
       "name": "paddleocr",
@@ -40,7 +44,8 @@
       "min_python": "3.10",
       "max_python": "3.12",
       "size_mb": 200,
-      "post_install_note": "First use downloads ~500MB models to ~/.paddlex/official_models/"
+      "post_install_note": "First use downloads ~500MB models to ~/.paddlex/official_models/",
+      "tier": "optional"
     },
     {
       "name": "paddlepaddle",
@@ -48,7 +53,8 @@
       "purpose": "PaddleOCR backend (DL framework). pip-name=paddlepaddle, import-name=paddle",
       "min_python": "3.10",
       "max_python": "3.12",
-      "size_mb": 105
+      "size_mb": 105,
+      "tier": "optional"
     },
     {
       "name": "Pillow",
@@ -56,7 +62,8 @@
       "purpose": "Image render (text on scans) for skills/image-text-replace",
       "min_python": "3.10",
       "max_python": "3.12",
-      "size_mb": 3
+      "size_mb": 3,
+      "tier": "core"
     },
     {
       "name": "opencv-python",
@@ -64,7 +71,8 @@
       "purpose": "Image mask ops + fast inpaint fallback for skills/image-text-replace",
       "min_python": "3.10",
       "max_python": "3.12",
-      "size_mb": 30
+      "size_mb": 30,
+      "tier": "core"
     },
     {
       "name": "iopaint",
@@ -72,7 +80,8 @@
       "min_python": "3.10",
       "max_python": "3.12",
       "size_mb": 200,
-      "post_install_note": "REQUIRED: download LaMa model (~196 MB) to ASCII-safe path before first use. Auto-download через iopaint часто рвётся на 50% (MD5 mismatch). Manual download: mkdir 'C:\\iopaint-cache\\torch\\hub\\checkpoints'; curl -L --retry 10 --retry-delay 5 --retry-all-errors -o 'C:\\iopaint-cache\\torch\\hub\\checkpoints\\big-lama.pt' 'https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt'. Pipeline сам ставит TORCH_HOME=C:\\iopaint-cache\\torch. Подробности — skills/image-text-replace/README.md."
+      "post_install_note": "REQUIRED: download LaMa model (~196 MB) to ASCII-safe path before first use. Auto-download через iopaint часто рвётся на 50% (MD5 mismatch). Manual download: mkdir 'C:\\iopaint-cache\\torch\\hub\\checkpoints'; curl -L --retry 10 --retry-delay 5 --retry-all-errors -o 'C:\\iopaint-cache\\torch\\hub\\checkpoints\\big-lama.pt' 'https://github.com/Sanster/models/releases/download/add_big_lama/big-lama.pt'. Pipeline сам ставит TORCH_HOME=C:\\iopaint-cache\\torch. Подробности — skills/image-text-replace/README.md.",
+      "tier": "optional"
     },
     {
       "name": "easyocr",
@@ -80,7 +89,8 @@
       "min_python": "3.10",
       "max_python": "3.12",
       "size_mb": 150,
-      "post_install_note": "First use of easyocr.Reader(['ru','en']) скачивает ~64MB detection + 50MB recognition модели в %USERPROFILE%/.EasyOCR/model/. Source — GitHub Releases (стабильно)."
+      "post_install_note": "First use of easyocr.Reader(['ru','en']) скачивает ~64MB detection + 50MB recognition модели в %USERPROFILE%/.EasyOCR/model/. Source — GitHub Releases (стабильно).",
+      "tier": "optional"
     },
     {
       "name": "diffusers",
@@ -88,87 +98,168 @@
       "min_python": "3.10",
       "max_python": "3.12",
       "size_mb": 30,
-      "post_install_note": "REQUIRED: установить также transformers + accelerate + safetensors. SD model (runwayml/stable-diffusion-inpainting ~3.4GB UNet + 2GB other) скачивается на первом использовании в ASCII-safe path C:/sd-cache. Требует HF account + read token (https://huggingface.co/settings/tokens). См. skills/image-text-replace/SKILL.md секцию 'SD setup'."
+      "post_install_note": "REQUIRED: установить также transformers + accelerate + safetensors. SD model (runwayml/stable-diffusion-inpainting ~3.4GB UNet + 2GB other) скачивается на первом использовании в ASCII-safe path C:/sd-cache. Требует HF account + read token (https://huggingface.co/settings/tokens). См. skills/image-text-replace/SKILL.md секцию 'SD setup'.",
+      "tier": "optional"
     },
     {
       "name": "transformers",
       "purpose": "SD pipeline dependency (text encoder, tokenizer for image-text-replace v3.0)",
       "min_python": "3.10",
       "max_python": "3.12",
-      "size_mb": 60
+      "size_mb": 60,
+      "tier": "optional"
     },
     {
       "name": "accelerate",
       "purpose": "SD pipeline dependency (memory-efficient model loading)",
       "min_python": "3.10",
       "max_python": "3.12",
-      "size_mb": 5
+      "size_mb": 5,
+      "tier": "optional"
     },
     {
       "name": "safetensors",
       "purpose": "SD model weights format (safer than .ckpt pickle)",
       "min_python": "3.10",
       "max_python": "3.12",
-      "size_mb": 2
+      "size_mb": 2,
+      "tier": "optional"
     }
   ],
-
   "mcp_servers": [
     {
       "name": "markitdown",
       "purpose": "Universal office-doc → markdown conversion",
       "method": "uvx",
-      "install_args": ["markitdown-mcp"],
-      "register_args": ["-s", "user", "--", "uvx", "markitdown-mcp"]
+      "install_args": [
+        "markitdown-mcp"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "markitdown-mcp"
+      ],
+      "tier": "core"
     },
     {
       "name": "document-loader",
       "purpose": "Office docs + PNG-rendering of slides (AWS Labs)",
       "method": "uvx",
-      "install_args": ["awslabs.document-loader-mcp-server@latest"],
-      "register_args": ["-s", "user", "--", "uvx", "awslabs.document-loader-mcp-server@latest"]
+      "install_args": [
+        "awslabs.document-loader-mcp-server@latest"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "awslabs.document-loader-mcp-server@latest"
+      ],
+      "tier": "core"
     },
     {
       "name": "word",
       "purpose": "DOCX read/edit (direct)",
       "method": "uvx",
-      "install_args": ["--from", "office-word-mcp-server", "word_mcp_server"],
-      "register_args": ["-s", "user", "--", "uvx", "--from", "office-word-mcp-server", "word_mcp_server"]
+      "install_args": [
+        "--from",
+        "office-word-mcp-server",
+        "word_mcp_server"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "--from",
+        "office-word-mcp-server",
+        "word_mcp_server"
+      ],
+      "tier": "core"
     },
     {
       "name": "excel",
       "purpose": "XLSX cell manipulation, formulas, charts",
       "method": "uvx",
-      "install_args": ["excel-mcp-server", "stdio"],
-      "register_args": ["-s", "user", "--", "uvx", "excel-mcp-server", "stdio"]
+      "install_args": [
+        "excel-mcp-server",
+        "stdio"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "excel-mcp-server",
+        "stdio"
+      ],
+      "tier": "core"
     },
     {
       "name": "pdf-mcp",
       "purpose": "PDF tables/text extraction, page rendering (cached)",
       "method": "uvx",
-      "install_args": ["pdf-mcp"],
-      "register_args": ["-s", "user", "--", "uvx", "pdf-mcp"]
+      "install_args": [
+        "pdf-mcp"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "pdf-mcp"
+      ],
+      "tier": "core"
     },
     {
       "name": "sequential-thinking",
       "purpose": "Meta-cognition for complex multi-step tasks",
       "method": "uvx",
-      "install_args": ["sequential-thinking-mcp"],
-      "register_args": ["-s", "user", "--", "uvx", "sequential-thinking-mcp"]
+      "install_args": [
+        "sequential-thinking-mcp"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "sequential-thinking-mcp"
+      ],
+      "tier": "core"
     },
     {
       "name": "fetch",
       "purpose": "Fetch arbitrary URLs (HTML/text)",
       "method": "uvx",
-      "install_args": ["mcp-server-fetch"],
-      "register_args": ["-s", "user", "--", "uvx", "mcp-server-fetch"]
+      "install_args": [
+        "mcp-server-fetch"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "mcp-server-fetch"
+      ],
+      "tier": "core"
     },
     {
       "name": "time",
       "purpose": "Current time, timezones, date math",
       "method": "uvx",
-      "install_args": ["mcp-server-time"],
-      "register_args": ["-s", "user", "--", "uvx", "mcp-server-time"]
+      "install_args": [
+        "mcp-server-time"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "mcp-server-time"
+      ],
+      "tier": "core"
     },
     {
       "name": "autocad-mcp",
@@ -177,30 +268,75 @@
       "source_url": "https://github.com/puran-water/autocad-mcp/archive/refs/heads/main.zip",
       "extracted_name": "autocad-mcp-main",
       "install_dir": "$env:USERPROFILE\\.claude\\mcp-servers\\autocad-mcp",
-      "register_env": {"AUTOCAD_MCP_BACKEND": "auto"},
-      "register_args": ["-s", "user", "-e", "AUTOCAD_MCP_BACKEND=auto", "--", "{install_dir}\\.venv\\Scripts\\python.exe", "-m", "autocad_mcp"],
+      "register_env": {
+        "AUTOCAD_MCP_BACKEND": "auto"
+      },
+      "register_args": [
+        "-s",
+        "user",
+        "-e",
+        "AUTOCAD_MCP_BACKEND=auto",
+        "--",
+        "{install_dir}\\.venv\\Scripts\\python.exe",
+        "-m",
+        "autocad_mcp"
+      ],
       "post_install_note": "If AutoCAD installed: in AutoCAD run APPLOAD and load '{install_dir}\\lisp-code\\mcp_dispatch.lsp'. Then restart Claude Code to see 8 new tools.",
       "size_mb": 150,
-      "requires_internet": true
+      "requires_internet": true,
+      "tier": "optional",
+      "needs_admin": false
     },
     {
       "name": "adeu",
       "purpose": "docx-diff с нативными Word Track Changes для diff между ревизиями. Полезно для согласования правок в коммерческих документах.",
       "method": "uvx",
-      "install_args": ["--from", "adeu", "adeu-server"],
-      "register_args": ["-s", "user", "--", "uvx", "--from", "adeu", "adeu-server"],
+      "install_args": [
+        "--from",
+        "adeu",
+        "adeu-server"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uvx",
+        "--from",
+        "adeu",
+        "adeu-server"
+      ],
       "size_mb": 10,
-      "post_install_note": "Прогрев первый раз: uvx --from adeu adeu-server --help (затем restart Claude session)."
+      "post_install_note": "Прогрев первый раз: uvx --from adeu adeu-server --help (затем restart Claude session).",
+      "tier": "core"
     },
     {
       "name": "playwright",
       "purpose": "Браузерная автоматизация (Microsoft Playwright MCP): навигация, клики, формы, скриншоты рендеренных JS-страниц. Локально, без API-ключа. Дополняет веб-доступ (см. r.jina.ai fallback).",
       "method": "npx",
-      "install_args": ["@playwright/mcp@latest"],
-      "register_args": ["-s", "user", "--", "npx", "-y", "@playwright/mcp@latest"],
+      "install_args": [
+        "@playwright/mcp@latest"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
       "size_mb": 50,
       "requires_internet": true,
-      "post_install_note": "Первый запуск npx скачает пакет (~50MB); браузеры Playwright качаются при первом использовании. Restart Claude Code для появления tools."
+      "post_install_note": "Первый запуск npx скачает пакет (~50MB); браузеры Playwright качаются при первом использовании. Restart Claude Code для появления tools.",
+      "tier": "core"
+    },
+    {
+      "name": "exa",
+      "purpose": "Semantic web search + fetch (первая ступень лестницы веб-доступа, см. CLAUDE.md). Надёжнее WebFetch (тот 80-90% fail).",
+      "method": "claude-mcp-add",
+      "register_command": "claude mcp add --transport http exa https://mcp.exa.ai/mcp --scope user",
+      "tier": "core",
+      "needs_key": false,
+      "post_install_note": "HTTP-transport MCP, ставится одной командой claude mcp add (см. register_command). setup-extras.ps1 пока пропустит (unknown method) -- ставит /sync-base."
     }
   ]
 }
