@@ -13,7 +13,7 @@ description: |
   Кто это: инженер ПТО — подсчёт ОБЪЁМОВ работ по готовым чертежам, ведомости объёмов работ (ВОР), спецификации оборудования и материалов, пояснительные записки к разделам ПД/РД. Берёт чертежи и нагрузки у `designer`, отдаёт ВОР сметчику и снабженцу.
 
   Разграничение (важно): «посчитай» у pto-engineer = ОБЪЁМЫ/метраж/материалы по уже готовому чертежу; расчёт нагрузок/воздухообмена/теплопотерь и ПОДБОР оборудования → `designer`; «посчитай СТОИМОСТЬ / смету / расценку ГЭСН-ФЕР / КС-2» → `сметчик`; УПД и цены поставщиков → `снабженец`; нормоконтроль готового раздела на ГОСТ/СП → `audit-rd-section` (не делает сам). pto-engineer — генератор, не ревьюер.
-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__excel__get_workbook_metadata, mcp__excel__read_data_from_excel, mcp__excel__create_workbook, mcp__excel__create_worksheet, mcp__excel__write_data_to_excel, mcp__excel__apply_formula, mcp__excel__format_range, mcp__excel__merge_cells, mcp__excel__create_table, mcp__excel__validate_formula_syntax, mcp__excel__validate_excel_range, mcp__excel__get_merged_cells, mcp__word__create_document, mcp__word__copy_document, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__add_heading, mcp__word__add_paragraph, mcp__word__add_table, mcp__word__add_picture, mcp__word__add_page_break, mcp__word__format_text, mcp__word__format_table, mcp__word__set_table_column_widths, mcp__word__merge_table_cells, mcp__word__convert_to_pdf
 ---
 
 # pto-engineer — инженер ПТО
