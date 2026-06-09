@@ -145,10 +145,17 @@ try {
                 $reason = "marker unreadable"
             }
         }
+        # Flag-файл для STOP-процедуры CLAUDE.md (тихая строка «запусти /sync-base»).
+        # Создаём при pending, убираем при up-to-date. /sync-base снимает его после установки.
+        $pendingFlag = Join-Path $claudeDir '.local-state\extras-pending.flag'
         if ($needsRun) {
             Write-SyncLog "extras-diff PENDING: $reason. Run: pwsh `"`$HOME\.claude\scripts\setup-extras.ps1`""
+            $flagDir = Split-Path $pendingFlag -Parent
+            if (-not (Test-Path $flagDir)) { New-Item -ItemType Directory -Path $flagDir -Force | Out-Null }
+            Set-Content -Path $pendingFlag -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $reason" -Encoding UTF8
         } else {
             Write-SyncLog "extras-diff: up-to-date (manifest hash matches marker)"
+            if (Test-Path $pendingFlag) { Remove-Item $pendingFlag -Force -ErrorAction SilentlyContinue }
         }
     }
     # === Merge shared settings → personal (Phase 1 sync-redesign 2026-05-21) ===
