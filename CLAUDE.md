@@ -147,5 +147,5 @@
 
 <!-- END USER EXTENSIONS -->
 # graphify
-- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) — вход→граф знаний. Триггер `/graphify` → сразу Skill tool. Есть `graphify-out/graph.json` → запрос трактовать как graphify-query.
+- **Проактивно предлагать** (как Workflow): знание = паутина связей, спрашиваемая НЕОДНОКРАТНО (устройство домена, архитектура кода, свод доков) → одной строкой предложить queryable-граф вместо повторного перечитывания, ждать «да». Токены честно: код (AST) — построение 0 токенов; доки — построение стоит (субагенты), потом query дёшев/оффлайн. НЕ на разовом/мелком; один раз на задачу.
