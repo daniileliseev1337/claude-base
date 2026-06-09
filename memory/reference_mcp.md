@@ -28,6 +28,8 @@ CORE-секция CLAUDE.md (STOP-процедура, шаг 2) ссылаетс
 |-----|-------------|
 | `autocad-mcp` | ПК с установленным AutoCAD (через manifest, github-zip-uv) |
 | `exa` | Веб-поиск/выкачка (web_search_exa / web_fetch_exa); per-machine, для norm-lookup и harvest |
+| `playwright` | Реальный браузер: SPA-сайты и **пробивание антибота** (401/403), где fetch/firecrawl падают — открыть карточку, найти прямую ссылку/CDN, скачать. Приём: [[feedback_web_doc_fetch_browser_antibot]] |
+| `firecrawl` | Scraping/поиск с headless; на антиботе может ловить 401 → эскалация на `playwright` |
 
 **Правило для STOP-процедуры:**
 - В шаге 2 сверять с **9 стандартными** именами + опциональным `autocad-mcp` если ПК с AutoCAD.

@@ -1,6 +1,6 @@
 ---
 created: 2026-05-18
-updated: 2026-05-18
+updated: 2026-06-09
 status: active
 owner: Даниил
 tags: [мета, индекс, memory]
@@ -18,6 +18,7 @@ tags: [мета, индекс, memory]
 - [[2026-05-12_uninstall-and-chat-storage]] — где живёт чат-история Claude Code, как её защищать от Uninstall.
 - [[2026-05-13_harvest-workflow]] — методология поиска внешних инструментов (GitHub → MCP registry → Anthropic skills).
 - [[feedback_webfetch_reality_check]] — «уже есть» ≠ «работает». WebFetch (80-90% fail) и Adobe Firefly не работают на наших задачах; не списывать новый инструмент через «у нас уже есть X» без верификации. Источник — harvest 9 плагинов 2026-06-01.
+- [[feedback_web_doc_fetch_browser_antibot]] — добывание документов (паспорта/СС/datasheet) под антиботом: на 401/403 НЕ сдаваться, эскалация на реальный браузер `playwright` (открыть карточку → прямая CDN-ссылка → скачать). Приёмы поиска: B2B-поставщики, товарный запрос, watermark=источник. Приёмы, не жёсткие правила. Источник — docs-каскад ИД (кейс LUNDA) 2026-06-09.
 - [[feedback_cloud_tools_consent]] — для cloud-инструментов (Codex/Exa/Firecrawl/Higgsfield) consent-prompt в моменте (информированно), не жёсткий запрет обезличивания. Источник — harvest 9 плагинов 2026-06-01.
 - [[reference_licenses_k7]] — договорённости К-7 по лицензиям (AGPL Firecrawl не блокер при условии не-распространения за пределы К-7/смежных). Источник — harvest 9 плагинов 2026-06-01.
 - [[feedback_tool_sandbox_isolation]] — per-machine установки (npm -g, pip) через мои tool-команды идут в изолированное окружение, НЕ на реальный ПК. Давать команды для ручного запуска, не заявлять «установил». Источник — codex CLI кейс 2026-06-01.
