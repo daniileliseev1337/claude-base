@@ -54,6 +54,23 @@
       Если лестница веб-доступа покажет себя — сначала заменить fallback в norm-lookup
       на fetch/playwright, потом включать deny.
 
+## 7а. Телеметрия инструментов (обкатка на dev-ПК ДО раскатки)
+- [ ] Подключить hook **только в личный** `~/.claude/settings.json` (НЕ shared):
+      `PostToolUse` → `scripts/log-tool-usage.ps1` (сниппет — в шапке самого скрипта).
+- [ ] Поработать день-два → `pwsh scripts/aggregate-tool-usage.ps1 -Days 2` —
+      проверить: лог пишется, агенты/скиллы фиксируются, ничего не тормозит.
+- [ ] ОК → перенести hook-блок в `settings.shared.json` (раскатится merge-скриптом всем),
+      добавить вызов сводки в /sync-base-отчёт и абзац телеметрии в feedback consumer'ов.
+
+## 7б. Блок ПТО (скелет уже в репо: blocks/pto/BLOCK.md)
+- [ ] Заполнить TODO в `blocks/pto/BLOCK.md`: pilot_machines (свой hostname), таблицу
+      разграничения триггеров по мере появления агентов семьи.
+- [ ] Перенести в блок уже «утёкшее»: `chains/id-volume-cascade.md` → `blocks/pto/chains/`,
+      `skills/id-volume-graph/` → `blocks/pto/skills/` (git mv, чтобы сохранить историю).
+- [ ] Новых агентов семьи класть СРАЗУ в `blocks/pto/agents/` (не в общий agents/).
+- [ ] После переноса: `graphify ~/.claude --update` (граф должен увидеть blocks/) + коммит.
+- [ ] Smoke-тесты блока — чек-лист в самом BLOCK.md.
+
 ## 8. Люди
 - [ ] Обновить памятку сотрудникам. Суть: база обновляется сама (auto-pull);
       по подсказке Claude или раз в 1–2 недели — `/sync-base` в отдельной сессии;

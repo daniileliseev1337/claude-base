@@ -75,6 +75,17 @@ claude mcp list
   базы), Ollama (опц., локальный LLM для graphify-доков). Предлагать в том же
   optional-списке.
 
+### Шаг 4.5. Блоки (`~/.claude/blocks/`)
+Прочитать `blocks/*/BLOCK.md` и `.local-state/blocks.json` (активные блоки этого ПК).
+- `status: experimental` → предлагать ТОЛЬКО если hostname в `pilot_machines`.
+- `status: stable` → предложить по описанию `roles` (один вопрос, отказ — в declined.json,
+  в инвентаре показывать всегда).
+- **Активация**: скопировать `blocks/<имя>/agents/*.md` в `~/.claude/agents/` с префиксом
+  `block-<имя>-` (копии gitignored), записать в `.local-state/blocks.json`, напомнить про
+  restart Claude Code. **Деактивация**: удалить копии `agents/block-<имя>-*`, убрать из json.
+- При обновлении базы (Шаг 1 подтянул правки в `blocks/`) — пересоздать копии активных
+  блоков (источник истины — `blocks/`, копии всегда перезаписываемы).
+
 ### Шаг 5. Снять флаг уведомления
 Если установка по манифесту прошла (setup-extras обновил marker) — удалить
 `~/.claude/.local-state/extras-pending.flag`. Если что-то core не встало —
