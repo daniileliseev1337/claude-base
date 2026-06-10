@@ -175,7 +175,19 @@ soffice --headless --convert-to pdf input.docx
 5. **Сохранение в .doc (старый формат)** — `python-docx` НЕ умеет, только .docx. Для .doc — конвертировать через LibreOffice headless.
 6. **Раздельные секции (sections)** — для верстки альбомных листов или разных колонтитулов. python-docx работает с ними через `doc.sections`.
 7. **Списки и нумерация** — глубокий enchant: `numbering.xml` в docx определяет нумерацию, на одном файле может быть несколько определений. Простая правка через python-docx может не взлететь.
-8. **⚠ `mcp__word__search_and_replace` ДУБЛИРУЕТ текст в таблицах** (anti-patterns A3.8). На ячейке с `gridSpan`/merge рапортует «N occurrences» и вставляет replace N× в один run → задвоение, документ испорчен. **Акт ИД = одна таблица — особо опасно.** НЕ использовать для текста внутри таблиц. Надёжный путь — in-place правка `word/document.xml` через ZipArchive:
+8. **⚠ ЧТЕНИЕ таблиц: merged-ячейка считается N раз** — `row.cells` (python-docx) возвращает
+   объединённую ячейку по разу на КАЖДЫЙ grid-слот (`gridSpan`/`vMerge`); word-MCP наследует то же.
+   Суммирование «в лоб» по ячейкам удваивает цену, стоящую на 2 позиции (реальный кейс 2026-06:
+   двойной счёт, модель настаивала «ошибки нет»). Перед агрегацией — дедупликация по identity
+   XML-элемента:
+   ```python
+   seen, uniq = set(), []
+   for cell in row.cells:
+       if id(cell._tc) not in seen:
+           seen.add(id(cell._tc)); uniq.append(cell)
+   ```
+   Любую сумму из docx-таблицы подтверждать независимым пересчётом по уникальным ячейкам.
+9. **⚠ `mcp__word__search_and_replace` ДУБЛИРУЕТ текст в таблицах** (anti-patterns A3.8). На ячейке с `gridSpan`/merge рапортует «N occurrences» и вставляет replace N× в один run → задвоение, документ испорчен. **Акт ИД = одна таблица — особо опасно.** НЕ использовать для текста внутри таблиц. Надёжный путь — in-place правка `word/document.xml` через ZipArchive:
    ```powershell
    Add-Type -AssemblyName System.IO.Compression
    $zip = [IO.Compression.ZipFile]::Open($docx,'Update'); $e=$zip.GetEntry('word/document.xml')

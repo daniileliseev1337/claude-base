@@ -1,15 +1,13 @@
 ---
-description: Сверить локальную claude-base (~/.claude) с GitHub origin, подтянуть обновления (git pull), проверить per-machine инструменты (Exa MCP, Codex CLI) и выдать чеклист того, что нужно доставить руками. Безопасно — push не делает автоматически.
-allowed-tools: Bash
+description: Единая команда актуализации claude-base — pull обновлений, самопроверка базы, установка инструментов по манифесту (core молча, optional по выбору), полный инвентарь того, что стоит/не стоит/требует ключа. Безопасно — push не делает автоматически.
+allowed-tools: Bash, Read, AskUserQuestion
 ---
 
-# /sync-base — актуализация claude-base с GitHub
+# /sync-base — единая актуализация claude-base
 
-Сверяет локальную базу `~/.claude` с origin (claude-base на GitHub),
-подтягивает обновления, проверяет per-machine инструменты, выдаёт чеклист
-ручных действий.
-
-Использование: `/sync-base` (без аргументов).
+Одна команда «обнови мне всё»: git pull + самопроверка + установка/инвентарь инструментов.
+Объединяет прежние ручные шаги (Update-ClaudeBase, setup-extras) — пользователю
+знать о них не нужно. Использование: `/sync-base` (без аргументов).
 
 ## ВАЖНЫЕ правила
 - **Bypass proxy для GitHub ОБЯЗАТЕЛЕН** (корп-прокси блокирует CONNECT к
@@ -18,65 +16,95 @@ allowed-tools: Bash
   локальные незапушенные коммиты (могут содержать приватное — решает пользователь).
 - **Путь с кириллицей** — всегда оборачивать `"$HOME/.claude"` в кавычки.
 - При конфликте rebase — остановиться, показать конфликт, спросить пользователя.
+- Отказ от optional-инструмента — записать, но **в инвентаре показывать всегда**
+  (пользователь мог передумать; «отказался однажды» ≠ «исчез навсегда»).
 
 ## Алгоритм
 
-### Шаг 1. Сверка с GitHub
+### Шаг 0. Личный слой
+Если нет `~/.claude/CLAUDE.user.md` — создать с заголовком:
+```bash
+test -f "$HOME/.claude/CLAUDE.user.md" || printf '# CLAUDE.user.md — личные правила этого ПК (в git не попадает)\n' > "$HOME/.claude/CLAUDE.user.md"
+```
+
+### Шаг 1. Сверка с GitHub и pull
 ```bash
 git -C "$HOME/.claude" -c http.proxy="" -c https.proxy="" fetch origin main
 echo "BEHIND (origin впереди нас):"; git -C "$HOME/.claude" rev-list --count HEAD..origin/main
 echo "AHEAD (у нас незапушенного):"; git -C "$HOME/.claude" rev-list --count origin/main..HEAD
-git -C "$HOME/.claude" status -sb | head -3
 ```
-
-### Шаг 2. Если BEHIND > 0 — подтянуть
+Если BEHIND > 0:
 ```bash
 git -C "$HOME/.claude" -c http.proxy="" -c https.proxy="" pull --rebase --autostash origin main
-```
-Затем показать что обновилось:
-```bash
 git -C "$HOME/.claude" log --oneline -10
 ```
-Особо отметить новые/изменённые файлы в `skills/`, `agents/`, `memory/`,
-`commands/`, `chains/` — это то, что реально влияет на работу.
+Отметить новые/изменённые файлы в `skills/`, `agents/`, `memory/`, `commands/`,
+`chains/`, `graphify-out/` — это то, что реально влияет на работу.
+Если AHEAD > 0 — предупредить, показать коммиты, НЕ пушить самому
+(проверить обезличивание, решает пользователь).
 
-### Шаг 3. Если AHEAD > 0 — предупредить (НЕ пушить сам)
-Сообщить: «На этом ПК N локальных коммитов, которых нет на GitHub.»
-Показать их: `git -C "$HOME/.claude" log --oneline origin/main..HEAD`.
-Спросить пользователя, пушить ли (могут быть приватные данные —
-проверить обезличивание перед push).
-
-### Шаг 4. Проверить per-machine инструменты (git их НЕ переносит)
-```bash
-echo "=== Exa MCP ==="; claude mcp list 2>&1 | grep -i exa || echo "НЕТ — доустановить"
-echo "=== Extras из manifest (playwright + новые MCP/пакеты) ==="; claude mcp list 2>&1 | grep -qi playwright && echo "playwright OK — extras применены" || echo "playwright НЕТ — запусти ~/.claude/scripts/setup-extras.ps1 (доставит новое из mcp-manifest.json)"
-echo "=== Inkscape (правка вектор-PDF, pdf-helper) ==="; inkscape --version 2>&1 | head -1 || echo "НЕТ — доустановить (нужен для правки чертежей-PDF)"
-echo "=== graphify (граф кода/docs больших папок — опц.) ==="; graphify --version 2>&1 | head -1 || echo "НЕТ — опционально"
-echo "=== Ollama (локальный LLM-бэкенд graphify для docs-графа — опц.) ==="; ollama --version 2>&1 | head -1 || echo "НЕТ — опционально"
+### Шаг 2. Самопроверка базы
+```powershell
+pwsh -File "$HOME/.claude/scripts/verify-claude-base.ps1"
 ```
+(если скрипта нет — пропустить с пометкой). Провалившиеся проверки — в итоговый отчёт.
 
-### Шаг 5. Доклад пользователю
-Выдать структурированный итог:
+### Шаг 3. Инвентарь инструментов по манифесту
+Прочитать `~/.claude/mcp-manifest.json` (поля `tier`, `needs_admin`, `needs_key`,
+`size_mb`) и `~/.claude/.local-state/declined.json` (если есть). Снять факт:
+```bash
+claude mcp list
+```
+Для каждого элемента манифеста определить статус: `установлен` / `НЕ установлен` /
+`отклонён ранее (дата)` / `нужен админ` / `нужен ключ`.
 
-**✅ Подтянуто из git:** перечислить ключевые обновления (skills/agents/memory/commands).
+### Шаг 4. Установка
+- **`tier: core`, не установлено** → ставить сразу, без вопросов:
+  - MCP с `method: uvx|npx|github-zip-uv` — через `pwsh -File "$HOME/.claude/scripts/setup-extras.ps1"`
+    (идемпотентен, ставит недостающее по манифесту);
+  - `method: claude-mcp-add` (exa) — выполнить `register_command` из манифеста напрямую.
+- **`tier: optional`, не установлено** → ОДИН вопрос списком (AskUserQuestion,
+  multiSelect): название + назначение + размер. Включая отклонённые ранее
+  (пометить «отклонял <дата>»). Выбранное — ставить; невыбранное — записать в
+  `~/.claude/.local-state/declined.json` (`{"имя": "YYYY-MM-DD"}`).
+- **`needs_admin: true`** на корп-ПК без админ-прав → не пытаться, в отчёт:
+  «требует админа — пропущено». Если есть user-space обход — предложить его.
+- **`needs_key: true`** без ключа → в отчёт: «нужен ключ от разработчика» (не молча).
+- Прочее per-machine (вне манифеста): Inkscape (`winget install Inkscape.Inkscape`,
+  нужен админ), graphify CLI (`uv tool install graphifyy` — нужен для query по графу
+  базы), Ollama (опц., локальный LLM для graphify-доков). Предлагать в том же
+  optional-списке.
 
-**🔲 Доустановить руками (per-machine, если отсутствует из Шага 4):**
-- **Extras из manifest** (playwright + новые MCP/Python-пакеты): `pwsh ~/.claude/scripts/setup-extras.ps1` — идемпотентно ставит недостающее по `mcp-manifest.json`. Запускать когда Шаг 4 показал «playwright НЕТ» или в `auto-sync.log` есть «extras-diff pending».
-- Exa MCP: `claude mcp add --transport http exa https://mcp.exa.ai/mcp --scope user`
-- Inkscape (правка вектор-PDF, скилл `pdf-helper`): `winget install Inkscape.Inkscape`
-  (или inkscape.org, нужна версия 1.x). ⚠ Медленный на слабом железе/без GPU.
-  GPL-3.0 — используется как внешняя программа, не в коде. После установки —
-  перезапуск терминала, чтобы `inkscape` появился в PATH.
-- graphify (**экономит токены**: Claude навигирует базу/проект через граф вместо чтения всех файлов). Skill `/graphify` приходит с базой автоматически — нужен только CLI: `uv tool install graphifyy`. Затем построить граф своей базы/проекта: `graphify update <путь>` (код — offline, бесплатно; docs/PDF — нужен Ollama ниже или `GEMINI_API_KEY`). MIT.
-- Ollama (опц., локальный LLM для graphify docs/PDF-графа конфиденц. данных — данные не уходят в облако): `winget install Ollama.Ollama` → `ollama pull qwen2.5:7b` (~5 ГБ). ⚠ Без GPU медленно (ночные/пакетные прогоны). Для кода graphify работает и без Ollama.
-- glif-mcp (опц., ⚠ archived — визуальные AI-workflow glif.app, узкая ниша): `claude mcp add glif -s user -e GLIF_API_KEY=<key> -- npx -y @glifxyz/glif-mcp-server`. Нужен `GLIF_API_KEY` (glif.app). Ставить только если реально нужно.
+### Шаг 4.5. Блоки (`~/.claude/blocks/`)
+Прочитать `blocks/*/BLOCK.md` и `.local-state/blocks.json` (активные блоки этого ПК).
+- `status: experimental` → предлагать ТОЛЬКО если hostname в `pilot_machines`.
+- `status: stable` → предложить по описанию `roles` (один вопрос, отказ — в declined.json,
+  в инвентаре показывать всегда).
+- **Активация**: скопировать `blocks/<имя>/agents/*.md` в `~/.claude/agents/` с префиксом
+  `block-<имя>-` (копии gitignored), записать в `.local-state/blocks.json`, напомнить про
+  restart Claude Code. **Деактивация**: удалить копии `agents/block-<имя>-*`, убрать из json.
+- При обновлении базы (Шаг 1 подтянул правки в `blocks/`) — пересоздать копии активных
+  блоков (источник истины — `blocks/`, копии всегда перезаписываемы).
 
-**🔲 Веб (claude.ai), проверить разово:**
-- Adobe MCP отключён? (Settings → Connectors → Adobe → Disconnect) — 0% использования
+### Шаг 5. Снять флаг уведомления
+Если установка по манифесту прошла (setup-extras обновил marker) — удалить
+`~/.claude/.local-state/extras-pending.flag`. Если что-то core не встало —
+флаг ОСТАВИТЬ (уведомление в STOP продолжит напоминать).
 
-**🔲 Developer-ПК only:**
-- `/plugin install compound-engineering` (если этот ПК — developer)
+### Шаг 6. Итоговый отчёт (всегда, компактно)
+```
+✅ База: подтянуто N коммитов (ключевое: ...) / актуальна
+✅ Самопроверка: X/Y (провалы: ...)
+📦 Инструменты:
+   установлено: ...
+   поставлено сейчас: ...
+   отклонено тобой (можно передумать): ...
+   требует админа: ...   требует ключа: ...
+```
+Если всё актуально и стоит — одной строкой: «База актуальна, всё на месте».
 
-## Если всё актуально
-Если BEHIND=0 и все per-machine инструменты на месте — коротко: «База
-актуальна, всё на месте» + что проверено. Не разводить отчёт.
+## Примечания
+- `Update-ClaudeBase.bat` остаётся ТОЛЬКО как bootstrap самого первого запуска
+  на новом ПК (когда Claude-сессии ещё нет). Дальше — только `/sync-base`.
+- Web (claude.ai) разово: Adobe MCP отключён? (Settings → Connectors → Disconnect).
+- Developer-ПК only: `/plugin install compound-engineering`.

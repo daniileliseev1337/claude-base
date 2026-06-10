@@ -22,7 +22,7 @@ description: |
   обычного делового письма/запроса в экспертизу БЕЗ перечня замечаний (→ `letter-writer`); самих
   правок разделов проекта (→ профильный агент). Ключевой признак этого агента — на руках ПЕРЕЧЕНЬ
   ЗАМЕЧАНИЙ от экспертизы, на который надо ответить по форме.
-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__word__create_document, mcp__word__copy_document, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__add_heading, mcp__word__add_paragraph, mcp__word__add_table, mcp__word__add_picture, mcp__word__add_page_break, mcp__word__format_text, mcp__word__format_table, mcp__word__set_table_column_widths, mcp__word__merge_table_cells, mcp__word__convert_to_pdf, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_get_toc
 ---
 
 # expertiza-responder — писатель ответов на экспертизу
