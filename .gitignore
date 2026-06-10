@@ -69,6 +69,10 @@
 !chains/
 !chains/**
 
+# Доменные блоки с активацией по роли (см. blocks/README.md)
+!blocks/
+!blocks/**
+
 # Regression-тесты (pytest) для скиллов — импорт из аудита К-7 2026-05-20
 # См. evals/README.md
 !evals/
@@ -124,6 +128,9 @@ settings.json
 **/settings.json
 # Но settings.shared.json — наоборот, в репо (это и есть team-shared):
 !settings.shared.json
+
+# Активационные копии агентов блоков (создаёт /sync-base per-PC; источник — blocks/)
+agents/block-*.md
 
 # Auto-sync лог (per-PC, append-only, не должен лететь в git)
 **/auto-sync.log
