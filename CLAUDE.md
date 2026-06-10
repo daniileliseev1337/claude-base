@@ -14,9 +14,10 @@
 Безусловная процедура. Тип запроса (даже «привет») её не отменяет.
 
 1. **Прочитать** этот CLAUDE.md (если ещё не в контексте).
-2. **MCP-аудит.** Сверить активные tools с эталоном 9 серверов: `markitdown`,
-   `document-loader`, `word`, `excel`, `pdf-mcp`, `sequential-thinking`, `fetch`,
-   `time`, `adeu` (+ опц. `autocad-mcp`, `exa`). Если какого-то нет/статус `✗` —
+2. **MCP-аудит.** Сверить активные tools с эталоном 11 core-серверов (mcp-manifest.json,
+   `tier: core`): `markitdown`, `document-loader`, `word`, `excel`, `pdf-mcp`,
+   `sequential-thinking`, `fetch`, `time`, `adeu`, `playwright`, `exa`
+   (+ опц. `autocad-mcp`, `firecrawl`). Если какого-то нет/статус `✗` —
    **первой строкой** предупредить: `⚠ MCP не подключены: <имена>. Прогрев: uvx <name> --help`.
 3. **Агенты.** Сверить available agents с эталоном 16 (`~/.claude/agents/`,
    детали — `memory/reference_agents.md`). Не подгрузились — restart (hot-reload нет).
@@ -24,7 +25,7 @@
    `⚠ В базе появились новые инструменты — запусти /sync-base в отдельной сессии, когда удобно`.
    Без перечислений и без вопросов; не повторять в течение сессии.
 5. **Применять 5 принципов Karpathy** и **MCP-роутинг по расширениям** (таблицы ниже).
-6. **Подтвердить** одной строкой: `✓ прочитан CLAUDE.md (MCP: X/9, agents: Y/16)`.
+6. **Подтвердить** одной строкой: `✓ прочитан CLAUDE.md (MCP: X/11, agents: Y/16)`.
 
 ## 5 принципов Karpathy (выжимка; полная — скилл `karpathy-guidelines`)
 

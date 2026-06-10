@@ -81,7 +81,7 @@ tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__excel__get_workbook_m
   журнал→акт→реестр→документы качества→схемы→ведомости; каскад правок;
   типы разрывов замечаний ТН; инвариант ПВ≡ВСО≡ВОР≡ИС). Query'ить оффлайн
   вместо «простыни» в контексте:
-  `python ~/.claude/skills/id-volume-graph/tools/id_graph.py query "<слова модели>"`
+  `python ~/.claude/blocks/pto/skills/id-volume-graph/tools/id_graph.py query "<слова модели>"`
   (либо `path A B` / `explain X`). Применять при сборке/проверке полного тома
   и разборе замечаний технадзора. Это методология (обезличено), не инстанс —
   факты проекта по-прежнему из `FACTS.md`/исходников.

@@ -27,9 +27,9 @@ description: >
 
 ## Как спрашивать (оффлайн, из любого cwd)
 ```bash
-python ~/.claude/skills/id-volume-graph/tools/id_graph.py query   "<слова из меток узлов>"
-python ~/.claude/skills/id-volume-graph/tools/id_graph.py path    "Позиция (оборуд./материал)" "Документ качества"
-python ~/.claude/skills/id-volume-graph/tools/id_graph.py explain "Каскад изменений"
+python ~/.claude/blocks/pto/skills/id-volume-graph/tools/id_graph.py query   "<слова из меток узлов>"
+python ~/.claude/blocks/pto/skills/id-volume-graph/tools/id_graph.py path    "Позиция (оборуд./материал)" "Документ качества"
+python ~/.claude/blocks/pto/skills/id-volume-graph/tools/id_graph.py explain "Каскад изменений"
 ```
 - `query` матчит по **меткам узлов** (подстрока+IDF) → BFS-обход соседства. Спрашивать
   словами модели (АОСР, ВСО, ПВ, реестр, документ качества, замечание, каскад, норма),
@@ -60,9 +60,9 @@ python ~/.claude/skills/id-volume-graph/tools/id_graph.py explain "Каскад 
 God-узлы (хабы): Документ качества · Акт · ИС · Позиция · Замечание ТН · Требования заказчика.
 
 ## Редактирование (граф живой — дополнять по мере новых томов/нюансов)
-1. Правишь `~/.claude/skills/id-volume-graph/id_volume_extract.json` (узлы/рёбра/гиперрёбра,
+1. Правишь `~/.claude/blocks/pto/skills/id-volume-graph/id_volume_extract.json` (узлы/рёбра/гиперрёбра,
    формат graphify extraction; `confidence`=EXTRACTED для явной методологии, INFERRED для синтеза).
-2. Пересборка: `uv tool run --from graphifyy python ~/.claude/skills/id-volume-graph/tools/rebuild.py`
+2. Пересборка: `uv tool run --from graphifyy python ~/.claude/blocks/pto/skills/id-volume-graph/tools/rebuild.py`
 3. Визуал (из папки скилла): `graphify export html` → `graphify-out/graph.html`.
 
 ## Артефакты
