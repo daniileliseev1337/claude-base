@@ -28,6 +28,13 @@
 - **Matrix** — point-to-point синк сессий; наш hub-and-spoke git-синк масштабнее. **GitMo** — UI-обёртка Git, Linux-only; auto-hooks уже есть. **MetaPurge** — UI-обёртка; pikepdf+PIL умеют.
 - По описанию: wsp-wordpress-mcp (нет WordPress), PhpSpreadsheet (PHP), dgdoc (Go-темплейтинг), microsoft/Lens (t2i-генерация), OCRmyPDF-AppleOCR (macOS), go-pdf (Go), makememe (юмор), OpenMythos (теория без практики).
 
+## Добивка (3 репо, токен-экономия/безопасность)
+| Репо | Вердикт | Суть |
+|---|---|---|
+| **guardian-runtime** (10⭐, MIT) | НЕ НАДО для подписки | Firewall перехватывает через `ANTHROPIC_BASE_URL`-прокси — работает только для СВОИХ скриптов с SDK+API-ключом; к подписочному Claude Code точки перехвата нет. Резерв: если заведём API-скрипты — вернуться за паттернами политик |
+| **code-mapper** (3⭐, public domain, чистый Python 17КБ) | ПОПРОБОВАТЬ (гибрид) | Статичный PROJECT_CONTEXT.md: дерево + Mermaid-диаграммы + индекс символов, ~78% сжатие. Не конкурент graphify (тот queryable для md-базы), а дополнение: для Python-tools/ скиллов и onboarding-памятки — 0 токенов на построение |
+| **structural-beacon** | NOT_FOUND | Репо 404 (удалено после HN-поста?), у автора public_repos=0 — оценка невозможна |
+
 ## Уроки
 - Подборка Show HN = молодые репо (1–10⭐): брать ПАТТЕРНЫ и идеи, не зависимости; форкать мелкие скрипты в базу.
 - Фан-аут 7 haiku-агентов с веб-доступом — штатно: ~250k токенов, ~1 мин/агент, лестница exa→fetch работала.
