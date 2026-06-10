@@ -60,3 +60,19 @@ tools-allowlist агентов, blocks/, телеметрия). Задача: п
 6. Отложено сознательно: deny WebFetch (сначала обкатка лестницы + замена fallback
    в norm-lookup); доработка setup-extras.ps1 (tier / claude-mcp-add).
 7. Пользователь обещал ЕЩЁ вводные по работе всей базы — ждать, не предполагать.
+
+## Продолжение сессии (плагины + telegram-бот + план изучения репо)
+- **Плагины**: пользователь поставил 7 новых (firecrawl, chrome-devtools-mcp, telegram,
+  atomic-agents, agenthub, demo-video, karpathy-coder), twilio и часть выключил.
+  Плагины per-PC, другим НЕ раскатываются (раскатка = settings.shared.json + установка,
+  кандидат в /sync-base). Сводка маркетплейса (144+35 плагинов) дана в чате; кандидаты
+  на установку: session-report, hookify, self-improving-agent, skill-security-auditor,
+  context7. Идея на будущее: упаковать claude-base как плагин (plugin-dev).
+- **Telegram-бот настроен**: Claude-work-base (@Daniilcoop_bot), Bun 1.3.14 установлен,
+  плагин enabled, токен в `~/.claude/channels/telegram/.env`. После рестарта: запустить
+  `claude --channels plugin:telegram@claude-plugins-official`, написать боту → получить
+  6-значный код → `/telegram:access pair <код>`. Дальше пользователь пересылает боту
+  ссылки на GitHub-репо из «Избранного» (лежат там нумерованными списками с описаниями).
+- **Следующая большая задача**: изучить присланные репо — «нужно нам / не нужно /
+  заменяет / облегчает» (как тест обновлённой базы: роутинг-гейт, query-before-build
+  по графу, лестница веба, harvest-методика). Блок ПТО — на обкатке (пилот DANIIL).
