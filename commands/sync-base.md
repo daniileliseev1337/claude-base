@@ -44,8 +44,10 @@ git -C "$HOME/.claude" log --oneline -10
 (проверить обезличивание, решает пользователь).
 
 ### Шаг 2. Самопроверка базы
-```powershell
-pwsh -File "$HOME/.claude/scripts/verify-claude-base.ps1"
+```bash
+# pwsh (PowerShell 7) есть не на всех ПК — fallback на встроенный Windows PowerShell 5.1
+if command -v pwsh >/dev/null; then PS="pwsh"; else PS="powershell -NoProfile -ExecutionPolicy Bypass"; fi
+$PS -File "$HOME/.claude/scripts/verify-claude-base.ps1"
 ```
 (если скрипта нет — пропустить с пометкой). Провалившиеся проверки — в итоговый отчёт.
 
@@ -60,8 +62,8 @@ claude mcp list
 
 ### Шаг 4. Установка
 - **`tier: core`, не установлено** → ставить сразу, без вопросов:
-  - MCP с `method: uvx|npx|github-zip-uv` — через `pwsh -File "$HOME/.claude/scripts/setup-extras.ps1"`
-    (идемпотентен, ставит недостающее по манифесту);
+  - MCP с `method: uvx|npx|github-zip-uv` — через `$PS -File "$HOME/.claude/scripts/setup-extras.ps1"`
+    (тот же fallback `pwsh`/`powershell`, что в Шаге 2; идемпотентен, ставит недостающее по манифесту);
   - `method: claude-mcp-add` (exa) — выполнить `register_command` из манифеста напрямую.
 - **`tier: optional`, не установлено** → ОДИН вопрос списком (AskUserQuestion,
   multiSelect): название + назначение + размер. Включая отклонённые ранее
@@ -73,7 +75,9 @@ claude mcp list
 - Прочее per-machine (вне манифеста): Inkscape (`winget install Inkscape.Inkscape`,
   нужен админ), graphify CLI (`uv tool install graphifyy` — нужен для query по графу
   базы), Ollama (опц., локальный LLM для graphify-доков). Предлагать в том же
-  optional-списке.
+  optional-списке. **Установленность Inkscape проверять по путям установки**
+  (`Test-Path 'C:\Program Files\Inkscape\bin\inkscape.exe'` и аналоги), НЕ через
+  `command -v`/PATH — winget не добавляет Inkscape в PATH, ложный «не установлен».
 
 ### Шаг 4.5. Блоки (`~/.claude/blocks/`)
 Прочитать `blocks/*/BLOCK.md` и `.local-state/blocks.json` (активные блоки этого ПК).
