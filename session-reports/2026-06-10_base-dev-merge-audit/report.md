@@ -34,9 +34,9 @@ tools-allowlist агентов, blocks/, телеметрия). Задача: п
   в вызывающем скрипте (ProcessPoolExecutor + spawn).
 - PowerShell-сериализованный settings.json: `&` хранится как `&` — Edit-tool по
   сырому тексту не матчится, править через ConvertFrom/ConvertTo-Json.
-- Push с этого ПК прошёл ЧЕРЕЗ системный прокси; bypass-proxy (`-c http.proxy=""`)
-  давал «Could not resolve host» — на DANIIL конфиг сети отличается от правила
-  proxy_github (проверять обе ветки).
+- На DANIIL (ноутбук разработчика) ПРОКСИ НЕТ — разовый «Could not resolve host»
+  при push был временным DNS-сбоем, повторный push прошёл без всяких флагов.
+  Правило bypass-proxy из proxy_github актуально для корп-ПК, не для этого хоста.
 - Hostname этого ПК = `DANIIL` (не DANIILPC, как местами в памяти).
 
 ## Зафиксированные нюансы (для следующих dev-сессий)
