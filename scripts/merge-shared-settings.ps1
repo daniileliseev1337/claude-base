@@ -78,13 +78,11 @@ $SharedKeys = @(
     'hooks', 'autoMode'
 )
 
-# Meta keys to skip
-$MetaKeys = @('_comment', '_added')
-
+# Meta keys to skip: любой ключ с префиксом "_" — комментарий/метаинформация
 $changed = $false
 foreach ($prop in $shared.PSObject.Properties) {
     $key = $prop.Name
-    if ($MetaKeys -contains $key) { continue }
+    if ($key.StartsWith('_')) { continue }
 
     $sharedValue = $prop.Value
     $personalHasKey = $personal.PSObject.Properties.Name -contains $key

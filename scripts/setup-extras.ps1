@@ -93,6 +93,48 @@ if ($httpExit -eq 0 -and $httpsExit -eq 0) {
     Log "Step 0: applied GitHub bypass-proxy persistent config"
 }
 
+# === Step 0.5: ccusage — мониторинг токенов + statusline ===
+#
+# settings.shared.json содержит statusLine "ccusage statusline" (живой расход
+# токенов в строке статуса CLI). Без установленного ccusage строка просто
+# не отрисуется — ставим. npm (если есть Node) -> bun (user-scope, без админа).
+Write-Step "Step 0.5: ccusage (мониторинг токенов + statusline)"
+try {
+    if (Get-Command ccusage -ErrorAction SilentlyContinue) {
+        Write-OK "ccusage already installed"
+    } elseif ($DryRun) {
+        Write-Host "  [dry] ccusage будет установлен (npm, иначе bun user-scope)" -ForegroundColor Yellow
+    } else {
+        $npmCmd = Get-Command npm -ErrorAction SilentlyContinue
+        $bunExe = $null
+        $bunCmd = Get-Command bun -ErrorAction SilentlyContinue
+        if ($bunCmd) { $bunExe = $bunCmd.Source }
+        elseif (Test-Path "$env:USERPROFILE\.bun\bin\bun.exe") { $bunExe = "$env:USERPROFILE\.bun\bin\bun.exe" }
+
+        if ($npmCmd) {
+            npm install -g ccusage 2>$null | Out-Null
+        } else {
+            if (-not $bunExe) {
+                Write-Host "  Node/npm нет — ставлю bun (user-scope, без админа)..." -ForegroundColor Gray
+                Invoke-RestMethod 'https://bun.sh/install.ps1' | Invoke-Expression
+                if (Test-Path "$env:USERPROFILE\.bun\bin\bun.exe") { $bunExe = "$env:USERPROFILE\.bun\bin\bun.exe" }
+            }
+            if ($bunExe) { & $bunExe add -g ccusage 2>$null | Out-Null }
+        }
+
+        if (Get-Command ccusage -ErrorAction SilentlyContinue) {
+            Write-OK "ccusage installed — statusline появится после перезапуска Claude Code"
+            Log "Step 0.5: ccusage installed"
+        } else {
+            Write-Warn "ccusage не встал в PATH текущей сессии — после перезапуска терминала проверь: ccusage --version"
+            Log "Step 0.5: ccusage install attempted, not in PATH yet"
+        }
+    }
+} catch {
+    Write-Warn "ccusage setup failed (не критично, statusline просто не появится): $($_.Exception.Message)"
+    Log "Step 0.5: FAILED: $($_.Exception.Message)"
+}
+
 # === Pre-flight ===
 if (-not (Test-Path $ManifestPath)) {
     Write-Err "Manifest not found: $ManifestPath"
