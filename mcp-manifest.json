@@ -288,6 +288,31 @@
       "needs_admin": false
     },
     {
+      "name": "Revit-Connector",
+      "purpose": "pyRevit MCP — управление живой моделью Autodesk Revit из Claude Code: execute_revit_code (IronPython 2.7 в контексте doc) + ~18 готовых tools (модель/виды/семейства/спеки/раскраска). Мост Claude→MCP→pyRevit Routes(:48884)→Revit API. Используется агентом pyrevit-engineer.",
+      "method": "github-zip-uv",
+      "source_url": "https://github.com/revit-mcp/revit-mcp-python/archive/refs/heads/master.zip",
+      "extracted_name": "revit-mcp-python-master",
+      "install_dir": "$env:USERPROFILE\\.claude\\mcp-servers\\revit-mcp-python",
+      "register_args": [
+        "-s",
+        "user",
+        "--",
+        "uv",
+        "run",
+        "--with",
+        "mcp[cli]",
+        "mcp",
+        "run",
+        "{install_dir}\\main.py"
+      ],
+      "post_install_note": "ТРЕБУЕТ установленный Autodesk Revit + pyRevit + admin-права. Ручные шаги в Revit (за пользователем, авто-инсталлом не делаются): (1) pyRevit → Extensions → 'MCP Server for Revit Python' → Install + Enable; (2) pyRevit → Settings → Routes → включить Routes Server; (3) в %APPDATA%\\pyRevit\\pyRevit_config.ini секция [routes]: server_host=\"127.0.0.1\", server_port=48884 (по умолчанию bind 0.0.0.0 — НЕБЕЗОПАСНО); (4) pyRevit Reload; (5) проверка http://127.0.0.1:48884/revit_mcp/status/ → JSON active; (6) restart Claude Code. Прогрев: uv run --with \"mcp[cli]\" python -c \"import mcp\". Routes API без аутентификации — bind строго 127.0.0.1, на боевых моделях работать по копиям. Паттерны/грабли — ~/.claude/mcp-servers/revit-mcp-python/CLAUDE.md. Агент: pyrevit-engineer.",
+      "size_mb": 5,
+      "requires_internet": true,
+      "tier": "optional",
+      "needs_admin": true
+    },
+    {
       "name": "adeu",
       "purpose": "docx-diff с нативными Word Track Changes для diff между ревизиями. Полезно для согласования правок в коммерческих документах.",
       "method": "uvx",
