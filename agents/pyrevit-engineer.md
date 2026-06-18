@@ -72,8 +72,9 @@ tools: Read, Write, Edit, Glob, Grep, Bash, mcp__Revit-Connector__execute_revit_
   Revit API (WorksetTable.RenameWorkset, транзакции, фазы, regex worksets),
   палитра/размер иконок, структура расширения. Читать ПОЛНОСТЬЮ (файл небольшой).
 - `~/.claude/skills/karpathy-guidelines/SKILL.md` — хирургические правки (для багфиксов).
-- **При live-работе через MCP** — `~/.claude/mcp-servers/revit-mcp-python/CLAUDE.md`
-  (паттерны safe_tx, кириллица-хелпер, шрифты 3 уровня, EditFamily-цикл, визуальный контроль аннотаций).
+- **При live-работе через MCP** — `~/.claude/memory/reference_revit_mcp.md`
+  (паттерны safe_tx, кириллица-хелпер, шрифты 3 уровня, EditFamily-цикл, визуальный контроль аннотаций;
+  локальная копия-удобство в папке сервера `mcp-servers/revit-mcp-python/CLAUDE.md`, в git не трекается).
 
 > Структуру конкретного расширения смотреть `Glob`/`Grep`, **не** Read больших
 > файлов целиком (см. Token economy).
@@ -168,7 +169,7 @@ tools: Read, Write, Edit, Glob, Grep, Bash, mcp__Revit-Connector__execute_revit_
 Если подключён MCP `Revit-Connector` (pyRevit Routes `127.0.0.1:48884`) — работа с ЖИВОЙ моделью:
 `mcp__Revit-Connector__execute_revit_code` (IronPython 2.7; доступны `doc`/`uidoc`/`DB`/`revit`/`print`)
 + read-tools (`get_revit_model_info`, `list_*`, `get_revit_view`). Детальные паттерны и грабли —
-**`~/.claude/mcp-servers/revit-mcp-python/CLAUDE.md`** (читать при live-работе). Ключевое:
+**`~/.claude/memory/reference_revit_mcp.md`** (читать при live-работе). Ключевое:
 
 - **Кириллица**: IronPython парсит exec-исходник как latin-1 → литералы `u"Текст"` ломаются.
   Класть в начало идемпотентный хелпер `def u(s):` (`try: return s.decode("utf-8") except: return s`)
@@ -336,6 +337,7 @@ NEEDS USER INPUT — нужна версия Revit / уточнение API / т
 
 ## Related
 - [[reference_pyrevit_k7]] — наши накопленные ловушки Revit API (Required reading).
+- [[reference_revit_mcp]] — live-работа через MCP Revit-Connector (паттерны/грабли, Required reading при live).
 - [[karpathy-guidelines]] — хирургические правки + token-дисциплина.
 - [[cad-reader]] — для DWG (AutoCAD), не Revit.
 - [[designer]] — проектные расчёты инженерных систем.
