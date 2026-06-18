@@ -41,6 +41,8 @@
   (vla-put-VertCellMargin tbl GC:MARGIN)
   (vla-put-HorzCellMargin tbl GC:MARGIN)
   (setq i 0) (foreach w GC:COLS (vla-SetColumnWidth tbl i w) (setq i (1+ i)))
+  ;; ACAD auto-merges row 0 as a title; unmerge every row so header cells survive
+  (setq rri 0) (while (< rri n) (c7:safe 'vla-UnmergeCells (list tbl rri rri 0 (1- GC:NCOLS))) (setq rri (1+ rri)))
   (setq rri 0)
   (foreach rd rowlist
     (setq rtype (car rd) c (cdr rd))

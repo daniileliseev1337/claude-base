@@ -29,7 +29,8 @@ def main():
             expected[pos] = cells[qty_col - 1]   # quantity column ('Всего'/'Объём')
 
     acad = {}
-    for tok in io.open(pairs_path, encoding="utf-8").read().split():
+    # AutoCAD writes acad_pairs.txt in cp1251 (qty may be non-ASCII, e.g. swapped 'м')
+    for tok in io.open(pairs_path, encoding="cp1251").read().split():
         k, v = tok.split(":")
         acad[int(k)] = v
 
