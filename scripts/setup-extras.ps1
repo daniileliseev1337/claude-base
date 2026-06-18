@@ -318,6 +318,19 @@ foreach ($srv in $mcpSrvs) {
             Write-OK "$name source extracted to $installDir"
         }
 
+        # 1b. Local patches (idempotent) for servers that need a post-extract fix.
+        #     Revit-Connector: upstream main.py uses localhost + proxy-aware httpx,
+        #     which hangs on corp-proxy / IPv6 machines. See memory/reference_revit_mcp.md.
+        if ($name -eq 'Revit-Connector') {
+            $patcher = Join-Path $PSScriptRoot 'patch-revit-mcp.ps1'
+            if (Test-Path $patcher) {
+                & $patcher -InstallDir $installDir
+                Log "Revit-Connector main.py patched (IPv4 + trust_env=False)"
+            } else {
+                Write-Warn "patch-revit-mcp.ps1 not found next to setup-extras.ps1"
+            }
+        }
+
         # 2. uv sync
         $venvPython = "$installDir\.venv\Scripts\python.exe"
         if (Test-Path $venvPython) {
