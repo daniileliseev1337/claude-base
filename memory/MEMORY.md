@@ -26,6 +26,7 @@ tags: [мета, индекс, memory]
 - [[2026-05-15_extras-distribution-mechanism]] — manifest + setup-extras + Install.ps1 Stage 8 архитектура распространения Python/MCP стека.
 - [[2026-05-18_lesson-15-proxy-helpers-persistence]] — Урок 15: proxy-хелперы persistence в claude-lite-instaler (CLOSED 2026-05-18 коммитом `3562631`).
 - [[2026-05-26_anthropic_geoblock_ru]] — Anthropic геоблокирует RU IP на уровне backend API → `app-unavailable-in-region` HTML вместо JSON → Claude Desktop defensive-блок → `accountId=null` → белый экран. Не корп-прокси, не TLS MITM.
+- [[reference_revit_mcp]] — справочник Revit-Connector (pyRevit MCP). С 2026-06-18 — раздел «диагностика отказа подключения»: команды виснут/`503` пустой/`Server disconnected` при исправном Revit = (1) корп-прокси гонит localhost через `HTTP_PROXY` (фикс `trust_env=False` + `NO_PROXY`), (2) localhost→IPv6 (фикс `REVIT_HOST=127.0.0.1`), (3) Home-экран Revit = нет active doc; +грабли «две копии main.py». Прокси-аспект — [[proxy_github]].
 
 ### Архитектурные backlog'и (из аудитов чужих баз)
 

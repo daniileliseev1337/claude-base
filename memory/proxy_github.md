@@ -70,6 +70,17 @@ $env:HTTPS_PROXY=""; gh pr view 123
 - `huggingface.co`, `cdn-lfs.huggingface.co` (модели — LaMa, EasyOCR, SD)
 - Microsoft / Anthropic / другие — через прокси нормально.
 
+### Локальные адреса — ВСЕГДА мимо прокси (NO_PROXY)
+`127.0.0.1` / `localhost` / `::1` — это локальные HTTP-мосты MCP (Revit Routes `:48884`,
+autocad-mcp и пр.), их НЕЛЬЗЯ гнать через корп-прокси. Если `NO_PROXY` не задан, python-`httpx`
+(по умолчанию `trust_env=True`) отправляет даже запрос к `127.0.0.1` на `HTTP_PROXY` → прокси
+отвечает **пустым `503`** или виснет, и локальный MCP выглядит «мёртвым» (таймаут/disconnect),
+хотя сам сервис исправен. Признак: прямой `Invoke-WebRequest http://127.0.0.1:<port>/...` даёт
+200 (.NET байпасит local), а MCP-команда — нет (httpx уважает прокси).
+**Фикс:** задать env `NO_PROXY=127.0.0.1,localhost,::1` (системно/в Set-Proxy.ps1), а в httpx-клиентах
+локальных мостов — `trust_env=False`. Кейс — Revit-Connector ([[reference_revit_mcp]]), 2026-06-18.
+Кандидат в `setup-extras.ps1` Step 0 рядом с GitHub-bypass.
+
 ### Harvest и WebFetch на GitHub
 - `WebFetch` tool на `https://github.com/<owner>/<repo>` — **bypass автоматический**.
 - `gh api search/repositories?q=...` — **требует** `$env:HTTPS_PROXY=""` перед вызовом

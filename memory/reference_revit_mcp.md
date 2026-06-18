@@ -18,6 +18,41 @@ Revit Python» → Install+Enable; Settings → Routes → on; `%APPDATA%\pyRevi
 секция `[routes]`: `server_host="127.0.0.1"`, `server_port=48884` (по умолчанию 0.0.0.0 — небезопасно);
 pyRevit Reload; проверка `http://127.0.0.1:48884/revit_mcp/status/`; restart Claude Code.
 
+## Подключение мертво / команды виснут — диагностика отказа (прокси / IPv6 / Home / 2 копии)
+
+Симптомы (Revit при этом открыт и исправен): ВСЕ MCP-команды → `Request timed out after Ns`,
+ИЛИ `Error: 503 - ` (ПУСТОЕ тело), ИЛИ `Server disconnected without sending a response`.
+**НЕ перезапускать Revit вслепую.** Сначала отделить «коннектор» от «Revit» прямым HTTP:
+```powershell
+Invoke-WebRequest http://127.0.0.1:48884/revit_mcp/status/ -UseBasicParsing   # 200 = Revit/Routes ЖИВЫ
+Get-NetTCPConnection -State Listen | ? LocalPort -eq 48884                      # порт слушается?
+```
+Прямой HTTP даёт 200, а MCP-команда висит/503 → проблема в python-обёртке (`main.py`), НЕ в Revit.
+Тело 500/503 читать через `[Net.HttpWebRequest]` (там точная причина: «route does not exist» ≠ поломка).
+
+**(1) Корп-прокси — главная и самая неочевидная причина.** `httpx` (по умолчанию `trust_env=True`)
+гонит ДАЖE `http://127.0.0.1:48884` через `HTTP_PROXY`, когда `NO_PROXY` не задан. Прокси не достаёт
+до localhost клиента → **`503` с ПУСТЫМ телом** (а обработчик `/status/` при ошибке отдаёт 503 с JSON —
+значит пустой 503 пришёл НЕ от Revit). Репро тем же httpx:
+`httpx.get(url)` → 503 len0; `httpx.Client(trust_env=False).get(url)` → 200.
+ФИКС: обоим `httpx.AsyncClient(...)` в `main.py` добавить `trust_env=False` (в `revit_image` и
+`_revit_call`). Системно — задать `NO_PROXY=127.0.0.1,localhost,::1` (см. [[proxy_github]]).
+
+**(2) localhost → IPv6.** Routes слушает `0.0.0.0:48884` (только IPv4). На Windows `localhost`
+резолвится в IPv6 `::1` первым → прямой httpx виснет. ФИКС: `REVIT_HOST = "127.0.0.1"` в `main.py`.
+Тест: `http://[::1]:48884/...` → connection refused, `http://127.0.0.1:48884/...` → 200.
+
+**(3) Home-экран Revit = «нет активного документа».** `Error: 503 -` (тут JSON «No active Revit
+document») при открытой модели → активна стартовая страница Revit, `ActiveUIDocument=None`.
+Лечение: открыть/активировать ВИД модели (двойной клик по плану), закрыть Home-экран.
+
+**Грабли: ДВЕ копии `main.py`.** Claude запускает MCP-КЛИЕНТ из `~/.claude/mcp-servers/revit-mcp-python/main.py`
+(точно определять по CommandLine: `Get-CimInstance Win32_Process -Filter "Name='python.exe'"` → строка
+с `mcp.exe run ...main.py`). Вторая копия — серверная в `%APPDATA%\pyRevit\Extensions\<...>.extension\main.py`
+(это HTTP-Routes ВНУТРИ Revit), на коннектор Claude НЕ влияет — правка её бесполезна. После правки
+`main.py` обязателен **Reload Window** (запущенный python держит старый код в памяти).
+`mcp-servers/` НЕ в claude-base git → правка локальна; для раздачи всем — внести в setup-extras/дистрибутив.
+
 ## Грабли и паттерны (ОБЯЗАТЕЛЬНО при live-работе)
 
 **Кириллица.** IronPython 2.7 парсит exec-исходник как latin-1 (объявление `# coding` игнорится) →
