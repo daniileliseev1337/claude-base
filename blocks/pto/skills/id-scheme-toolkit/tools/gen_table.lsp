@@ -77,7 +77,7 @@
   (- (cadr (vlax-safearray->list mx)) (cadr (vlax-safearray->list mn))))
 
 (defun c7:read-data ( / f line tab parts key)
-  (setq tab (chr 9) GC:ROWS '() GC:GAP 4.0 GC:MAXCOLS 4)
+  (setq tab (chr 9) GC:ROWS '() GC:GAP 4.0 GC:MAXCOLS 4 GC:QTYCOL nil)
   (setq f (open "C:/temp/table_data.txt" "r"))
   (while (setq line (read-line f))
     (setq parts (c7:split line tab) key (car parts))
@@ -90,6 +90,7 @@
       ((= key "THMAX")   (setq GC:THMAX (atof (cadr parts))))
       ((= key "MARGIN")  (setq GC:MARGIN (atof (cadr parts))))
       ((= key "TARGETH") (setq GC:TARGETH (atof (cadr parts))))
+      ((= key "QTYCOL")  (setq GC:QTYCOL (atoi (cadr parts))))
       ((= key "GAP")     (setq GC:GAP (atof (cadr parts))))
       ((= key "XSTART")  (setq GC:XSTART (atof (cadr parts))))
       ((= key "YTOP")    (setq GC:YTOP (atof (cadr parts))))
@@ -168,15 +169,16 @@
 
 ;; --- verification: dump (pos : last-column) pairs from built tables to a file ---
 ;; reads G:TABLES (multi) or G:LASTTABLE (single). Python then cross-checks vs xlsx.
-(defun c7:verify-dump ( / doc s tbl nr nc r n0 f hs)
+(defun c7:verify-dump ( / doc s tbl nr nc r n0 f hs qc)
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)) s "")
   (setq hs (if G:TABLES G:TABLES (if G:LASTTABLE (list G:LASTTABLE) '())))
   (foreach h hs
     (setq tbl (vla-HandleToObject doc h) nr (vla-get-Rows tbl) nc (vla-get-Columns tbl) r 0)
+    (setq qc (if GC:QTYCOL (1- GC:QTYCOL) (1- nc)))        ; 0-based qty column
     (while (< r nr)
       (setq n0 (vla-GetText tbl r 0))
       (if (and (> (strlen n0) 0) (> (atoi n0) 0) (= n0 (itoa (atoi n0))))
-        (setq s (strcat s n0 ":" (vla-GetText tbl r (1- nc)) " ")))
+        (setq s (strcat s n0 ":" (vla-GetText tbl r qc) " ")))
       (setq r (1+ r))))
   (setq f (open "C:/temp/acad_pairs.txt" "w")) (write-line s f) (close f)
   (princ "verify pairs -> C:/temp/acad_pairs.txt"))

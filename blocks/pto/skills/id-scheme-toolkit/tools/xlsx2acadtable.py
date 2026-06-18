@@ -15,6 +15,16 @@ exact same slicing/classification/renumbering as generation.
 """
 import sys, io, openpyxl
 
+# symbols absent from cp1251 -> AutoCAD control codes / ASCII (so they survive the data file)
+_SUBS = {"∅": "%%c", "⌀": "%%c", "Ø": "%%c", "ø": "%%c",  # diameter -> %%c
+" ": " ", " ": " "}
+
+
+def sanitize(s):
+    for k, v in _SUBS.items():
+        s = s.replace(k, v)
+    return s
+
 
 def cellstr(v):
     if v is None:
@@ -34,34 +44,48 @@ def find_tables(ws):
             for i, s in enumerate(starts)]
 
 
-def parse_table(xlsx, sheet, tidx, renumber):
-    """Slice + classify one VOR table. Returns (rows, bounds, s, e, npos).
-    rows: list of (type, cells[]) where type in title|header|section|data."""
+def detect_qty_col(header_cells):
+    """1-based index of the quantity column ('Всего'/'Объём'/'Кол-во'); default = last."""
+    for i, h in enumerate(header_cells):
+        hl = h.strip().lower()
+        if ("всего" in hl) or ("объ" in hl) or ("кол" in hl):
+            return i + 1
+    return len(header_cells)
+
+
+def parse_table(xlsx, sheet, tidx, renumber, ncols=4):
+    """Slice + classify one VOR table into ncols columns.
+    Returns (rows, bounds, s, e, npos, qty_col). rows: (type, cells[]).
+    section = first cell non-empty and all the rest empty."""
     wb = openpyxl.load_workbook(xlsx, data_only=True)
     ws = wb[sheet]
     maxc = ws.max_column
     bounds = find_tables(ws)
     if not bounds:
-        return [], [], None, None, 0
+        return [], [], None, None, 0, ncols
     s, e = bounds[tidx]
-    rows, pos = [], 0
+    rows, pos, qty_col = [], 0, ncols
     for r in range(s, e + 1):
         vals = [cellstr(ws.cell(row=r, column=c).value) for c in range(1, maxc + 1)]
-        av, bv, cv, dv = (vals + ["", "", "", ""])[:4]
+        cells = (vals + [""] * ncols)[:ncols]
         if not any(x.strip() for x in vals):
             continue
         if r == s:
-            rows.append(("title", [av]))
+            rows.append(("title", [cells[0]]))
         elif r == s + 1:
-            rows.append(("header", [("№" if renumber else av), bv, cv, dv]))
-        elif av and not bv and not cv and not dv:
-            rows.append(("section", [av]))
+            head = cells[:]
+            qty_col = detect_qty_col(head)
+            if renumber:
+                head[0] = "№"
+            rows.append(("header", head))
+        elif cells[0] and not any(c.strip() for c in cells[1:]):
+            rows.append(("section", [cells[0]]))
         else:
             if renumber:
                 pos += 1
-                av = str(pos)
-            rows.append(("data", [av, bv, cv, dv]))
-    return rows, bounds, s, e, pos
+                cells[0] = str(pos)
+            rows.append(("data", cells))
+    return rows, bounds, s, e, pos, qty_col
 
 
 def main():
@@ -75,7 +99,7 @@ def main():
     if multi:
         gap, xstart, ytop, maxcols = a[13], a[14], a[15], a[16]
 
-    rows, bounds, s, e, pos = parse_table(xlsx, sheet, tidx, renumber)
+    rows, bounds, s, e, pos, qty_col = parse_table(xlsx, sheet, tidx, renumber, ncols)
     print("tables:", bounds)
     if not rows:
         print("NO TABLES FOUND"); return
@@ -90,13 +114,14 @@ def main():
     out.write("THMAX" + T + thmax + "\n")
     out.write("MARGIN" + T + margin + "\n")
     out.write("TARGETH" + T + target_h + "\n")
+    out.write("QTYCOL" + T + str(qty_col) + "\n")
     if multi:
         out.write("GAP" + T + gap + "\n")
         out.write("XSTART" + T + xstart + "\n")
         out.write("YTOP" + T + ytop + "\n")
         out.write("MAXCOLS" + T + maxcols + "\n")
     for idx, (rtype, cells) in enumerate(rows):
-        out.write("ROW" + T + str(idx) + T + rtype + T + T.join(cells) + "\n")
+        out.write("ROW" + T + str(idx) + T + rtype + T + T.join(sanitize(c) for c in cells) + "\n")
     out.close()
     print("OK wrote C:\\temp\\table_data.txt | rows=%d cols=%d positions=%d table=%d (xlsx %d-%d) renumber=%s"
           % (len(rows), ncols, pos, tidx, s, e, renumber))

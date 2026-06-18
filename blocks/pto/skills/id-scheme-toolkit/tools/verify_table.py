@@ -17,15 +17,16 @@ from xlsx2acadtable import parse_table
 def main():
     a = sys.argv
     xlsx, sheet, tidx, renum = a[1], a[2], int(a[3]), a[4]
-    pairs_path = a[5] if len(a) > 5 else r"C:\temp\acad_pairs.txt"
+    ncols = int(a[5]) if len(a) > 5 else 4
+    pairs_path = a[6] if len(a) > 6 else r"C:\temp\acad_pairs.txt"
     renumber = (renum == "1")
 
-    rows, _, _, _, _ = parse_table(xlsx, sheet, tidx, renumber)
+    rows, _, _, _, _, qty_col = parse_table(xlsx, sheet, tidx, renumber, ncols)
     expected, pos = {}, 0
     for rtype, cells in rows:
         if rtype == "data":
             pos += 1
-            expected[pos] = cells[-1]            # last column = Всего/Объём
+            expected[pos] = cells[qty_col - 1]   # quantity column ('Всего'/'Объём')
 
     acad = {}
     for tok in io.open(pairs_path, encoding="utf-8").read().split():
