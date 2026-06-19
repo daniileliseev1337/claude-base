@@ -8,7 +8,7 @@ description: |
   Разграничение (важно): нужна ТОЧНАЯ ЦИТАТА ОДНОГО ПУНКТА / проверка что норма указана верно → этот агент; проверка ЦЕЛОГО РАЗДЕЛА на соответствие нормам (состав, маркировки, спецификации vs ГОСТ/СП) → `audit-rd-section` (он внутри сам зовёт norm-lookup за цитатами). norm-lookup не ревьюит документ — он отдаёт цитату.
 
   Справочник/проверяльщик 2-го уровня. Прямой пользовательский триггер: «процитируй пункт», «правда ли ГОСТ/СП это требует», «сверь ссылку на пункт перед сдачей». Программный триггер: любой агент (designer / pto-engineer / сметчик / audit-rd-section / kp-writer / letter-writer) собирается процитировать ГОСТ/СНиП/СП/МДС/ПУЭ/постановление, но не уверен в номере/редакции/содержании; в артефакте есть pending [ПРОВЕРИТЬ НОРМУ <название>]; перед выдачей раздела с нормативными ссылками — прогнать ссылки через norm-lookup.
-tools: Read, Bash, Grep, Glob, WebFetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_get_toc, mcp__pdf-mcp__pdf_render_pages, mcp__word__get_document_text, mcp__word__find_text_in_document, mcp__word__get_document_outline
+tools: Read, Bash, Grep, Glob, WebFetch, mcp__fetch__fetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, mcp__firecrawl__firecrawl_extract, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_wait_for, mcp__playwright__browser_press_key, mcp__playwright__browser_close, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_get_toc, mcp__pdf-mcp__pdf_render_pages, mcp__word__get_document_text, mcp__word__find_text_in_document, mcp__word__get_document_outline
 ---
 
 # norm-lookup — поисковик по нормативной базе РФ
@@ -110,13 +110,19 @@ library опциональна. Если она настроена и досту
   индексы).
 - **Bash** — Python-скрипты для извлечения текста из PDF норм
   (`pdfplumber`/`pypdf`) когда содержимое нужно вытащить программно.
-- **Exa** (`mcp__exa__web_search_exa` / `mcp__exa__web_fetch_exa`) — ОСНОВНОЙ
-  веб-путь к официальным нормам на `cntd.ru` / `docs.cntd.ru`. Надёжнее
-  WebFetch (тот фейлит на 80-90% сайтов — это и ломало нормоконтроль).
-  web_search для поиска документа + highlights, web_fetch для полного текста.
-- **WebFetch** — fallback к Exa, те же `cntd.ru` / `docs.cntd.ru`.
-  **НЕ использовать** агрегаторы (`techlibrary`, случайные PDF с гугла) —
-  там часто устаревшие или искажённые редакции.
+- **Лестница веб-доступа** (cntd.ru часто АНТИБОТ → несколько провайдеров; порядок CLAUDE.md):
+  1. **Exa** (`mcp__exa__web_search_exa` / `mcp__exa__web_fetch_exa`) — ОСНОВНОЙ путь к
+     официальным нормам `cntd.ru` / `docs.cntd.ru`: search → highlights (часто хватает),
+     fetch → полный текст (batch URL'ы в один вызов).
+  2. **firecrawl** (`firecrawl_search` / `firecrawl_scrape` / `firecrawl_extract`) — если Exa
+     не дал: поиск + scrape страницы (берёт JS и часть антибота), extract — вытащить пункт структурно.
+  3. **fetch-MCP** (`mcp__fetch__fetch`) — простой HTML без антибота.
+  4. **playwright** (`browser_navigate` / `browser_snapshot` / `browser_evaluate` /
+     `browser_take_screenshot` / `browser_click` / `browser_wait_for`) — последний рубеж для
+     **антибота / Cloudflare / SPA** на cntd.ru: открыть, дождаться, снять текст или скрин.
+  5. **WebFetch** — самый слабый fallback (фейлит 80-90%), только если всё выше не дало.
+  **НЕ использовать** агрегаторы (`techlibrary`, случайные PDF с гугла) — там часто устаревшие
+  или искажённые редакции; источник — только cntd.ru / локальная база.
 - **pdf-mcp** (`pdf_info` / `pdf_search` / `pdf_read_pages` / `pdf_get_toc`
   / `pdf_render_pages`) — чтение PDF норм из knowledge-library: `pdf_info`
   проверяет text-layer, `pdf_search` находит пункт, `pdf_read_pages` даёт
@@ -156,22 +162,25 @@ library опциональна. Если она настроена и досту
 
 Если найдено — переход к Step 4 (извлечение цитаты).
 
-### Step 3 — Веб-поиск (Exa-first, WebFetch fallback)
+### Step 3 — Веб-поиск (лестница: Exa → firecrawl → fetch → playwright → WebFetch)
 
-Если в локальной базе нет — веб-поиск на cntd.ru. **Exa приоритетнее**:
-WebFetch часто фейлит (80-90% сайтов, см.
-`memory/feedback_webfetch_reality_check.md`) — именно это ломало нормоконтроль.
+Если в локальной базе нет — веб-поиск на cntd.ru. cntd.ru часто АНТИБОТ, поэтому идти
+ПО ЛЕСТНИЦЕ, не падать сразу на WebFetch (он фейлит 80-90%, см.
+`memory/feedback_webfetch_reality_check.md` — именно это ломало нормоконтроль):
 
-1. `mcp__exa__web_search_exa` с запросом вида
-   «<норма> <тема> пункт cntd.ru» → находит URL документа + highlights.
-   Highlights часто уже содержат нужный пункт — может хватить без fetch.
-2. Если highlights недостаточно — `mcp__exa__web_fetch_exa` на найденный
-   URL `docs.cntd.ru/...` → чистый текст документа (batch URL'ы в один вызов).
-3. **Только если Exa не дал результата** — `WebFetch` на
-   `https://docs.cntd.ru/document/<id>` как fallback.
-4. Сохранить найденный текст в working memory (не файл).
+1. `mcp__exa__web_search_exa` «<норма> <тема> пункт cntd.ru» → URL + highlights
+   (часто уже содержат пункт). Мало — `mcp__exa__web_fetch_exa` на `docs.cntd.ru/...`.
+2. Exa пусто/мало → `mcp__firecrawl__firecrawl_search` (+ `firecrawl_scrape` /
+   `firecrawl_extract` на найденный URL) — берёт JS и часть антибота.
+3. Страница без защиты → `mcp__fetch__fetch` (простой HTML).
+4. Антибот / Cloudflare / SPA не пробиты → **playwright**: `browser_navigate` на
+   `https://docs.cntd.ru/document/<id>`, `browser_wait_for`, затем `browser_snapshot` /
+   `browser_evaluate` (текст) или `browser_take_screenshot` (потом OCR). Закрыть `browser_close`.
+5. **Только если всё выше не дало** — `WebFetch` как последний fallback.
+6. Сохранить найденный текст в working memory (не файл).
 
-Достоверность пометить `exa_cntd_ru` (через Exa) или `cntd_ru_WebFetch` (fallback).
+Достоверность пометить источником: `exa_cntd_ru` / `firecrawl_cntd_ru` /
+`playwright_cntd_ru` / `cntd_ru_WebFetch`.
 
 ### Step 4 — Извлечение точной цитаты
 
