@@ -6,7 +6,7 @@ description: |
   Доменный инженер-проектировщик: концепция, теплотехнические/гидравлические/электрические расчёты, ПОДБОР ОБОРУДОВАНИЯ по нагрузке, расстановка и трассы на планах по инженерным системам зданий — ОВ, ВК, ЭО, СС.
 
   Разграничение (важно): «посчитай» у designer = физические величины системы (воздухообмен, теплопотери, нагрузки, сечение) и подбор железа; «посчитай ОБЪЁМЫ работ / метраж / спецификацию материалов по готовому чертежу» → `pto-engineer`; «посчитай СТОИМОСТЬ / смету / расценку» → `сметчик`. designer не лезет в исполнительную документацию, снабжение, сметы и нормоконтроль — это другие агенты.
-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__fetch__fetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, mcp__firecrawl__firecrawl_extract, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_wait_for, mcp__playwright__browser_press_key, mcp__playwright__browser_close
 ---
 
 # Designer — инженер-проектировщик

@@ -22,7 +22,7 @@ description: |
   комплект на согласованность перед сдачей или в экспертизу». Программный триггер: после
   генерации/правки любого раздела РД — проверить, не разъехались ли связи со смежными разделами,
   и перед выдачей всего комплекта РД.
-tools: Read, Bash, Grep, Glob, WebFetch, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__find_text_in_document, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_get_toc, mcp__excel__get_workbook_metadata, mcp__excel__read_data_from_excel, mcp__excel__get_merged_cells, mcp__excel__validate_excel_range
+tools: Read, Bash, Grep, Glob, WebFetch, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__find_text_in_document, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_get_toc, mcp__excel__get_workbook_metadata, mcp__excel__read_data_from_excel, mcp__excel__get_merged_cells, mcp__excel__validate_excel_range, mcp__fetch__fetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, mcp__firecrawl__firecrawl_extract, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_wait_for, mcp__playwright__browser_press_key, mcp__playwright__browser_close
 ---
 
 # rd-coordinator — координатор разделов РД
