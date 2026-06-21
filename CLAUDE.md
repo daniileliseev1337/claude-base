@@ -110,8 +110,26 @@
 `exa` (semantic search + fetch) → `fetch` MCP (простой HTML) → `playwright` (антибот
 401/403/Cloudflare, SPA/JS-рендер; на карточке товара искать прямую CDN-ссылку) → встроенный
 `WebFetch` — ТОЛЬКО последняя ступень (80-90% fail на JS/антиботах). Провал ступени = сигнал
-перейти на следующую, а НЕ «в интернете нет». Уроки: `memory/feedback_webfetch_reality_check.md`,
-`memory/feedback_web_doc_fetch_browser_antibot.md`.
+перейти на следующую, а НЕ «в интернете нет».
+
+**Добыча документов/файлов (паспорта, сертификаты, PDF) — обязательный метод** (детально и всегда:
+`memory/feedback_web_direct_access.md`):
+1. **ШАГ 0 при ЛЮБОМ сбое — СКРИНШОТ** (`playwright browser_take_screenshot/snapshot`), смотреть ГЛАЗАМИ,
+   не угадывать по тексту curl. Тип страницы-блокера даёт решение: **DDoS-Guard/Cloudflare** «Just a moment /
+   Проверка браузера» → подождать 5-6 сек и повторить `navigate` (ставит cookie `__ddg…`/`cf_clearance`, 2-й
+   заход проходит); **404 / «не найдено»** → искать ВНУТРЕННИМ поиском сайта (`form.action`→`/search/?q=`), не
+   угадывать URL; **`<!DOCTYPE>` вместо `%PDF`** → ссылка из Google битая, брать из карточки товара.
+2. **Обход корп-прокси** (трафик Claude уходит с иностранного IP → росс. сайты отдают заглушку/404, `pub.fsa`
+   timeout): скачивать через `curl --noproxy "*" -A "<браузерный UA>" -o f.pdf URL`; cloud-MCP (exa/firecrawl)
+   ходят своим каналом — ими ЧИТАТЬ реквизиты, но они отдают текст, не файл.
+3. **Файлы за сессией/ботозащитой:** playwright `navigate` на карточку (ставит cookies) → `browser_evaluate
+   document.cookie` → `curl --noproxy -b "<cookies>" -e "<referer>" -o f.pdf URL`. Проверять `head -c4`=`%PDF`.
+4. **Домен НЕ угадывать**; ссылку на документ брать из карточки товара (раздел «Документы/Сертификаты»), не
+   конструировать; скрином сверять, что документ — на нужный артикул. «Документа нет» — только после
+   визуального просмотра нужной карточки на правильном домене.
+Сканы проверять `sonnet`, не haiku (haiku врёт в изготовителе/типе). Правила дат документ↔акт и порядок
+поиска — `memory/feedback_user_rules_docs_cascade.md`; приёмы запросов — `memory/feedback_id_doc_search_method.md`.
+Старые заметки: `feedback_webfetch_reality_check.md`, `feedback_web_doc_fetch_browser_antibot.md`.
 
 ## Универсальные правила работы
 
