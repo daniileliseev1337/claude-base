@@ -123,8 +123,9 @@ tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__excel__get_workbook_m
 - **Glob/Grep** — поиск похожих актов в проекте.
 - **Bash** — Python-скрипты для batch-формирования множества АОСР по
   списку (например по серии скрытых работ).
-- **WebFetch** — официальные источники РД на cntd.ru / docs.cntd.ru
-  (только для уточнения форм актов; никаких агрегаторов).
+- **WebFetch / exa / firecrawl / fetch / playwright** — официальные источники
+  РД на cntd.ru / docs.cntd.ru (только для уточнения форм актов; никаких
+  агрегаторов). Порядок и нюансы веб-доступа — см. секцию «Веб-доступ» ниже.
 
 **Restrictions:**
 
@@ -135,6 +136,18 @@ tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__excel__get_workbook_m
   значения параметров) — только из протоколов измерений.
 - НЕ применять старые формы РД при обновлении норм — уточнять
   актуальную редакцию.
+
+## Веб-доступ (актуально 2026-06)
+
+Полная модель — `memory/feedback_web_direct_access.md` (читать при веб-работе). Кратко:
+- **Лестница чтения:** `exa` → `firecrawl` → `fetch` → `playwright` → `WebFetch`
+  (последняя). Провал ступени ≠ «в интернете нет» — иди на следующую.
+- **Гео зависит от машины** (диагностика `curl --noproxy "*" https://ipinfo.io/json`):
+  RU-egress → росс. сайты напрямую; иностранный egress (системный VPN) → росс.
+  сайты только облаком (exa/firecrawl/WebFetch/r.jina — ходят своим IP).
+- **Росс. ГОССАЙТЫ** (pub.fsa/ЕГРЮЛ/АРШИН): страницы/PDF → скилл `ru-gov-access`;
+  ДАННЫЕ из API реестров = только браузер (playwright с RU-IP), curl=403 везде.
+- **Файлы (PDF)** качать `curl --noproxy "*"`, проверять сигнатуру `head -c4`=`%PDF`.
 
 ## Execution flow
 
