@@ -150,12 +150,16 @@ if (-not $isDeveloper) {
     if (Test-Path $configFile) {
         try {
             $cfg = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ($cfg.github_repo -and $cfg.token) {
-                Write-Host "  [OK] .feedback-config.json present, repo=$($cfg.github_repo)" -ForegroundColor Green
+            if ($cfg.github_repo -and ($cfg.token_encrypted -or $cfg.token)) {
+                $tokenForm = if ($cfg.token_encrypted) { 'token_encrypted (DPAPI)' } else { 'token (plaintext, legacy)' }
+                Write-Host "  [OK] .feedback-config.json present, repo=$($cfg.github_repo), $tokenForm" -ForegroundColor Green
+                if (-not $cfg.token_encrypted -and $cfg.token) {
+                    Write-Host "  [WARN] plain token (legacy) — запусти scripts/Set-FeedbackToken.ps1 для DPAPI-шифрования." -ForegroundColor Yellow
+                }
                 Record "5. Feedback config" "PASS"
             } else {
-                Write-Host "  [FAIL] config missing github_repo or token" -ForegroundColor Red
-                Record "5. Feedback config" "FAIL" "missing fields"
+                Write-Host "  [FAIL] config missing github_repo or token/token_encrypted" -ForegroundColor Red
+                Record "5. Feedback config" "FAIL" "missing github_repo or token/token_encrypted"
             }
         } catch {
             Write-Host "  [FAIL] .feedback-config.json invalid JSON: $_" -ForegroundColor Red
@@ -175,13 +179,15 @@ if (-not $isDeveloper) {
             [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
 
             if ($token -and $token.Length -gt 20) {
+                # Шифруем через DPAPI CurrentUser (как Set-FeedbackToken.ps1) — plaintext в файл НЕ пишем
+                $encrypted = ConvertFrom-SecureString -SecureString $secureToken
                 $cfg = @{
-                    github_repo = "daniileliseev1337/claude-base-feedback"
-                    token = $token
+                    github_repo     = "daniileliseev1337/claude-base-feedback"
+                    token_encrypted = $encrypted
                 } | ConvertTo-Json
                 [System.IO.File]::WriteAllText($configFile, $cfg, [System.Text.UTF8Encoding]::new($false))
-                Write-Host "  [OK] $configFile создан" -ForegroundColor Green
-                Record "5. Feedback config" "PASS" "created interactively"
+                Write-Host "  [OK] $configFile создан (token зашифрован через DPAPI)" -ForegroundColor Green
+                Record "5. Feedback config" "PASS" "created interactively (DPAPI)"
             } else {
                 Write-Host "  [SKIP] token пустой/слишком короткий — пропускаем" -ForegroundColor Yellow
                 Record "5. Feedback config" "SKIP" "no token entered"
