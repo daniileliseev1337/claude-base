@@ -48,6 +48,12 @@
             "command": "& \"$HOME\\.claude\\scripts\\auto-pull.ps1\"",
             "shell": "powershell",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\graph-staleness-check.ps1\"",
+            "shell": "powershell",
+            "timeout": 15
           }
         ]
       },
@@ -59,6 +65,12 @@
             "command": "& \"$HOME\\.claude\\scripts\\auto-pull.ps1\"",
             "shell": "powershell",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\graph-staleness-check.ps1\"",
+            "shell": "powershell",
+            "timeout": 15
           }
         ]
       }

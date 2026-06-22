@@ -1,6 +1,6 @@
 ---
 name: graphify
-description: "Use for any question about a codebase, its architecture, file relationships, or project content — especially when graphify-out/ exists, where the question should be treated as a graphify query first. Turns any input (code, docs, papers, images, videos) into a persistent knowledge graph with god nodes, community detection, and query/path/explain tools."
+description: "Knowledge-graph navigator over a codebase or any folder of files (code, docs, papers, images). Use BOTH on the explicit /graphify command AND proactively on plain-language intent about a project's or knowledge base's structure — in English or Russian: «разберись / объясни, как тут устроено X (авторизация, оплата, ревью артефактов, sync, каскад)», «как связаны A и B», «где у нас описано / что реализует правило Y», «обнови / пересобери граф, я поменял файлы», «почему graphify жрёт токены», «стоит ли тут вообще строить граф». ESPECIALLY when graphify-out/graph.json already exists: treat any natural-language question about the corpus as a `graphify query` FIRST — before reading files one by one. The graph is the map; querying it instead of grepping saves ~2x tokens on large bases. Turns input into a persistent graph with god nodes, community detection, and query/path/explain tools. Enforces token guards (corpus size, paid --mode deep, never auto-install the breaking PreToolUse hook) and respects a .graphifyignore scope file."
 trigger: /graphify
 ---
 
@@ -41,6 +41,24 @@ Turn any folder of files into a navigable knowledge graph with community detecti
 /graphify explain "SwinTransformer"                   # plain-language explanation of a node
 ```
 
+## 🛡 Гарды (token-safety, проверять ДО запуска — наследие graph-pilot)
+
+У graphify 40+ команд/флагов, и три из них легко жгут токены или ломают Claude Code. Перед запуском:
+
+1. **Размер корпуса.** Перед ПЕРВЫМ построением прикинь число файлов-исходников.
+   **< 100** → граф почти не сэкономит (обычный поиск и так быстр) — СПРОСИ, строить ли; не строй молча.
+   100–500 → умеренная польза (≈6–15×); **> 500** → окупается (30×+). (Дублирует corpus-warning в Step 2, но проверяй и нижнюю границу, не только верхнюю.)
+2. **`--mode deep` платный.** Дефолтный AST-проход по коду — **0 токенов**. `--mode deep` гонит доки
+   через LLM = **токены**. Включай ТОЛЬКО если одновременно: в корпусе реально много документов/PDF
+   И пользователь явно просил глубокий смысловой разбор. Иначе — обычный режим, и скажи об этом.
+3. **Не ставь ломающий хук вслепую.** `graphify claude install` вшивает PreToolUse-хук, который на
+   части сборок Claude Code слетает и **блокирует чтение файлов**. НЕ ставить по своей инициативе;
+   для авто-обновления рекомендуй безопасный **post-commit** (`graphify hook install`). Откат, если
+   хук уже сломал чтение: удалить блок `hooks` с `graphify` из `settings.json` → перезапустить Claude Code.
+
+> Имя пакета на PyPI — **`graphifyy`** (две «y»), команда — `graphify` (одна). `pip install graphify`
+> ставит не то; Step 1 уже использует правильное `graphifyy`.
+
 ## What graphify is for
 
 Drop any folder of code, docs, papers, images, or video into graphify and get a queryable knowledge graph. Persistent across sessions, honest audit trail (EXTRACTED/INFERRED/AMBIGUOUS), community detection surfaces cross-document connections you wouldn't think to ask about.
@@ -49,7 +67,9 @@ Drop any folder of code, docs, papers, images, or video into graphify and get a 
 
 If the user invoked `/graphify --help` or `/graphify -h` (with no other arguments), print the contents of the `## Usage` section above verbatim and stop. Do not run any commands, do not detect files, do not default the path to `.`. Just print the Usage block and return.
 
-**Fast path — existing graph:** Before doing anything else, check whether `graphify-out/graph.json` exists. The expected location is `graphify-out/graph.json` relative to the **current working directory** (i.e. the project root where you are running commands). If it exists AND the user's request is a natural-language question about the codebase (e.g. "How does X work?", "What calls Y?", "Trace the data flow through Z") and NOT an explicit rebuild command (`--update`, `--cluster-only`, or a bare path/URL that implies fresh extraction): **skip Steps 1–5 entirely and jump straight to `## For /graphify query`.** Run `graphify query "<question>"` immediately. Do not run detect. Do not check corpus size. Do not ask the user to narrow. The graph is already built — use it.
+**Fast path — existing graph:** Before doing anything else, check whether `graphify-out/graph.json` exists. The expected location is `graphify-out/graph.json` relative to the **current working directory** (i.e. the project root where you are running commands). If it exists AND the user's request is a natural-language question about the codebase (e.g. "How does X work?", "What calls Y?", "Trace the data flow through Z") and NOT an explicit rebuild command (`--update`, `--cluster-only`, or a bare path/URL that implies fresh extraction): **skip Steps 1–5 entirely and jump straight to `## For /graphify query`.** Do not run detect. Do not check corpus size. Do not ask the user to narrow. The graph is already built — use it.
+
+> **Even on the fast path, do NOT skip vocab-expansion.** `## For /graphify query` begins with a REQUIRED Step 0 (constrained vocab-expansion, see `references/query.md`). graphify's matcher has no stemming/synonyms/cross-language — a Russian question against English or normalized labels (our claude-base case) returns **0 hits** without expansion. Expand first, then query. "Run immediately" means "don't rebuild", not "skip expansion".
 
 If no path was given, use `.` (current directory). Do not ask the user for a path.
 
@@ -104,6 +124,14 @@ If the import succeeds, print nothing and move straight to Step 2.
 **In every subsequent bash block, replace `python3` with `$(cat graphify-out/.graphify_python)` to use the correct interpreter.**
 
 ### Step 2 - Detect files
+
+> **Scope-фильтр (`.graphifyignore`).** `detect()` автоматически читает `.graphifyignore`
+> (gitignore-синтаксис) в корне сканирования — наряду с `.gitignore`. Для графа claude-base такой файл
+> уже лежит в `~/.claude/.graphifyignore` и исключает session-reports/harvested/evals/служебные каталоги:
+> без него граф засорялся на ~55% (мусорные узлы топят ядро, god-nodes садятся на отчёты вместо
+> agents/skills/CLAUDE.md). Строя граф ЛЮБОГО проекта с «версионируемым, но не-структурным» контентом
+> (логи, бенчи, выгрузки) — положи `.graphifyignore` рядом ДО построения: дешевле, чем чистить граф
+> потом. Разовый вариант — CLI-флаг `--exclude <pattern>` (repeatable, anchored at scan root).
 
 ```bash
 $(cat graphify-out/.graphify_python) -c "
@@ -585,13 +613,15 @@ Both are non-default subcommands. `--update` re-extracts only new or changed fil
 
 ## For /graphify query
 
-When `graphify-out/graph.json` already exists and the user asks a question about the corpus, run the query directly:
+When `graphify-out/graph.json` already exists and the user asks a question about the corpus, **do NOT run `graphify query` on the raw question.** Follow `references/query.md` in order:
 
-```bash
-graphify query "<question>"
-```
+1. **Step 0 — constrained vocab-expansion (REQUIRED).** Extract the graph's own token vocabulary, pick up to 12 matching tokens from it (never invent tokens), and build the expanded query string. Without this, a wording/cross-language mismatch (Russian question ↔ English/normalized labels) collapses the result to 0 hits.
+2. **Step 1 — traversal** with the *expanded* string: `graphify query "<expanded tokens>"` (add `--dfs` / `--budget` as needed).
+3. **save-result** to close the feedback loop.
 
-Answer using only what the graph output contains, and quote `source_location` when citing a specific fact. Before traversal, expand the question against the graph's own vocabulary so a wording mismatch does not collapse the answer to noise. For that vocab-expansion step, the `--dfs` / `--budget` modes, `save-result` feedback, and the `/graphify path` and `/graphify explain` flows, see `references/query.md`.
+Answer using only what the graph output contains, and quote `source_location` when citing a specific fact (cite from the source file, not the node label — labels are truncated/normalized). For the full vocab-expansion step, `--dfs`/`--budget`, `save-result`, and the `/graphify path` and `/graphify explain` flows, see `references/query.md`.
+
+> **Windows/UTF-8.** Any ad-hoc python that reads `graph.json` or writes sidecars (`.vocab.txt` etc.) MUST pass `encoding='utf-8'` to `read_text`/`write_text`/`open` — default cp1251 mangles or crashes on Cyrillic labels. For console output prefer writing to a UTF-8 file and reading it back, or set `PYTHONIOENCODING=utf-8`.
 
 ---
 
