@@ -1,0 +1,60 @@
+# =====================================================================
+# .graphifyignore — scope графа знаний claude-base
+# =====================================================================
+# Читается graphify detect() (наряду с .gitignore). Назначение ОТЛИЧАЕТСЯ
+# от .gitignore: git ВЕРСИОНИРУЕТ эти каталоги (отчёты/находки пушатся),
+# но в граф-НАВИГАТОР по устройству базы они не нужны — это история и
+# сырьё, а не структура. Без этого файла граф засорялся на ~55-75%
+# (session-reports 466 узлов / harvested 113 / evals 61 из 1166), god-nodes
+# садились на мусор, а ядро (agents/skills/memory/CLAUDE.md) тонуло.
+#
+# ПРАВИЛО: граф базы = ТОЛЬКО устройство (как у нас принято X / где описано Y).
+# Оставляем: CLAUDE.md, agents/, skills/, memory/, blocks/, chains/,
+#            scripts/, library/(индекс), docs/, commands/, mcp-manifest.json,
+#            settings.shared.json, anti-patterns.md, README/CHANGELOG.
+# =====================================================================
+
+# --- История и сырьё (версионируется в git, но не структура) ---
+session-reports/
+harvested/
+evals/
+feedback-inbox/
+feedback-staging/
+feedback-pending/
+
+# --- Служебные / runtime каталоги ---
+backups/
+cache/
+telemetry/
+downloads/
+sessions/
+tasks/
+work/
+shell-snapshots/
+debug/
+ide/
+bin/
+_sandbox/
+channels/
+
+# --- Внешний код, не наша структура ---
+plugins/
+mcp-servers/
+projects/
+
+# --- Служебное состояние / конфиги ---
+.local-state/
+.obsidian/
+
+# --- Собственный вывод графа (не зацикливаться) ---
+graphify-out/
+
+# --- Бинарные шаблоны (нет смысла в граф знаний) ---
+formatting-templates/*.docx
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.zip
+*.docx
+*.xlsx
