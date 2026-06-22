@@ -29,6 +29,8 @@
 # settings.shared.json в репо вместо него:
 !settings.shared.json
 !anti-patterns.md
+# Scope-фильтр графа знаний (читается graphify detect, раздаётся команде)
+!.graphifyignore
 
 # Auto-sync скрипты (запускаются Claude Code как hooks)
 !scripts/
