@@ -46,3 +46,31 @@
 
 - Коммит правок + graphify-out/ (за пользователем).
 - Опционально: ручной labeling 92 communities (пропущен — query/explain работают без него); внести firecrawl в mcp-manifest (рассинхрон эталона, из карты MCP).
+
+---
+
+# Продолжение сессии (та же сессия, расширилась за пределы graphify)
+
+## 2. Updater fix — feedback-config валидация (коммит в 7c8a978)
+`Update-ClaudeBase.ps1` Step 5 валидировал `.feedback-config.json` по plaintext `token`, который с 2026-05-27 обнуляется (канон — `token_encrypted` DPAPI). Consumer после миграции получал ложный FAIL + exit 1. Фикс: `github_repo -and (token_encrypted -or token)` + WARN на legacy; интерактивная ветка теперь шифрует через DPAPI (как Set-FeedbackToken.ps1). Сверено с feedback-collector.ps1 / pull-feedback.ps1.
+
+## 3. Методичка для сотрудников по Claude Code
+- **Источник:** `docs/methodichka.md` (коммит fb2d45c) — версионируется, раздаётся командой через /sync-base. Универсальная (база как есть, ОВ/ВК/ЭО/СС).
+- **К-7-версия (фирменная, для рассылки)** на Рабочем столе: `Методичка-К7-Claude.pdf` + `Методичка-К7-Claude.docx`. Собрана на шапке К-7 из шаблона `~/Desktop/Инструкции_по_оборудованию_AV_комплекс_1.docx` (python-docx, копия шаблона → чистка тела → контент; docx2pdf через Word COM). Правки по ходу: убран блок «Утверждаю»/ген.директор; **убраны ОВ/ВК** (профиль К-7 = ЭО/СС: электрика, слаботочка/АВ/освещение — допущение, подтвердить у пользователя); добавлен раздел 13 «Наглядная карта базы (граф знаний)».
+- **Граф базы** скопирован рядом: `~/Desktop/Граф-базы-К7.html` (интерактивный, 684 КБ).
+- Backlog: добавить раздел 13 (про граф) и в базовый `docs/methodichka.md` (сейчас только в К-7-версии); решить, версионировать ли К-7 DOCX/PDF.
+
+## 4. Playwright «about:blank» — закреплена версия (коммит fdf5c8c)
+Симптом (несколько сотрудников): Chrome открывается пустой, навигация не идёт; раньше работало. Корень: `npx -y @playwright/mcp@latest` авто-обновлялся, на смене версии докачка браузера через корп-прокси зависала. Воспроизведено обратное: на 0.0.76 navigate работает. Фикс: пин `@playwright/mcp@0.0.76` (регистрация + mcp-manifest.json), `/sync-base` шаг «version-drift» перерегистрирует у консьюмеров. Память: [[playwright-mcp-pin-version]].
+
+## 5. Web-access правило — ветка окружения под корп-прокси (коммит 38e9d4d)
+`memory/feedback_web_direct_access.md` предполагал, что playwright всегда доходит до сайта (верно под VPN/прямой выход, ложно под корп-прокси в терминале VS Code → about:blank). Добавлен **ШАГ −1 «Окружение»**: диагностика `env|grep proxy`; под прокси читать через exa/firecrawl (свой канал) + файлы curl --noproxy; playwright только off-proxy/VPN или с `--proxy-server` (per-machine). `@playwright/mcp` умеет `--proxy-server`/`--proxy-bypass`.
+- Открытый вариант: прописать playwright `--proxy-server=<корп-прокси>` per-machine в CLAUDE.user.md, если нужно чтобы браузер реально работал на work-ПК (нужен адрес прокси).
+
+## Память, добавленная за сессию (projects/.../memory/)
+[[workflow-schema-strict-hang]], [[graphify-base-scope-rebuild]], [[next-base-session-review-feedback]], [[playwright-mcp-pin-version]].
+
+## Очередь на следующие сессии
+1. Разбор feedback-отчётов сотрудников (pull-feedback → feedback-inbox, ~10 веток) на дыры/изъяны → миграция в shared.
+2. Граф БЛОКА ПТО (план в blocks/pto/, рецепт пересборки отлажен).
+3. Мелочи: раздел 13 в базовый methodichka.md; firecrawl в mcp-manifest; (опц.) playwright --proxy-server per-machine.
