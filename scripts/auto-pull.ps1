@@ -70,6 +70,22 @@ try {
 
     Write-SyncLog "start"
 
+    # === Wedge-детект: sync застрял конфликтом слияния? (feedback infra 2026-06-08) ===
+    # Если предыдущий autostash-pop оставил конфликт-маркеры, КАЖДЫЙ pull падает на
+    # 'unmerged files' и база молча не обновляется (реальный кейс: consumer отстал на
+    # 64 коммита незаметно — лог никто не читает). Детектим ДО pull, ГРОМКО предупреждаем
+    # в контекст сессии, pull НЕ делаем (не усугубляем). Авто-reset не делаем намеренно —
+    # восстановление за пользователем (managed-сброс к origin рискован без подтверждения).
+    $wedge = & git status --porcelain 2>$null | Where-Object { $_ -match '^(UU|AA|DD|AU|UA|DU|UD)' }
+    if ($wedge) {
+        $files = (($wedge | ForEach-Object { ($_ -replace '^..\s+','') }) -join '; ')
+        Write-SyncLog "WEDGE detected (unmerged files) — pull пропущен. Files: $files"
+        $warn = "⚠ claude-base sync ЗАКЛИНЕН конфликтом слияния (unmerged files) — авто-обновление НЕ работает, база может молча отставать. Файлы: $files. Восстановление: бэкап → 'git checkout HEAD -- <файлы>' + 'git stash drop'; для consumer-ПК managed-файлы можно сбросить 'git reset --hard origin/main'. Затем повторить сессию."
+        @{ hookSpecificOutput = @{ hookEventName = 'SessionStart'; additionalContext = $warn } } |
+            ConvertTo-Json -Compress -Depth 4 | Write-Output
+        exit 0   # finally сделает Pop-Location + DONE
+    }
+
     # === Zero-touch GitHub bypass-proxy (idempotent) ===
     # Корп-прокси блокирует CONNECT к github.com. Для ручных git/gh операций
     # пользователю нужен persistent global config bypass. Применяем сами при
