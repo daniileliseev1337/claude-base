@@ -51,17 +51,19 @@ python ~/.claude/skills/ru-gov-access/tools/ru_fetch.py <URL> [-o out.html|out.p
 «сайт/документ не открывается с иностранного IP».
 
 ⚠️ **НЕ решает (data-слой SPA-реестров):** JSON-API поиска (FSA `POST /api/v1/rss/common/certificates`,
-ЕГРЮЛ-выписка, АРШИН-поиск) даже с RU-IP + cookie сессии + браузерными заголовками возвращает `403`
-(Content-Length 0, заголовки Spring Security) — проверено 2026-06-22 на живом RU-IP (AS9123). Это
-**application-level 403**: SPA делает JS-handshake, curl-реплей его не воспроизводит. Нужен **реальный
-браузер через RU-exit**:
-- **на ПК в РФ** (офисный IP) — API обычно открывается напрямую (браузер / `--noproxy`), проверить на месте;
-- **с иностранного egress** — playwright через RU-прокси (живой адрес взять из вывода `ru_fetch.py` или `$RU_PROXY`):
+ЕГРЮЛ-выписка, АРШИН-поиск) возвращает `403` (Content-Length 0, заголовки Spring Security) **на ЛЮБОМ IP** —
+проверено 2026-06-22 И с иностранного egress, И с реального офисного RU-IP (AS57712, Мытищи): страница `200`,
+а API через curl = `403`. Значит дело **НЕ в гео и не в IP, а в браузерной JS-сессии**: SPA делает handshake
+на JavaScript, curl-реплей (даже с cookie+заголовками) его не воспроизводит. Нужен **реальный браузер**:
+- **на ПК в РФ** — локальный браузер уже с RU-IP: открыть реестр в Chrome/Edge (для человека) или гонять
+  через **playwright** (для Claude) — прокси/сервис НЕ нужны, IP уже российский;
+- **с иностранного egress** (VPN/Дубай) — playwright через RU-прокси (живой RU-SOCKS5 из вывода `ru_fetch.py`/`$RU_PROXY`):
   ```
   claude mcp add playwright-ru -- npx @playwright/mcp@0.0.76 --proxy-server=socks5://<RU_IP:PORT>
   ```
   рендерит SPA с RU-IP → данные грузятся. Либо антибот-API с browser+`country=RU`: **ScrapingAnt**
-  (10k/мес free, без карты, hosted MCP) / Bright Data.
+  (10k/мес free) / Bright Data.
+- ⛔ **curl-реплей API не работает нигде** (403 даже с RU-IP) — не тратить на это время, сразу браузер.
 
 ## Надёжность и безопасность
 - Бесплатные прокси **эфемерны** (живут часы/дни) — скрипт берёт свежий список КАЖДЫЙ запуск и

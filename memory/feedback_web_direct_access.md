@@ -39,14 +39,15 @@ playwright использует ЛОКАЛЬНЫЙ браузер (Chromium/Chro
 - нужен именно браузер на росс. сайт: (b) → перерегистрировать playwright с `--proxy-server=<HTTP_PROXY>`;
   (c) → нужен RU-exit, иностранный VPN не поможет. Per-machine, в `CLAUDE.user.md`.
 
-**Росс. ГОССАЙТЫ (pub.fsa/ЕГРЮЛ/АРШИН/ФГИС) — блок ЧИСТО ГЕО (проверено 2026-06-22):** с RU-IP `pub.fsa`/`fgis`
-отдают `200`, антибота на страницах нет; с иностранного egress (c) и через облако (exa/firecrawl/jina) — нет
-(403/422/tunnel-fail). Решение — скилл **`ru-gov-access`** (`tools/ru_fetch.py`): сам определяет egress, на
-иностранном гонит запрос через RU-SOCKS5 (свой `$RU_PROXY` либо авто-источник бесплатных proxifly + health-check).
-✅ берёт страницы/прямые PDF на любом egress, free, без ключей. ⚠️ JSON-API реестров (FSA cert-search и т.п.)
-за WAF дают 403 с датацентрового RU-IP — для ДАННЫХ нужен residential-RU/браузер (residential `$RU_PROXY`,
-playwright `--proxy-server=socks5h://<RU>`, ScrapingAnt browser `country=RU` 10k/мес free). На ПК в РФ
-(офисный IP) API обычно открывается напрямую `--noproxy`. Полный каталог: `session-reports/2026-06-22_web-access-survey/`.
+**Росс. ГОССАЙТЫ (pub.fsa/ЕГРЮЛ/АРШИН/ФГИС): СТРАНИЦЫ — блок ЧИСТО ГЕО** (проверено 2026-06-22: с RU-IP
+`pub.fsa`/`fgis` = `200`, антибота нет; с иностранного egress и облака — нет: 403/422/tunnel-fail). Страницы/PDF
+решает скилл **`ru-gov-access`** (`tools/ru_fetch.py`): определяет egress, на иностранном гонит через RU-SOCKS5
+(`$RU_PROXY` либо авто-источник бесплатных proxifly+hookzof+health-check). ✅ free, без ключей.
+**ДАННЫЕ из SPA-API реестров — нужен БРАУЗЕР (JS-сессия), НЕ curl:** API даёт `403` (Spring Security,
+Content-Length 0) на ЛЮБОМ IP — проверено И с иностранного egress, И с реального офисного RU-IP (AS57712,
+Мытищи). Дело НЕ в гео/датацентре, а в JS-handshake SPA. → **ПК в РФ:** локальный браузер/playwright (IP уже RU,
+прокси не нужен); **иностранный egress:** playwright `--proxy-server=socks5://<RU>` или ScrapingAnt browser
+`country=RU`. curl-реплей API не работает нигде. Полный каталог: `session-reports/2026-06-22_web-access-survey/`.
 
 Итог: ШАГ 0 + Методы рассчитаны на состояния (a)/(b). В (c) (системный VPN) — росс. сайты только облаком,
 госсайты — только RU-exit.
