@@ -27,6 +27,18 @@
   },
 
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\grilling-detector.ps1\"",
+            "shell": "powershell",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "startup",
