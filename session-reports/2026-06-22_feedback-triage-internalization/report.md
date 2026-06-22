@@ -97,3 +97,16 @@ memory/{reference_workflow_tool, named_chains, reference_pyrevit_k7, feedback_ma
 
 Личные артефакты (Desktop, вне shared): claude-multibackend-osint-handoff, osint-arsenal-catalog,
 osint-bootstrap-{windows.ps1, kali.sh, README.md}.
+
+4. **РАБОЧИЕ инструменты в базу (не вброс — по требованию пользователя «доделать, не грабли»).**
+   Создано 2 скилла с протестированными python-tools (метод: код → тест на живом примере →
+   оформить → привязать → проверить обнаружение → end-to-end):
+   - `skills/supplier-due-diligence` + `tools/verify_pdf_metadata.py` (pikepdf, offline) —
+     проверка реальности контрагента (ЕГРЮЛ/санкции/домен через web) + подлинности его PDF
+     (метаданные → флаги подделки). Тест: чистый PDF→0 флагов, Photoshop+правка→поймал.
+   - `skills/doc-finder` + `tools/gen_dorks.py` — генерация поисковых запросов + добыча
+     официального PDF документа качества. Тест: 6 корректных dork-запросов.
+   Привязано: `снабженец` (Required reading + триггеры + Related), `auditor` (рабочий скилл в
+   due-diligence), `id-tom-priemka` (verify_pdf_metadata вместо exiftool — pikepdf точно есть).
+   Обнаружение Claude подтверждено (оба скилла в available skills). Закрывает
+   feedback_cert_sourcing_fabrication реальным инструментом, а не упоминанием.
