@@ -290,6 +290,22 @@ for r, row in enumerate(ws.iter_rows(values_only=True), 1):
     xlsx с PQ/динамическими массивами/LAMBDA в них ломаются/не считаются. Если файл
     заказчика на этих движках — проверить, нет ли PQ/LAMBDA; критичную логику дублировать
     обычными формулами. M365 — тянет; OnlyOffice — нет. (Источник: collaborative-excel-tools, <шифр>.)
+17. **`openpyxl`/excel MCP при `save()` молча УДАЛЯЕТ drawing-слой (картинки/лого).**
+    Любая запись в xlsx с встроенными изображениями через `Workbook.save()` или
+    `mcp__excel__write_data_to_excel` → картинки исчезают (реальный кейс: пропало 30+ лого
+    из каталога вендоров). **Pre-flight:** до записи проверить ZIP-разведкой наличие
+    `xl/media/*` и `xl/drawings/*.xml`:
+    ```powershell
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($path)
+    $media = @($zip.Entries | Where-Object { $_.FullName -like "xl/media/*" }).Count
+    $zip.Dispose(); Write-Host "media images: $media"
+    ```
+    Если drawings есть — НЕ писать через MCP/`save()`. Варианты: (а) запись через **ZIP-хирургию**
+    (правка `xl/media/`, `xl/drawings/drawingN.xml`, `_rels`, `[Content_Types].xml` напрямую в
+    архиве в режиме Update); (б) правки делает пользователь в Excel. Post-verify: media-count
+    ПОСЛЕ == media-count ДО (+ ровно новые). Поле `descr` в drawing.xml Excel не обновляет —
+    сверять по SHA-256 содержимого, не по метаданным. (Источник: feedback vendor-logo-inserter.)
 15. **`delete_rows()` на листе с ВЕРТИКАЛЬНЫМИ merge молча теряет данные.** openpyxl при
     `ws.delete_rows()` пытается сдвинуть merge-диапазоны и при высокой плотности
     вертикальных merge (поз. занимает 2+ строки, merge колонок A/B/J/K) **клобберит
