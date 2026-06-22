@@ -33,9 +33,9 @@
 ## SOLVE (выполнено в этой же сессии)
 - **Диагноз:** блок росс. госсайтов — ЧИСТО ГЕО (живой RU-SOCKS5: pub.fsa/fgis → 200, антибота нет). Дорогие браузерные антибот-сервисы для СТРАНИЦ не нужны.
 - **Создан скилл `ru-gov-access`** (`skills/ru-gov-access/SKILL.md` + `tools/ru_fetch.py`): определяет egress (ipinfo), на иностранном — RU-SOCKS5 (свой `$RU_PROXY` либо авто-источник бесплатных proxifly + health-check). End-to-end проверен: с egress=AE → pub.fsa HTTP 200, реальный HTML. Free, без ключей/MCP, раздаётся sync-base.
-- **Граница (честно):** JSON-API реестров (FSA cert-search) за WAF → 403 с датацентрового RU-IP; для ДАННЫХ нужен residential-RU/браузер (residential `$RU_PROXY` / playwright `--proxy-server` / ScrapingAnt browser country=RU free — требует ключа, не тестировано). На ПК в РФ (офисный IP) API вероятно открывается напрямую.
+- **Граница (УТОЧНЕНО на реальном рабочем ПК):** JSON-API реестров (FSA cert-search) → `403` НА ЛЮБОМ IP — проверено и с иностранного egress, и с офисного RU-IP (AS57712 Мытищи: страница 200, API curl=403). Значит блок API не гео/датацентр, а **браузерная JS-сессия** (Spring Security). curl-реплей не работает нигде. ДАННЫЕ = только браузер: RU-ПК — playwright локально (IP уже RU, доп. инструменты не нужны); иностр. egress — playwright `--proxy-server=socks5 RU` / ScrapingAnt browser country=RU.
 
 ## Остаётся
-- (опц.) Протестировать data-слой реестров через ScrapingAnt free-ключ или residential `$RU_PROXY`.
-- Проверить на рабочем ПК в РФ, что API реестров открывается напрямую `--noproxy`.
-- Закоммитить+запушить правки базы (CLAUDE.md, feedback_web_direct_access.md, skills/ru-gov-access, session-report) для раздачи консьюмерам.
+- Проверить, что **playwright на рабочем ПК** реально рендерит SPA реестра (есть нюанс about:blank под корп-прокси, state b) — если да, data-слой для команды закрыт без доп. инструментов.
+- (для company-data) рассмотреть DaData free API по ИНН вместо скрейпа ЕГРЮЛ (надёжнее).
+- ✅ Правки базы закоммичены и запушены (40bbbee, a14c7a9, 5bcc40e).
