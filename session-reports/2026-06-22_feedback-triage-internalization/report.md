@@ -72,3 +72,28 @@ agents/auditor.md, agents/сметчик.md, CLAUDE.md, settings.shared.json,
 scripts/{grilling-detector.ps1, auto-pull.ps1}, chains/upd-to-spec-reconcile.md,
 skills/{domain-grilling/*, excel-helper, upd-parser/*, pd-tep-extractor},
 memory/{reference_workflow_tool, named_chains, reference_pyrevit_k7, feedback_manual_procedure_verbatim}.
+
+## Вторая половина сессии — идеи пользователя по развитию базы
+
+1. **Правило выбора модели субагентов (CLAUDE.md «Токен-дисциплина»).** По боли пользователя
+   (дешёвая модель на содержательной задаче галлюцинирует → каскад исправлений дороже экономии):
+   модель субагента/Workflow/ревьюера теперь ВЫБИРАЕТ ПОЛЬЗОВАТЕЛЬ — вопрос через AskUserQuestion
+   перед каждым спавном, рекомендация по умолчанию «планка вверх» (sonnet для содержательного и
+   всех ревьюеров, haiku только для тупой экстракции). Группировка однотипных + fallback на sonnet
+   в автономном режиме. Обновлена заметка feedback_subagent_model_economy.
+
+2. **Мультибэкенд Claude+GLM+codex (личное, dev дома).** Изучены 4 источника (z.ai docs, 2 youtube,
+   github). Факт: `ANTHROPIC_BASE_URL` глобальный — голым env «sonnet=GLM, opus=Opus» не сделать
+   (issue #25146); нужен локальный роутер-прокси (claude-code-multirouter — per-agent тег в
+   agents/*.md). Подготовлен HANDOFF на Desktop (НЕ в shared).
+
+3. **OSINT-arsenal (личное + легальный сабсет в базу).** Workflow-каталог 250+ инструментов по 15
+   кластерам (Desktop, не shared). В shared базу внедрён ЛЕГАЛЬНЫЙ сабсет: agents/auditor.md
+   (due-diligence контрагента: ЕГРЮЛ/OpenSanctions/crt.sh/SecurityTrails/Hudson Rock + верификация
+   подлинности документов ExifTool/FotoForensics/TinEye/AI-or-Not), memory/feedback_web_direct_access
+   (dorking/Intelligence X/crt.sh/ExifTool), skills/id-tom-priemka (подлинность скана). Закрывает
+   feedback_cert_sourcing_fabrication. Полный arsenal (вкл. offensive) — bootstrap-скрипты на Desktop
+   для самостоятельного запуска (WSL на этом ноуте нет; установка системная, не из песочницы).
+
+Личные артефакты (Desktop, вне shared): claude-multibackend-osint-handoff, osint-arsenal-catalog,
+osint-bootstrap-{windows.ps1, kali.sh, README.md}.
