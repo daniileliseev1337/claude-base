@@ -35,7 +35,11 @@
 - **Создан скилл `ru-gov-access`** (`skills/ru-gov-access/SKILL.md` + `tools/ru_fetch.py`): определяет egress (ipinfo), на иностранном — RU-SOCKS5 (свой `$RU_PROXY` либо авто-источник бесплатных proxifly + health-check). End-to-end проверен: с egress=AE → pub.fsa HTTP 200, реальный HTML. Free, без ключей/MCP, раздаётся sync-base.
 - **Граница (УТОЧНЕНО на реальном рабочем ПК):** JSON-API реестров (FSA cert-search) → `403` НА ЛЮБОМ IP — проверено и с иностранного egress, и с офисного RU-IP (AS57712 Мытищи: страница 200, API curl=403). Значит блок API не гео/датацентр, а **браузерная JS-сессия** (Spring Security). curl-реплей не работает нигде. ДАННЫЕ = только браузер: RU-ПК — playwright локально (IP уже RU, доп. инструменты не нужны); иностр. egress — playwright `--proxy-server=socks5 RU` / ScrapingAnt browser country=RU.
 
-## Остаётся
-- Проверить, что **playwright на рабочем ПК** реально рендерит SPA реестра (есть нюанс about:blank под корп-прокси, state b) — если да, data-слой для команды закрыт без доп. инструментов.
-- (для company-data) рассмотреть DaData free API по ИНН вместо скрейпа ЕГРЮЛ (надёжнее).
-- ✅ Правки базы закоммичены и запушены (40bbbee, a14c7a9, 5bcc40e).
+## АКТУАЛИЗАЦИЯ БАЗЫ (выполнено)
+Веб-модель пропагирована во ВСЕ веб-использующие компоненты (субагенты не читают CLAUDE.md): 15 файлов через Workflow editor+verify (opus, 15/15 ok) — 12 агентов (+_TEMPLATE) + doc-finder + supplier-due-diligence + harvest. Каждый несёт: лестницу, гео-зависимость (ipinfo), ru-gov-access, data-API=браузер. Исправлены устаревшие тезисы (напр. doc-finder «госреестры за прокси недоступны» → гео-aware + ru-gov-access). Запушено (265c1e8).
+
+## Остаётся (следующая сессия)
+- **Пересобрать граф базы** (`/graphify ~/.claude --update` ЧЕРЕЗ СКИЛЛ) — после ~20 правок устарел; решено делать отдельной сессией (токены). Закоммитить `graphify-out/`.
+- **playwright-тест реестра на рабочем ПК** — рендерит SPA или about:blank (state b); закрывает data-слой для команды.
+- (company-data) рассмотреть DaData free API по ИНН вместо скрейпа ЕГРЮЛ.
+- ✅ Все правки базы запушены: 40bbbee, a14c7a9, 5bcc40e, 96a9d09, 265c1e8.
