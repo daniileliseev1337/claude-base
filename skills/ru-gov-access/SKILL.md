@@ -29,8 +29,12 @@ description: >
 
 ## Как пользоваться (детерминированный скрипт, без ключей)
 ```
-python ~/.claude/skills/ru-gov-access/tools/ru_fetch.py <URL> [-o out.html|out.pdf] [--timeout 20]
+python ~/.claude/skills/ru-gov-access/tools/ru_fetch.py <URL> [-o out.html|out.pdf]
+# опции: -X POST  -H 'Header: V' (повторяемо)  -d '<тело>'  --timeout 20  --tries 16  --no-cache
 ```
+Источники прокси: proxifly (RU pre-filtered) + hookzof (health-check через ipinfo). Рабочий прокси
+кешируется на сессию (temp/ru_fetch_proxy.txt) → повторные запросы быстрее; `--no-cache` сбрасывает.
+
 Логика внутри:
 1. Определяет РЕАЛЬНОЕ гео egress (`curl --noproxy ipinfo.io` — env-проверки мало, системный VPN в переменных не виден).
 2. egress = RU → качает напрямую (`--noproxy`).
@@ -46,14 +50,18 @@ python ~/.claude/skills/ru-gov-access/tools/ru_fetch.py <URL> [-o out.html|out.p
 (паспорта/сертификаты по прямому URL), GET-страницы реестров. Это покрывает основную боль
 «сайт/документ не открывается с иностранного IP».
 
-⚠️ **НЕ всегда решает (data-слой SPA-реестров):** JSON-API поиска (напр. FSA
-`POST /api/v1/rss/common/certificates`, ЕГРЮЛ-выписка, АРШИН-поиск) за WAF дают `403` даже
-с RU-IP + браузерными заголовками, если IP **датацентровый** (бесплатные прокси — датацентр).
-Для данных из API нужен **residential RU-IP** или **реальная браузерная сессия**:
-- **на ПК в РФ** (офисный/residential IP) API, как правило, открывается напрямую `--noproxy` — проверить на рабочей машине;
-- **с иностранного egress** — варианты (по возрастанию усилий): задать residential `$RU_PROXY`;
-  перерегистрировать playwright с `--proxy-server=socks5h://<RU-residential>` (рендерит SPA с RU-IP);
-  антибот-API с browser+`country=RU` — **ScrapingAnt** (10k/мес free, без карты, hosted MCP) или Bright Data.
+⚠️ **НЕ решает (data-слой SPA-реестров):** JSON-API поиска (FSA `POST /api/v1/rss/common/certificates`,
+ЕГРЮЛ-выписка, АРШИН-поиск) даже с RU-IP + cookie сессии + браузерными заголовками возвращает `403`
+(Content-Length 0, заголовки Spring Security) — проверено 2026-06-22 на живом RU-IP (AS9123). Это
+**application-level 403**: SPA делает JS-handshake, curl-реплей его не воспроизводит. Нужен **реальный
+браузер через RU-exit**:
+- **на ПК в РФ** (офисный IP) — API обычно открывается напрямую (браузер / `--noproxy`), проверить на месте;
+- **с иностранного egress** — playwright через RU-прокси (живой адрес взять из вывода `ru_fetch.py` или `$RU_PROXY`):
+  ```
+  claude mcp add playwright-ru -- npx @playwright/mcp@0.0.76 --proxy-server=socks5://<RU_IP:PORT>
+  ```
+  рендерит SPA с RU-IP → данные грузятся. Либо антибот-API с browser+`country=RU`: **ScrapingAnt**
+  (10k/мес free, без карты, hosted MCP) / Bright Data.
 
 ## Надёжность и безопасность
 - Бесплатные прокси **эфемерны** (живут часы/дни) — скрипт берёт свежий список КАЖДЫЙ запуск и
