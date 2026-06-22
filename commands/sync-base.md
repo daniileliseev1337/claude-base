@@ -65,6 +65,13 @@ claude mcp list
   - MCP с `method: uvx|npx|github-zip-uv` — через `$PS -File "$HOME/.claude/scripts/setup-extras.ps1"`
     (тот же fallback `pwsh`/`powershell`, что в Шаге 2; идемпотентен, ставит недостающее по манифесту);
   - `method: claude-mcp-add` (exa) — выполнить `register_command` из манифеста напрямую.
+- **Version-drift (уже установленные MCP)** → сверить зарегистрированную команду
+  (`claude mcp get <name>`) с `install_args`/`register_args` манифеста. Если версия
+  расходится (напр. `@latest` вместо закреплённой) — перерегистрировать:
+  `claude mcp remove <name> -s user` + `claude mcp add` по манифесту, напомнить про
+  restart. Сейчас актуально для **playwright** (закреплён `@playwright/mcp@0.0.76`):
+  `@latest` авто-обновлялся и на смене версии докачка браузера через корп-прокси
+  зависала → Chrome на about:blank. setup-extras сверяет по ИМЕНИ и сам этого не чинит.
 - **`tier: optional`, не установлено** → ОДИН вопрос списком (AskUserQuestion,
   multiSelect): название + назначение + размер. Включая отклонённые ранее
   (пометить «отклонял <дата>»). Выбранное — ставить; невыбранное — записать в

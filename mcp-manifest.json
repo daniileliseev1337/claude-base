@@ -339,7 +339,7 @@
       "purpose": "Браузерная автоматизация (Microsoft Playwright MCP): навигация, клики, формы, скриншоты рендеренных JS-страниц. Локально, без API-ключа. Дополняет веб-доступ (см. r.jina.ai fallback).",
       "method": "npx",
       "install_args": [
-        "@playwright/mcp@latest"
+        "@playwright/mcp@0.0.76"
       ],
       "register_args": [
         "-s",
@@ -347,11 +347,11 @@
         "--",
         "npx",
         "-y",
-        "@playwright/mcp@latest"
+        "@playwright/mcp@0.0.76"
       ],
       "size_mb": 50,
       "requires_internet": true,
-      "post_install_note": "Первый запуск npx скачает пакет (~50MB); браузеры Playwright качаются при первом использовании. Restart Claude Code для появления tools.",
+      "post_install_note": "Версия ЗАКРЕПЛЕНА (0.0.76, НЕ @latest). Причина: @latest авто-обновлялся, и на смене версии докачка браузера Playwright через корп-прокси зависала → Chrome открывался на about:blank и навигация не шла. Обновлять версию вручную на хабе. Первый запуск npx качает пакет (~50MB); браузер качается при первом использовании. Restart Claude Code для появления tools.",
       "tier": "core"
     },
     {
