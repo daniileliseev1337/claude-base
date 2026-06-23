@@ -1,40 +1,55 @@
-﻿# graph-staleness-check.ps1 — SessionStart hook (claude-base)
-# Предупреждает ОДНОЙ строкой, если граф знаний базы (graphify-out/graph.json)
-# построен на коммите, отставшем от HEAD по СТРУКТУРНЫМ путям (agents/skills/
-# memory/blocks/chains/CLAUDE.md/mcp-manifest). «Устаревший граф вреднее
-# отсутствующего — он уверенно врёт» (CLAUDE.md). Тихо, если граф свеж/отсутствует.
+# graph-staleness-check.ps1 — SessionStart hook (claude-base)
+# Держит ДЕТЕРМИНИРОВАННЫЙ навигационный скелет графа всегда свежим (0 токенов),
+# чтобы Claude мог доверять ему и ходить по базе через query, а не грепом.
 #
-# Запускается ПОСЛЕ auto-pull.ps1 (тот делает git pull → HEAD актуален).
-# Не падает ни при каких условиях — exit 0 везде (хук не должен ломать старт).
+# Архитектура (см. CLAUDE.md секция graphify + skills/graphify/references/skeleton.md):
+#   • skeleton.json — детерминированный костяк (agents/skills/memory/rules/...), строится
+#     БЕЗ LLM из структурных сигналов. Этот хук пересобирает его при старте сессии, если
+#     он отстал от HEAD → на каждом ПК навигатор всегда свежий и достоверный.
+#   • graph.json — семантическое ОБОГАЩЕНИЕ (LLM, хаб, изредка). Его устаревание — не повод
+#     «не доверять»: костяк свежий. Поэтому старые предупреждения «устаревший врёт» убраны.
+#
+# Запускается ПОСЛЕ auto-pull.ps1 (HEAD актуален). Тихо при успехе. Никогда не ломает
+# старт сессии — exit 0 везде.
 
 $ErrorActionPreference = 'SilentlyContinue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 
-$base  = Join-Path $HOME '.claude'
-$graph = Join-Path $base 'graphify-out\graph.json'
-if (-not (Test-Path $graph)) { exit 0 }
+$base    = Join-Path $HOME '.claude'
+$skel    = Join-Path $base 'graphify-out\skeleton.json'
+$builder = Join-Path $base 'skills\graphify\tools\skeleton_build.py'
+$pyfile  = Join-Path $base 'graphify-out\.graphify_python'
+if (-not (Test-Path $builder)) { exit 0 }   # скелет-инструмент ещё не раскатан — молчим
 
-# built_at_commit достаём regex'ом — не парсим 1.3 МБ JSON целиком
-$raw = Get-Content $graph -Raw -Encoding UTF8
-if ($raw -notmatch '"built_at_commit"\s*:\s*"([^"]+)"') { exit 0 }
-$built = $Matches[1]
-if ([string]::IsNullOrWhiteSpace($built)) { exit 0 }
-
+# HEAD (short)
 Push-Location $base
-$head    = (git rev-parse --short HEAD 2>$null)
-$changed = git diff --name-only "$built" HEAD -- agents skills memory blocks chains CLAUDE.md mcp-manifest.json 2>$null
-$code    = $LASTEXITCODE
+$head = (git rev-parse --short HEAD 2>$null)
 Pop-Location
 
-if ($code -ne 0)  { exit 0 }   # built-коммит не в истории (rebase/gc) — не шуметь
-if (-not $changed) { exit 0 }  # структурных изменений нет — граф актуален
-
-$n = ($changed | Measure-Object).Count
-$isHub = Test-Path (Join-Path $base '.developer-marker')
-$action = if ($isHub) {
-  "Пересобрать: /graphify ~/.claude --update (через скилл), затем закоммитить graphify-out/."
-} else {
-  "На свежих зонах не доверять графу — читать файл-источник; обновление прилетит от хаба."
+# Свеж ли скелет? (built_at_commit == HEAD)
+$fresh = $false
+if ((Test-Path $skel) -and $head) {
+  $raw = Get-Content $skel -Raw -Encoding UTF8
+  if ($raw -match '"built_at_commit"\s*:\s*"([^"]+)"') {
+    if ($Matches[1] -eq $head) { $fresh = $true }
+  }
 }
-Write-Output "[graph-stale] Граф базы устарел: built=$built, HEAD=$head, изменилось $n структурных файлов (agents/skills/memory/blocks/chains/CLAUDE.md/mcp-manifest). Навигатор может «уверенно врать». $action"
+if ($fresh) { exit 0 }   # уже свежий — тихо
+
+# Пересобрать костяк (детерминированно, 0 токенов, секунды)
+$py = 'python'
+if (Test-Path $pyfile) {
+  $p = (Get-Content $pyfile -Raw -Encoding UTF8).Trim()
+  if ($p) { $py = $p }
+}
+$env:PYTHONIOENCODING = 'utf-8'
+$env:PYTHONUTF8 = '1'
+Push-Location $base
+& $py $builder *> $null
+$ok = $?
+Pop-Location
+
+if ($ok) {
+  Write-Output "[graph] Навигатор базы (skeleton) пересобран и свеж — query: python skills/graphify/tools/graph_query.py ""<вопрос>"" (истина в source_file)."
+}
 exit 0

@@ -655,8 +655,23 @@ When the user asks to install the post-commit auto-rebuild hook or wire graphify
 
 ## Tools
 
-`tools/graph_update_win.py` — deterministic backbone for `graphify --update` on a Windows
-hub with a Cyrillic install path (claude-base / DANIIL-LAPTOP). The LLM extraction (Step 3B
+The base graph is **two layers**: a deterministic always-fresh skeleton (navigator) and an
+optional LLM semantic enrichment. See `references/skeleton.md` for the skeleton design.
+
+`tools/skeleton_build.py` — **deterministic navigation skeleton, 0 LLM tokens** (layer 1, the
+trusted core). Canonical nodes (agent/skill/memory/rule/mcp/chain/command/tool) + edges from
+[[wikilinks]], name mentions, frontmatter, CLAUDE.md sections. Rebuilt automatically by the
+SessionStart hook when stale → always fresh on every PC. Output `graphify-out/skeleton.json`
+(gitignored, local-derived). Run: `python skills/graphify/tools/skeleton_build.py`.
+
+`tools/graph_query.py` — **one-call navigation query** (no manual vocab ritual). Scores nodes
+by name/label/description; Russian queries match natively (descriptions carry the RU frontmatter).
+Returns entry entities + 1-hop connections + source_file. Run:
+`python skills/graphify/tools/graph_query.py "<вопрос>" [--top N] [--kind agent,skill] [--json]`.
+Defaults to `skeleton.json`, falls back to `graph.json`.
+
+`tools/graph_update_win.py` — deterministic backbone for `graphify --update` (layer 2, semantic
+enrichment) on a Windows hub with a Cyrillic install path (claude-base / DANIIL-LAPTOP). The LLM extraction (Step 3B
 subagents) still runs between its subcommands; the script only does the deterministic glue
 that the generic flow gets wrong on Windows. Run from the dir holding `graphify-out/`, always
 with `PYTHONIOENCODING=utf-8 PYTHONUTF8=1`.
