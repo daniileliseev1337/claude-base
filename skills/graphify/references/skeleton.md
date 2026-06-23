@@ -43,9 +43,10 @@ Edges (all `confidence=EXTRACTED`, deterministic):
 - **skill → its tools/scripts** → `contains`.
 - **CLAUDE.md section → mentioned entity** → `rule__X → agent/skill/...`.
 
-Output: `graphify-out/skeleton.json` (node-link, via `build_from_json`+`cluster`+`to_json`),
-stamped `built_at_commit=HEAD`. Heuristic favours **recall over precision** — better an extra
-related node than a missed one; the source file is always cited so you verify in the file.
+Output: `graphify-out/skeleton.json` (node-link, **written directly with the standard library —
+no `graphifyy` package dependency**, so it builds on any PC with bare python), stamped
+`built_at_commit=HEAD`. Heuristic favours **recall over precision** — better an extra related
+node than a missed one; the source file is always cited so you verify in the file.
 
 ## Run
 

@@ -48,7 +48,13 @@ def translit(s):
 
 
 def tokens(s):
-    return [t for t in re.split(r"[^\w]+", s.lower(), flags=re.UNICODE) if len(t) >= 3]
+    # keep internal hyphens/digits so domain codes survive (КС-2, КС-3, П1, В1, ТОРГ-12).
+    out = []
+    for t in re.split(r"[^\w-]+", s.lower(), flags=re.UNICODE):
+        t = t.strip("-")
+        if t and (len(t) >= 3 or any(c.isdigit() for c in t)):
+            out.append(t)
+    return out
 
 
 def load_graph(path):
