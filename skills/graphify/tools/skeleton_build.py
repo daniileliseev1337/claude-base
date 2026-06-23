@@ -328,7 +328,6 @@ def main(argv=None):
     ap.add_argument("--root", default=".", help="base root (default cwd)")
     ap.add_argument("--out", default=str(OUT / "skeleton.json"), help="output node-link json")
     ap.add_argument("--commit", default=None, help="built_at_commit (default short HEAD)")
-    ap.add_argument("--no-cluster", action="store_true", help="skip clustering (faster)")
     args = ap.parse_args(argv)
 
     root = Path(args.root).resolve()
@@ -346,22 +345,23 @@ def main(argv=None):
     print(f"[skeleton] nodes: {len(nodes)} {dict(kinds)}")
     print(f"[skeleton] edges: {len(edges)} {dict(rels)}")
 
-    extraction = {"nodes": list(nodes.values()), "edges": edges, "hyperedges": [],
-                  "input_tokens": 0, "output_tokens": 0}
-
-    from graphify.build import build_from_json
-    from graphify.export import to_json
-    G = build_from_json(extraction)
-    if args.no_cluster:
-        communities = {0: list(G.nodes())}
-    else:
-        from graphify.cluster import cluster
-        communities = cluster(G)
+    # node-link JSON written DIRECTLY (no graphify package dependency) so the skeleton
+    # builds on ANY PC with bare python — a consumer's SessionStart hook needs no
+    # `graphifyy` install. graph_query.py reads nodes + links; communities aren't used.
     commit = args.commit or short_head()
+    node_list = list(nodes.values())
+    graph_obj = {
+        "directed": True, "multigraph": False, "graph": {},
+        "nodes": node_list,
+        "links": edges,
+        "hyperedges": [],
+        "built_at_commit": commit,
+        "layer": "skeleton",
+    }
     OUT.mkdir(parents=True, exist_ok=True)
-    ok = to_json(G, communities, args.out, force=True, built_at_commit=commit)
-    print(f"[skeleton] wrote {args.out}: {G.number_of_nodes()} nodes, "
-          f"{G.number_of_edges()} edges, built_at_commit={commit} (ok={ok})")
+    Path(args.out).write_text(json.dumps(graph_obj, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[skeleton] wrote {args.out}: {len(node_list)} nodes, {len(edges)} edges, "
+          f"built_at_commit={commit}")
     return 0
 
 
