@@ -30,114 +30,114 @@ some times......
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:25:34,381 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:25:34,381 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:25:34,383 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:25:34,383 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:25:40,153 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:25:40,153 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:25:40,154 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:25:40,154 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:25:43,786 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:25:43,786 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:25:43,786 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
-t-1___0.
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:25:47,798 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
-penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:25:47,800 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
-t-1___0.
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:25:51,404 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
-penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:25:51,405 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
-t-1___0.
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:25:56,435 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
-penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:25:56,436 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
-t-1___0.
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:01,087 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
-penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:01,088 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
-t-1___0.
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:04,359 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
-penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:04,360 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:25:43,786 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:08,069 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:25:47,798 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:08,070 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:25:47,800 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:10,947 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:51,404 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:10,948 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:25:51,405 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:25:56,435 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:25:56,436 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:01,087 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:01,088 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:04,359 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:04,360 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:17,274 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:26:08,069 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:17,276 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:26:08,070 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:10,947 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:10,948 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+t-1___0.
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
+2026-05-18 14:26:17,274 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
+penDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:17,276 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 2026-05-18 14:26:17.699 | INFO     | mineru.backend.pipeline.model_init:__init__:260 - DocAnalysis init done!
@@ -154,22 +154,22 @@ Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.82it/s]
 Table-ocr det: 100%|##########| 1/1 [00:00<00:00,  2.82it/s]
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:22,460 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:26:22,460 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:22,461 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:26:22,461 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:25,820 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:26:25,820 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:25,820 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:26:25,820 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 
 Table-ocr rec cyrillic:   0%|          | 0/226 [00:00<?, ?it/s]
@@ -206,12 +206,12 @@ Table-wireless Predict: 100%|##########| 1/1 [00:00<00:00,  9.90it/s]
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 Table-wired Predict:   0%|          | 0/1 [00:00<?, ?it/s]2026-05-18 14:26:34,586 - modelscope - INFO - Creating symbol
-ic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:34,587 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+ic link [C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0].
+2026-05-18 14:26:34,587 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
@@ -220,23 +220,23 @@ Table-wired Predict: 100%|##########| 1/1 [00:05<00:00,  5.53s/it]
 Table-wired Predict: 100%|##########| 1/1 [00:05<00:00,  5.53s/it]
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:40,237 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:26:40,237 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:40,238 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:26:40,238 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
-2026-05-18 14:26:44,873 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:26:44,873 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:26:44,873 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:26:44,873 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 INFO:     127.0.0.1:62825 - "GET /tasks/6f05ca36-568b-4512-97b1-8d9e7953638c HTTP/1.1" 200 OK
 

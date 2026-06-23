@@ -306,7 +306,7 @@ output выводится в лог.
 - **Если корп-прокси режет всю сеть наружу полностью** (нет прямого
   выхода к GitHub даже без прокси) — фикс **не поможет**, нужен
   Вариант A: скачивание ZIP вручную через тот же прокси (HTTPS GET
-  пройдёт), без auto-sync. Так сделано на ПК Apoliakov.
+  пройдёт), без auto-sync. Так сделано на ПК <логин>.
 
 Поэтому `-c http.proxy=""` кладётся в скрипты **по умолчанию** — не
 делает хуже ни в одном из сценариев.
@@ -506,7 +506,7 @@ git rev-list --left-right --count HEAD...origin/main
 
 ### Урок 12 — 403 при push имеет ДВА разных корня
 
-> **ИСПРАВЛЕНО 2026-05-14 после session-report Ivan Fesenko**
+> **ИСПРАВЛЕНО 2026-05-14 после session-report <сотрудник>**
 > (`session-reports/2026-05-14_harvest-markitdown-document-loader/`).
 > Первоначальная запись утверждала только «PAT истёк» — это лишь
 > один из двух сценариев. Реальная картина сложнее, и **различить
@@ -541,7 +541,7 @@ git push origin main
 #### Сценарий 12b — `denied to <другой-user>` = WRONG ACCOUNT
 
 ```
-remote: Permission to daniileliseev1337/claude-base.git denied to fessenkoim-arch.
+remote: Permission to daniileliseev1337/claude-base.git denied to <логин>.
                                                                 ^^^^^^^^^^^^^^^^
                                                                 ЛИЧНЫЙ аккаунт
                                                                 сотрудника, не owner
@@ -557,7 +557,7 @@ PAT валидный, scope нормальный, но **Credential Manager от
 2. Сотрудник принимает приглашение на GitHub
 3. `git push` начинает проходить с тем же PAT
 
-Подтверждено на NB-HP-LQ6G (Ivan Fesenko, `fessenkoim-arch`)
+Подтверждено на NB-HP-LQ6G (<сотрудник>, `<логин>`)
 2026-05-14 -- после collaborator-приглашения push сразу прошёл.
 
 #### Как НЕ ошибиться
@@ -584,7 +584,7 @@ PAT валидный, scope нормальный, но **Credential Manager от
 ### Урок 13 — диагностика push-ошибок по слоям, снизу вверх
 
 > Из `memory-snapshot-NB-HP-LQ6G/git-push-diagnostic-order.md` от
-> Ivan Fesenko (2026-05-14). Методический урок широкого применения.
+> <сотрудник> (2026-05-14). Методический урок широкого применения.
 
 **Симптом:** `git push` падает. В окружении есть **несколько
 подозрительных вещей** (прокси, странный credential helper, env-vars,
@@ -720,7 +720,7 @@ git. См. сценарий очистки env в Уроке 13, раунд 2.
 
 **2026-05-15** при написании `scripts/setup-extras.ps1` (281 строка)
 я **повторил эту же ошибку**: `& $Py312Path -m pip install --user
-$pendingPy 2>&1 | Out-Null`. На Apoliakov-ПК скрипт упал ровно как
+$pendingPy 2>&1 | Out-Null`. На <логин>-ПК скрипт упал ровно как
 описано в Уроке 10 — pip-WARNING (`cpuinfo.exe is installed in ...
 is not on PATH`) обернулся в NativeCommandError, `$ErrorActionPreference
 = 'Stop'` (стоит в начале setup-extras.ps1) убил скрипт.

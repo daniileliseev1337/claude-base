@@ -1,6 +1,6 @@
 {
   "model": "moondream:latest",
-  "image": "C:\\Users\\Apoliakov\\.claude\\session-reports\\2026-05-16_entera-analog\\bench\\samples\\upd_vrnlom_p1_small.png",
+  "image": "C:\\Users\\<логин>\\.claude\\session-reports\\2026-05-16_entera-analog\\bench\\samples\\upd_vrnlom_p1_small.png",
   "elapsed_sec": 4.17,
   "ollama_duration_sec": 4.15,
   "eval_count_tokens": 69,

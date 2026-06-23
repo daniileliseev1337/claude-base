@@ -10,7 +10,7 @@ At line:4 char:1
 2026-05-18 13:23:44.463 | INFO     | mineru.cli.models_download:download_pipeline_models:79 - Downloading model: models
 /Layout/PP-DocLayoutV2
 2026-05-18 13:23:49,222 - modelscope - INFO - Got 3 files, start to download ...
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 
 Processing 3 items:   0%|          | 0.00/3.00 [00:00<?, ?it/s]
 
@@ -657,15 +657,15 @@ Downloading [models/Layout/PP-DocLayoutV2/model.safetensors]: 100%|##########| 2
 Processing 3 items: 100%|##########| 3.00/3.00 [09:12<00:00, 205s/it] 
 Processing 3 items: 100%|##########| 3.00/3.00 [09:12<00:00, 184s/it]
 2026-05-18 13:33:01,838 - modelscope - INFO - Finish downloading 3 files for repo 'OpenDataLab/PDF-Extract-Kit-1.0'
-2026-05-18 13:33:01,838 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 13:33:01,838 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 13:33:01,839 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 13:33:01,839 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 2026-05-18 13:33:01.840 | INFO     | mineru.cli.models_download:download_pipeline_models:79 - Downloading model: models
 /MFR/unimernet_hf_small_2503
 2026-05-18 13:33:06,131 - modelscope - INFO - Got 7 files, start to download ...
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 
 Processing 7 items:   0%|          | 0.00/7.00 [00:00<?, ?it/s]
 
@@ -4656,15 +4656,15 @@ Downloading [models/MFR/unimernet_hf_small_2503/model.safetensors]: 100%|#######
 Processing 7 items: 100%|##########| 7.00/7.00 [18:53<00:00, 256s/it] 
 Processing 7 items: 100%|##########| 7.00/7.00 [18:53<00:00, 162s/it]
 2026-05-18 13:51:59,505 - modelscope - INFO - Finish downloading 7 files for repo 'OpenDataLab/PDF-Extract-Kit-1.0'
-2026-05-18 13:51:59,505 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 13:51:59,505 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 13:51:59,505 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 13:51:59,505 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 2026-05-18 13:51:59.506 | INFO     | mineru.cli.models_download:download_pipeline_models:79 - Downloading model: models
 /OCR/paddleocr_torch
 2026-05-18 13:52:03,467 - modelscope - INFO - Got 22 files, start to download ...
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 
 Processing 22 items:   0%|          | 0.00/22.0 [00:00<?, ?it/s]
 
@@ -9733,15 +9733,15 @@ Downloading [models/OCR/paddleocr_torch/seal_PP-OCRv4_det_server_infer.pth]: 100
 Processing 22 items: 100%|##########| 22.0/22.0 [02:31<00:00, 9.09s/it]
 Processing 22 items: 100%|##########| 22.0/22.0 [02:31<00:00, 6.89s/it]
 2026-05-18 13:54:34,995 - modelscope - INFO - Finish downloading 22 files for repo 'OpenDataLab/PDF-Extract-Kit-1.0'
-2026-05-18 13:54:34,995 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 13:54:34,995 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 13:54:34,996 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 13:54:34,996 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 2026-05-18 13:54:34.997 | INFO     | mineru.cli.models_download:download_pipeline_models:79 - Downloading model: models
 /TabRec/SlanetPlus/slanet-plus.onnx
 2026-05-18 13:54:38,764 - modelscope - INFO - Got 1 files, start to download ...
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 
 Processing 1 items:   0%|          | 0.00/1.00 [00:00<?, ?it/s]
 
@@ -9767,15 +9767,15 @@ Downloading [models/TabRec/SlanetPlus/slanet-plus.onnx]: 100%|##########| 7.40M/
 Processing 1 items: 100%|##########| 1.00/1.00 [00:04<00:00, 4.85s/it]
 Processing 1 items: 100%|##########| 1.00/1.00 [00:04<00:00, 4.85s/it]
 2026-05-18 13:54:43,617 - modelscope - INFO - Finish downloading 1 files for repo 'OpenDataLab/PDF-Extract-Kit-1.0'
-2026-05-18 13:54:43,617 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 13:54:43,617 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 13:54:43,619 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 13:54:43,619 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 2026-05-18 13:54:43.620 | INFO     | mineru.cli.models_download:download_pipeline_models:79 - Downloading model: models
 /TabRec/UnetStructure/unet.onnx
 2026-05-18 13:55:48,013 - modelscope - INFO - Got 1 files, start to download ...
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 
 Processing 1 items:   0%|          | 0.00/1.00 [00:00<?, ?it/s]
 
@@ -9803,15 +9803,15 @@ Downloading [models/TabRec/UnetStructure/unet.onnx]: 100%|##########| 7.95M/7.95
 Processing 1 items: 100%|##########| 1.00/1.00 [01:14<00:00, 74.1s/it]
 Processing 1 items: 100%|##########| 1.00/1.00 [01:14<00:00, 74.1s/it]
 2026-05-18 13:57:02,097 - modelscope - INFO - Finish downloading 1 files for repo 'OpenDataLab/PDF-Extract-Kit-1.0'
-2026-05-18 13:57:02,097 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 13:57:02,097 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 13:57:02,098 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 13:57:02,098 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 2026-05-18 13:57:02.099 | INFO     | mineru.cli.models_download:download_pipeline_models:79 - Downloading model: models
 /TabCls/paddle_table_cls/PP-LCNet_x1_0_table_cls.onnx
 2026-05-18 13:57:05,936 - modelscope - INFO - Got 1 files, start to download ...
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 
 Processing 1 items:   0%|          | 0.00/1.00 [00:00<?, ?it/s]
 
@@ -9844,15 +9844,15 @@ Downloading [models/TabCls/paddle_table_cls/PP-LCNet_x1_0_table_cls.onnx]: 100%|
 Processing 1 items: 100%|##########| 1.00/1.00 [00:11<00:00, 11.9s/it]
 Processing 1 items: 100%|##########| 1.00/1.00 [00:11<00:00, 11.9s/it]
 2026-05-18 13:57:17,795 - modelscope - INFO - Finish downloading 1 files for repo 'OpenDataLab/PDF-Extract-Kit-1.0'
-2026-05-18 13:57:17,795 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 13:57:17,795 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 13:57:17,795 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 13:57:17,795 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 2026-05-18 13:57:17.796 | INFO     | mineru.cli.models_download:download_pipeline_models:79 - Downloading model: models
 /MFR/pp_formulanet_plus_m
 2026-05-18 13:57:22,049 - modelscope - INFO - Got 2 files, start to download ...
-Downloading Model from https://www.modelscope.cn to directory: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
+Downloading Model from https://www.modelscope.cn to directory: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1.0
 
 Processing 2 items:   0%|          | 0.00/2.00 [00:00<?, ?it/s]
 
@@ -11650,13 +11650,13 @@ Downloading [models/MFR/pp_formulanet_plus_m/PP-FormulaNet_plus-M.pth]: 100%|###
 Processing 2 items: 100%|##########| 2.00/2.00 [07:53<00:00, 277s/it] 
 Processing 2 items: 100%|##########| 2.00/2.00 [07:53<00:00, 237s/it]
 2026-05-18 14:05:15,474 - modelscope - INFO - Finish downloading 2 files for repo 'OpenDataLab/PDF-Extract-Kit-1.0'
-2026-05-18 14:05:15,474 - modelscope - INFO - Creating symbolic link [C:\Users\Apoliakov\.cache\modelscope\hub\models\O
+2026-05-18 14:05:15,474 - modelscope - INFO - Creating symbolic link [C:\Users\<логин>\.cache\modelscope\hub\models\O
 penDataLab\PDF-Extract-Kit-1.0].
-2026-05-18 14:05:15,474 - modelscope - WARNING - Failed to create symbolic link C:\Users\Apoliakov\.cache\modelscope\hu
-b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
+2026-05-18 14:05:15,474 - modelscope - WARNING - Failed to create symbolic link C:\Users\<логин>\.cache\modelscope\hu
+b\models\OpenDataLab\PDF-Extract-Kit-1.0 for C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Ki
 t-1___0.
 2026-05-18 14:05:15.474 | INFO     | mineru.cli.models_download:download_pipeline_models:81 - Pipeline models downloade
-d successfully to: C:\Users\Apoliakov\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1___0
+d successfully to: C:\Users\<логин>\.cache\modelscope\hub\models\OpenDataLab\PDF-Extract-Kit-1___0
 2026-05-18 14:05:16.369 | INFO     | mineru.cli.models_download:configure_model:63 - The configuration file has been su
-ccessfully configured, the path is: C:\Users\Apoliakov\mineru.json
+ccessfully configured, the path is: C:\Users\<логин>\mineru.json
 === DONE 14:05:16 exit=0 ===

@@ -2,8 +2,8 @@
 
 **Дата начала:** 2026-05-16
 **Дата окончания:** 2026-05-18
-**Host:** Apoliakov (ноутбук Intel Core Ultra 5 245K, 15.4 GB RAM, no GPU, no admin)
-**Project cwd:** `C:\Users\Apoliakov\`
+**Host:** <логин> (ноутбук Intel Core Ultra 5 245K, 15.4 GB RAM, no GPU, no admin)
+**Project cwd:** `C:\Users\<логин>\`
 **Источник:** Claude Code CLI
 
 ---

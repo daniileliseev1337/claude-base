@@ -28,9 +28,9 @@ API documentation: http://127.0.0.1:52927/docs
 Fetching 7 files:   0%|          | 0/7 [00:00<?, ?it/s]Xet Storage is enabled for this repo, but the 'hf_xet' package i
 s not installed. Falling back to regular HTTP download. For better performance, install the package with: `pip install 
 huggingface_hub[hf_xet]` or `pip install hf_xet`
-C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_hub\file_
+C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_hub\file_
 download.py:143: UserWarning: `huggingface_hub` cache-system uses symlinks by default to efficiently store duplicated f
-iles but your machine does not support them in C:\Users\Apoliakov\.cache\huggingface\hub\models--opendatalab--PDF-Extra
+iles but your machine does not support them in C:\Users\<логин>\.cache\huggingface\hub\models--opendatalab--PDF-Extra
 ct-Kit-1.0. Caching files will still work but in a degraded version that might require more space on your disk. This wa
 rning can be disabled by setting the `HF_HUB_DISABLE_SYMLINKS_WARNING` environment variable. For more details, see http
 s://huggingface.co/docs/huggingface_hub/how-to-cache#limitations.
@@ -48,24 +48,24 @@ Traceback (most recent call last):
 
   File "<frozen runpy>", line 198, in _run_module_as_main
   File "<frozen runpy>", line 88, in _run_code
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
 st_api.py", line 1650, in <module>
     main()
     -> <Command main>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
 ", line 1524, in __call__
     return self.main(*args, **kwargs)
            |    |     |       -> {}
            |    |     -> ()
            |    -> <function Command.main at 0x0000012F973F0E00>
            -> <Command main>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
 ", line 1445, in main
     rv = self.invoke(ctx)
          |    |      -> <click.core.Context object at 0x0000012FC1B2F020>
          |    -> <function Command.invoke at 0x0000012F973F0AE0>
          -> <Command main>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
 ", line 1308, in invoke
     return ctx.invoke(self.callback, **ctx.params)
            |   |      |    |           |   -> {'host': '127.0.0.1', 'port': 52927, 'reload': False, 'allow_public_http_
@@ -75,14 +75,14 @@ client': False, 'enable_vlm_preload': False}
            |   |      -> <Command main>
            |   -> <function Context.invoke at 0x0000012F973E3CE0>
            -> <click.core.Context object at 0x0000012FC1B2F020>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\core.py
 ", line 877, in invoke
     return callback(*args, **kwargs)
            |         |       -> {'host': '127.0.0.1', 'port': 52927, 'reload': False, 'allow_public_http_client': False
 , 'enable_vlm_preload': False}
            |         -> ()
            -> <function main at 0x0000012FC1CE7B00>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\decorat
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\click\decorat
 ors.py", line 34, in new_func
     return f(get_current_context(), *args, **kwargs)
            | |                       |       -> {'host': '127.0.0.1', 'port': 52927, 'reload': False, 'allow_public_htt
@@ -90,12 +90,12 @@ p_client': False, 'enable_vlm_preload': False}
            | |                       -> ()
            | -> <function get_current_context at 0x0000012F973B5760>
            -> <function main at 0x0000012FC1CE7E20>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
 st_api.py", line 1646, in main
     server.run()
     |      -> <function Server.run at 0x0000012F97519440>
     -> <uvicorn.server.Server object at 0x0000012FC1BF1730>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\uvicorn\serve
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\uvicorn\serve
 r.py", line 75, in run
     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
            |           |    |             |                      |    |      -> <function Config.get_loop_factory at 0x
@@ -108,36 +108,36 @@ A5490>
            |           |    -> <function Server.serve at 0x0000012F975194E0>
            |           -> <uvicorn.server.Server object at 0x0000012FC1BF1730>
            -> <function run at 0x0000012F96CD60C0>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 195, in run
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 195, in run
     return runner.run(main)
            |      |   -> <coroutine object Server.serve at 0x0000012FC1D27300>
            |      -> <function Runner.run at 0x0000012F96D3F740>
            -> <asyncio.runners.Runner object at 0x0000012FC1BF1940>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 118, in run
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 118, in run
     return self._loop.run_until_complete(task)
            |    |     |                  -> <Task pending name='Task-1' coro=<Server.serve() running at C:\Users\Apolia
 kov\.claude\session-reports\2026-05-16_entera-anal...
            |    |     -> <function BaseEventLoop.run_until_complete at 0x0000012F96D3D300>
            |    -> <ProactorEventLoop running=True closed=False debug=False>
            -> <asyncio.runners.Runner object at 0x0000012FC1BF1940>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 678, in run_until_
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 678, in run_until_
 complete
     self.run_forever()
     |    -> <function ProactorEventLoop.run_forever at 0x0000012F96DF9120>
     -> <ProactorEventLoop running=True closed=False debug=False>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\windows_events.py", line 322, in run_for
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\windows_events.py", line 322, in run_for
 ever
     super().run_forever()
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 645, in run_foreve
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 645, in run_foreve
 r
     self._run_once()
     |    -> <function BaseEventLoop._run_once at 0x0000012F96D3F060>
     -> <ProactorEventLoop running=True closed=False debug=False>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 1999, in _run_once
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 1999, in _run_once
     handle._run()
     |      -> <function Handle._run at 0x0000012F96C7CCC0>
     -> <Handle Task.task_wakeup(<Future finis...��� �������')>)>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\events.py", line 88, in _run
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\events.py", line 88, in _run
     self._context.run(self._callback, *self._args)
     |    |            |    |           |    -> <member '_args' of 'Handle' objects>
     |    |            |    |           -> <Handle Task.task_wakeup(<Future finis...��� �������')>)>
@@ -145,75 +145,75 @@ r
     |    |            -> <Handle Task.task_wakeup(<Future finis...��� �������')>)>
     |    -> <member '_context' of 'Handle' objects>
     -> <Handle Task.task_wakeup(<Future finis...��� �������')>)>
-> File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
+> File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
 st_api.py", line 1320, in _process_task
     await self._run_task(task)
           |    |         -> AsyncParseTask(task_id='0bebd349-446a-45d8-932b-467233b2b252', status='failed', backend='pi
 peline', file_names=['upd_vrnlom']...
           |    -> <function AsyncTaskManager._run_task at 0x0000012FC1C058A0>
           -> <__main__.AsyncTaskManager object at 0x0000012FC1D2B3E0>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
 st_api.py", line 1350, in _run_task
     await run_parse_job(
           -> <function run_parse_job at 0x0000012FC1C04C20>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\fa
 st_api.py", line 1042, in run_parse_job
     await asyncio.to_thread(do_parse, **parse_kwargs)
-          |       |         |           -> {'output_dir': 'C:\\Users\\Apoliakov\\AppData\\Local\\Temp\\mineru-api-clien
+          |       |         |           -> {'output_dir': 'C:\\Users\\<логин>\\AppData\\Local\\Temp\\mineru-api-clien
 t-smzn4qqs\\output\\0bebd349-446a-45d8-932b-46723...
           |       |         -> <function do_parse at 0x0000012FC1BE9BC0>
           |       -> <function to_thread at 0x0000012F96D5C4A0>
-          -> <module 'asyncio' from 'C:\\Users\\Apoliakov\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\_
+          -> <module 'asyncio' from 'C:\\Users\\<логин>\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\asyncio\\_
 _init__.py'>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\asyncio\threads.py", line 25, in to_thread
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\asyncio\threads.py", line 25, in to_thread
     return await loop.run_in_executor(None, func_call)
                  |    |                     -> functools.partial(<built-in method run of _contextvars.Context object at
  0x0000012FC1D83540>, <function do_parse at 0x0000012...
                  |    -> <function BaseEventLoop.run_in_executor at 0x0000012F96D3DBC0>
                  -> <ProactorEventLoop running=True closed=False debug=False>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\thread.py", line 59, in run
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\thread.py", line 59, in run
     result = self.fn(*self.args, **self.kwargs)
              |        |            -> None
              |        -> None
              -> None
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\co
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\co
 mmon.py", line 666, in do_parse
     _process_pipeline(
     -> <function _process_pipeline at 0x0000012FC1BE9800>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\co
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\cli\co
 mmon.py", line 361, in _process_pipeline
     pipeline_doc_analyze_streaming(
     -> <function doc_analyze_streaming at 0x0000012FE5BB6E80>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
 d\pipeline\pipeline_analyze.py", line 241, in doc_analyze_streaming
     batch_results = batch_image_analyze(
                     -> <function batch_image_analyze at 0x0000012FE5BB6F20>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
 d\pipeline\pipeline_analyze.py", line 344, in batch_image_analyze
     results = batch_model(images_with_extra_info)
               |           -> [(<PIL.Image.Image image mode=RGB size=2338x1654 at 0x12FE479B950>, False, 'cyrillic')]
               -> <mineru.backend.pipeline.batch_analyze.BatchAnalyze object at 0x0000012FE599CB90>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
 d\pipeline\batch_analyze.py", line 353, in __call__
     self.model = self.model_manager.get_model(
     |            |    |             -> <function ModelSingleton.get_model at 0x0000012FE5BB6AC0>
     |            |    -> <mineru.backend.pipeline.pipeline_analyze.ModelSingleton object at 0x0000012FE584E510>
     |            -> <mineru.backend.pipeline.batch_analyze.BatchAnalyze object at 0x0000012FE599CB90>
     -> <mineru.backend.pipeline.batch_analyze.BatchAnalyze object at 0x0000012FE599CB90>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
 d\pipeline\pipeline_analyze.py", line 53, in get_model
     self._models[key] = custom_model_init(
     |    |       |      -> <function custom_model_init at 0x0000012FC1D86B60>
     |    |       -> (None, True, True)
     |    -> {}
     -> <mineru.backend.pipeline.pipeline_analyze.ModelSingleton object at 0x0000012FE584E510>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
 d\pipeline\pipeline_analyze.py", line 80, in custom_model_init
     custom_model = MineruPipelineModel(**model_input)
                    |                     -> {'device': 'cpu', 'table_config': {'enable': True}, 'formula_config': {'ena
 ble': True}, 'lang': None}
                    -> <class 'mineru.backend.pipeline.model_init.MineruPipelineModel'>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\backen
 d\pipeline\model_init.py", line 224, in __init__
     mfr_weight_dir=str(os.path.join(auto_download_and_get_model_root_path(mfr_model_path), mfr_model_path)),
                        |  |    |    |                                     |                -> 'models/MFR/unimernet_hf_
@@ -223,25 +223,25 @@ small_2503'
                        |  |    -> <function join at 0x0000012F94EF53A0>
                        |  -> <module 'ntpath' (frozen)>
                        -> <module 'os' (frozen)>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\utils\
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\mineru\utils\
 models_download_utils.py", line 59, in auto_download_and_get_model_root_path
     cache_dir = snapshot_download(repo, allow_patterns=[relative_path, relative_path+"/*"])
                 |                 |                     |              -> 'models/MFR/unimernet_hf_small_2503'
                 |                 |                     -> 'models/MFR/unimernet_hf_small_2503'
                 |                 -> 'opendatalab/PDF-Extract-Kit-1.0'
                 -> <function snapshot_download at 0x0000012FBECDB600>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
 ub\utils\_validators.py", line 114, in _inner_fn
     return fn(*args, **kwargs)
            |   |       -> {'allow_patterns': ['models/MFR/unimernet_hf_small_2503', 'models/MFR/unimernet_hf_small_2503
 /*']}
            |   -> ('opendatalab/PDF-Extract-Kit-1.0',)
            -> <function snapshot_download at 0x0000012FBEB3FBA0>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
 ub\_snapshot_download.py", line 332, in snapshot_download
     thread_map(
     -> <function thread_map at 0x0000012FBEB48900>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\tqdm\contrib\
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\tqdm\contrib\
 concurrent.py", line 69, in thread_map
     return _executor_map(ThreadPoolExecutor, fn, *iterables, **tqdm_kwargs)
            |             |                   |    |            -> {'desc': 'Fetching 7 files', 'max_workers': 8, 'tqdm_
@@ -252,7 +252,7 @@ ernet_hf_small_2503/config.json', 'models/MFR/unimernet_hf_...
 2FE47B2FC0>
            |             -> <class 'concurrent.futures.thread.ThreadPoolExecutor'>
            -> <function _executor_map at 0x0000012FBEB48860>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\tqdm\contrib\
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\tqdm\contrib\
 concurrent.py", line 51, in _executor_map
     return list(tqdm_class(ex.map(fn, *iterables, chunksize=chunksize), **kwargs))
                 |          |  |   |    |                    |             -> {'desc': 'Fetching 7 files', 'total': 7}
@@ -263,77 +263,77 @@ all_2503/config.json', 'models/MFR/unimernet_hf_...
                 |          |  -> <function Executor.map at 0x0000012F950C0360>
                 |          -> <concurrent.futures.thread.ThreadPoolExecutor object at 0x0000012FE4858E60>
                 -> <class 'huggingface_hub.utils.tqdm.tqdm'>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\tqdm\std.py",
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\tqdm\std.py",
  line 1181, in __iter__
     for obj in iterable:
         |      -> <generator object Executor.map.<locals>.result_iterator at 0x0000012FE5A3B010>
-        -> 'C:\\Users\\Apoliakov\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit-1.0\\snapshots\\d1336e
+        -> 'C:\\Users\\<логин>\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit-1.0\\snapshots\\d1336e
 e3c2975a8b26c4b09...
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 619, in resul
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 619, in resul
 t_iterator
     yield _result_or_cancel(fs.pop())
           |                 |  -> <method 'pop' of 'list' objects>
           |                 -> [<Future at 0x12fe59b6480 state=finished returned str>, <Future at 0x12fe59b52e0 state=f
 inished returned str>]
           -> <function _result_or_cancel at 0x0000012F950BF7E0>
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 317, in _resu
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 317, in _resu
 lt_or_cancel
     return fut.result(timeout)
                       -> None
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 449, in resul
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 449, in resul
 t
     return self.__get_result()
            -> None
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 401, in __get
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 401, in __get
 _result
     raise self._exception
           -> None
-  File "C:\Users\Apoliakov\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\thread.py", line 59, in run
+  File "C:\Users\<логин>\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\thread.py", line 59, in run
     result = self.fn(*self.args, **self.kwargs)
              |        |            -> None
              |        -> None
              -> None
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
 ub\_snapshot_download.py", line 306, in _inner_hf_hub_download
     return hf_hub_download(
            -> <function hf_hub_download at 0x0000012FBECDAAC0>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
 ub\utils\_validators.py", line 114, in _inner_fn
     return fn(*args, **kwargs)
            |   |       -> {'filename': 'models/MFR/unimernet_hf_small_2503/special_tokens_map.json', 'repo_type': 'mode
 l', 'revision': 'd1336ee3c2975a8...
            |   -> ('opendatalab/PDF-Extract-Kit-1.0',)
            -> <function hf_hub_download at 0x0000012FBECDA980>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
 ub\file_download.py", line 1014, in hf_hub_download
     return _hf_hub_download_to_cache_dir(
            -> <function _hf_hub_download_to_cache_dir at 0x0000012FBECDAA20>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
 ub\file_download.py", line 1188, in _hf_hub_download_to_cache_dir
     _create_symlink(blob_path, pointer_path, new_blob=True)
-    |               |          -> 'C:\\Users\\Apoliakov\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit
+    |               |          -> 'C:\\Users\\<логин>\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit
 -1.0\\snapshots\\d1336ee3c2975a8b26c4b09...
-    |               -> 'C:\\Users\\Apoliakov\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit-1.0\\blobs
+    |               -> 'C:\\Users\\<логин>\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit-1.0\\blobs
 \\a782b2f1cdab4d0bacb2dc0f85d...
     -> <function _create_symlink at 0x0000012FBECDA660>
-  File "C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
+  File "C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-analog\bench\.venv\Lib\site-packages\huggingface_h
 ub\file_download.py", line 738, in _create_symlink
     os.symlink(src_rel_or_abs, abs_dst)
-    |  |       |               -> 'C:\\Users\\Apoliakov\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit
+    |  |       |               -> 'C:\\Users\\<логин>\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit
 -1.0\\snapshots\\d1336ee3c2975a8b26c4b09...
     |  |       -> '..\\..\\..\\..\\..\\blobs\\a782b2f1cdab4d0bacb2dc0f85d02c4b1e31f0bd'
     |  -> <built-in function symlink>
     -> <module 'os' (frozen)>
 
 OSError: [WinError 1314] ������ �� �������� ���������� �������: '..\\..\\..\\..\\..\\blobs\\a782b2f1cdab4d0bacb2dc0f85d
-02c4b1e31f0bd' -> 'C:\\Users\\Apoliakov\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit-1.0\\snapshots\
+02c4b1e31f0bd' -> 'C:\\Users\\<логин>\\.cache\\huggingface\\hub\\models--opendatalab--PDF-Extract-Kit-1.0\\snapshots\
 \d1336ee3c2975a8b26c4b09ff39dc6b593d34141\\models\\MFR\\unimernet_hf_small_2503\\special_tokens_map.json'
 Error: 1 task(s) failed while processing documents:
 - task#1 (upd_vrnlom): Task 0bebd349-446a-45d8-932b-467233b2b252 failed for task#1 [upd_vrnlom]: {"task_id": "0bebd349-
 446a-45d8-932b-467233b2b252", "status": "failed", "backend": "pipeline", "file_names": ["upd_vrnlom"], "created_at": "2
 026-05-18T11:06:22.229243+00:00", "started_at": "2026-05-18T11:06:22.230243+00:00", "completed_at": "2026-05-18T11:12:5
 3.725646+00:00", "error": "[WinError 1314] ������ �� �������� ���������� �������: '..\\\\..\\\\..\\\\..\\\\..\\\\blobs\
-\\\a782b2f1cdab4d0bacb2dc0f85d02c4b1e31f0bd' -> 'C:\\\\Users\\\\Apoliakov\\\\.cache\\\\huggingface\\\\hub\\\\models--op
+\\\a782b2f1cdab4d0bacb2dc0f85d02c4b1e31f0bd' -> 'C:\\\\Users\\\\<логин>\\\\.cache\\\\huggingface\\\\hub\\\\models--op
 endatalab--PDF-Extract-Kit-1.0\\\\snapshots\\\\d1336ee3c2975a8b26c4b09ff39dc6b593d34141\\\\models\\\\MFR\\\\unimernet_h
 f_small_2503\\\\special_tokens_map.json'", "status_url": "http://127.0.0.1:52927/tasks/0bebd349-446a-45d8-932b-467233b2
 b252", "result_url": "http://127.0.0.1:52927/tasks/0bebd349-446a-45d8-932b-467233b2b252/result", "queued_ahead": 0}

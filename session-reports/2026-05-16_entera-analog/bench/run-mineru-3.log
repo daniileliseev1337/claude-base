@@ -25,7 +25,7 @@ some times......
 Start MinerU FastAPI Service: http://127.0.0.1:63355
 API documentation: http://127.0.0.1:63355/docs
 
-Fetching 7 files:   0%|          | 0/7 [00:00<?, ?it/s]C:\Users\Apoliakov\.claude\session-reports\2026-05-16_entera-ana
+Fetching 7 files:   0%|          | 0/7 [00:00<?, ?it/s]C:\Users\<логин>\.claude\session-reports\2026-05-16_entera-ana
 log\bench\.venv\Lib\site-packages\huggingface_hub\file_download.py:143: UserWarning: `huggingface_hub` cache-system use
 s symlinks by default to efficiently store duplicated files but your machine does not support them in C:\Users\Apoliako
 v\.cache\huggingface\hub\models--opendatalab--PDF-Extract-Kit-1.0. Caching files will still work but in a degraded vers

@@ -174,7 +174,7 @@
 **В этом отчёте есть** (по новому правилу — допустимо):
 - Hostnames: `DANIILPC`, `DELISEEV-PC`, `100226745A` (последнее — из auto-sync log, не моё)
 - GitHub-аккаунт: `daniileliseev1337`
-- Email: `Deliseev@k-7.tech` (из строки в setup-extras.ps1, не моё добавление)
+- Email: `Deliseev@<домен-организации>` (из строки в setup-extras.ps1, не моё добавление)
 - Proxy host: `scuf-meta.ru:10894` (упомянут в `feedback_git_no_proxy.md`, важен для urocheв)
 - Proxy username: упомянут в memory (не в этом report'е, чтобы не дублировать)
 

@@ -229,6 +229,44 @@ Check "pytest collects + passes (21 tests)" {
     }
 } -Hint "Требует pytest установлен: python -m pip install --user pytest"
 
+# === [7] PII-гард (обезличивание перед push, правило 6) ===
+Write-Host ""
+Write-Host "[7] PII-гард (обезличивание, правило 6)" -ForegroundColor Yellow
+
+Check "Нет реальных идентификаторов организации/объектов в pushed" {
+    $patterns = @('К-7','K-7','Лайф-саунд','МСУ-1','Сит-центр','Балашиха','РАНХиГС','ПСИ-158')
+    $dirs = @('agents','skills','memory','chains','session-reports') | ForEach-Object { Join-Path $ClaudeDir $_ }
+    $hits = @()
+    foreach ($d in $dirs) {
+        if (Test-Path $d) {
+            $hits += Get-ChildItem $d -Recurse -File -Include *.md,*.py,*.ps1,*.lsp -ErrorAction SilentlyContinue |
+                Select-String -Pattern $patterns -SimpleMatch -List -ErrorAction SilentlyContinue
+        }
+    }
+    $cm = Join-Path $ClaudeDir 'CLAUDE.md'
+    if (Test-Path $cm) { $hits += Select-String -Path $cm -Pattern $patterns -SimpleMatch -List -ErrorAction SilentlyContinue }
+    @($hits).Count -eq 0
+} -Hint "Найдены реальные идентификаторы (имя организации/коды объектов) — обезличить ДО push (правило 6 CLAUDE.md)"
+
+# === [8] Эталоны (счётчики MCP/agents, JSON-валидность) ===
+Write-Host ""
+Write-Host "[8] Эталоны (счётчики)" -ForegroundColor Yellow
+
+Check "mcp-manifest.json valid + 11 core MCP" {
+    try { $m = Get-Content (Join-Path $ClaudeDir 'mcp-manifest.json') -Raw | ConvertFrom-Json } catch { return $false }
+    @($m.mcp_servers | Where-Object { $_.tier -eq 'core' }).Count -eq 11
+} -Hint "Эталон 11 core MCP (markitdown..exa) — источник истины mcp-manifest.json"
+
+Check "agents/ == 16 (минус _TEMPLATE, agents.md)" {
+    $a = Get-ChildItem (Join-Path $ClaudeDir 'agents') -Filter *.md -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne '_TEMPLATE.md' -and $_.Name -ne 'agents.md' }
+    @($a).Count -eq 16
+} -Hint "Эталон 16 агентов"
+
+Check "settings.shared.json valid JSON" {
+    try { Get-Content (Join-Path $ClaudeDir 'settings.shared.json') -Raw | ConvertFrom-Json | Out-Null; $true } catch { $false }
+}
+
 # === Summary ===
 Write-Host ""
 Write-Host "=== Summary: $passed/$total passed ===" -ForegroundColor Cyan

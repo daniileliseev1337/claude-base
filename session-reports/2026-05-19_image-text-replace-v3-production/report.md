@@ -31,11 +31,11 @@
    first-class API), calibration.py CLI tool, SKILL.md переписан,
    LESSONS-LEARNED.md написан, mcp-manifest.json + diffusers/etc.
 9. DELISEEV-PC выявил несостыковку: CLAUDE.md обещал pdf-edit, но
-   скрипт только на Apoliakov-PC. User: «pdf-edit нам не нужен» →
+   скрипт только на <логин>-PC. User: «pdf-edit нам не нужен» →
    cleanup из всех актуальных файлов.
 10. setup-extras Step 4: auto-download LaMa + EasyOCR + SD. Token
     architecture: `.hf-token` per-PC (gitignored). 3 уровня
-    notification про контакт Даниила (Deliseev@k-7.tech).
+    notification про контакт Даниила (Deliseev@<домен-организации>).
 11. pdf-helper SKILL.md: scan-detection как обязательный first step
     + routing на image-text-replace OCR. image-text-replace SKILL.md:
     OCR primary, text replace secondary.
@@ -45,7 +45,7 @@
 ## Источники
 
 **MCP:** pdf-mcp (render для visual comparison), fetch (GitHub API
-для inspect Apoliakov commits).
+для inspect <логин> commits).
 
 **Skills:** karpathy-guidelines (активно — push back на blind iteration,
 push back на token в public repo, recognition что font calibration
@@ -114,7 +114,7 @@ Font calibration sheet (render same string в 12 шрифтах рядом со
   preserves dark cores.
 - **Cyrillic+PowerShell traps:** cv2.imread не читает Unicode, TORCH_HOME
   на Cyrillic ломается, HF_HOME=C:\sd-cache обязательно.
-- **Apoliakov pdf-edit drift:** CLAUDE.md → manifest → реальный код
+- **<логин> pdf-edit drift:** CLAUDE.md → manifest → реальный код
   inconsistency недели две. Cleanup сделан.
 
 ## Что выдумывал

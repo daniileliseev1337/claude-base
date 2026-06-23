@@ -44,7 +44,7 @@ https://github.com/new
 Settings → Manage access → Add people:
 
 - `apolyakov6500-boop` — Write
-- `fessenkoim-arch` — Write
+- `<логин>` — Write
 - `netesov002-stack` — Write (когда примет invitation в основной репо)
 
 ### 4. Создать Fine-grained PAT для каждого сотрудника
@@ -93,7 +93,7 @@ notepad $HOME\.claude\.feedback-config.json
 Settings → Manage access → Remove:
 
 - `apolyakov6500-boop` (read останется потому что repo public)
-- `fessenkoim-arch` (тоже)
+- `<логин>` (тоже)
 
 `netesov002-stack` (pending) — можно cancel invitation чтобы не запутаться.
 

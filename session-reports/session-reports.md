@@ -32,7 +32,7 @@ tags: [мета, индекс, sessions]
 - [[2026-05-19_image-text-replace-v3-production/report|image-text-replace-v3-production]] — production v3.0 + scan-aware PDF routing.
 - [[2026-05-18_arm-sech-pdf-to-xlsx/report|arm-sech-pdf-to-xlsx]] — PDF→Excel pipeline для армирования сечений (Daniil на R-090226727A).
 - [[2026-05-16_kp-k7-pdf-edit/report|kp-k7-pdf-edit]] — KP с правками PDF, мы написали свой `pdf-edit` MCP сервер.
-- [[2026-05-15_handoff-manifest-extras-installer-stage8/report|handoff-manifest-extras-installer-stage8]] — **большая инфра-сессия 2026-05-15...18**: handoff DELISEEV→DANIILPC, manifest + setup-extras, Install.ps1 Stage 8, Apoliakov инцидент (мета-урок 16). Закрытие 7 handoff-задач + Урок 15.
+- [[2026-05-15_handoff-manifest-extras-installer-stage8/report|handoff-manifest-extras-installer-stage8]] — **большая инфра-сессия 2026-05-15...18**: handoff DELISEEV→DANIILPC, manifest + setup-extras, Install.ps1 Stage 8, <логин> инцидент (мета-урок 16). Закрытие 7 handoff-задач + Урок 15.
 - [[2026-05-15_setup-doc-tooling/report|setup-doc-tooling]] — настройка doc-tooling.
 - [[2026-05-15_master-struktura-projektov-naming/report|master-struktura-projektov-naming]] — мастер-структура папок проектов.
 - [[2026-05-14_infra-day-auto-sync-styles-harvest-sessions/report|infra-day-auto-sync-styles-harvest-sessions]] — большой infra-day: auto-sync hooks, стили, harvest, session-policy.

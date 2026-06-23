@@ -130,11 +130,11 @@
 
 | Путь | Что это |
 |------|---------|
-| `C:\Users\Apoliakov\.claude\mcp-servers\pdf-edit\pdf_edit_mcp.py` | Свой MCP-сервер для правок PDF, 190 строк, PEP 723 |
-| `C:\Users\Apoliakov\.claude\bin\diff-pdf\diff-pdf.exe` | Portable бинарь визуального page-diff (v0.5.3, GPL) |
-| `C:\Users\Apoliakov\.claude\skills\excel-helper\SKILL.md` | +`cell_diff()` + `formula_diff()` (две новые секции) |
-| `C:\Users\Apoliakov\.claude\skills\pdf-helper\SKILL.md` | +pdf-edit MCP роутинг + diff-pdf инструкция |
-| `C:\Users\Apoliakov\.claude\CLAUDE.md` | USER EXTENSIONS: override эталона MCP 8→10 |
+| `C:\Users\<логин>\.claude\mcp-servers\pdf-edit\pdf_edit_mcp.py` | Свой MCP-сервер для правок PDF, 190 строк, PEP 723 |
+| `C:\Users\<логин>\.claude\bin\diff-pdf\diff-pdf.exe` | Portable бинарь визуального page-diff (v0.5.3, GPL) |
+| `C:\Users\<логин>\.claude\skills\excel-helper\SKILL.md` | +`cell_diff()` + `formula_diff()` (две новые секции) |
+| `C:\Users\<логин>\.claude\skills\pdf-helper\SKILL.md` | +pdf-edit MCP роутинг + diff-pdf инструкция |
+| `C:\Users\<логин>\.claude\CLAUDE.md` | USER EXTENSIONS: override эталона MCP 8→10 |
 | `session-reports/2026-05-15_setup-doc-tooling/harvested/` | 11 файлов: 5 кандидатов на редактирование PDF + 5 на diff + 2 _SUMMARY |
 
 ---
