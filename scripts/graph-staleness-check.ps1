@@ -1,16 +1,17 @@
-# graph-staleness-check.ps1 — SessionStart hook (claude-base)
-# Держит ДЕТЕРМИНИРОВАННЫЙ навигационный скелет графа всегда свежим (0 токенов),
-# чтобы Claude мог доверять ему и ходить по базе через query, а не грепом.
+# graph-staleness-check.ps1 - SessionStart hook (claude-base)
+# Keeps the DETERMINISTIC navigation skeleton always-fresh (0 tokens) so Claude can
+# trust it and navigate the base via query instead of grep.
 #
-# Архитектура (см. CLAUDE.md секция graphify + skills/graphify/references/skeleton.md):
-#   • skeleton.json — детерминированный костяк (agents/skills/memory/rules/...), строится
-#     БЕЗ LLM из структурных сигналов. Этот хук пересобирает его при старте сессии, если
-#     он отстал от HEAD → на каждом ПК навигатор всегда свежий и достоверный.
-#   • graph.json — семантическое ОБОГАЩЕНИЕ (LLM, хаб, изредка). Его устаревание — не повод
-#     «не доверять»: костяк свежий. Поэтому старые предупреждения «устаревший врёт» убраны.
+# Architecture (see CLAUDE.md graphify section + skills/graphify/references/skeleton.md):
+#   * skeleton.json - deterministic backbone (agents/skills/memory/rules/...), built
+#     WITHOUT an LLM from structural signals. This hook rebuilds it at session start if
+#     it lags HEAD -> on every PC the navigator stays fresh and trustworthy.
+#   * graph.json - semantic ENRICHMENT (LLM, hub, occasional). Its staleness is NOT a
+#     reason to distrust the graph: the skeleton is fresh. The old "stale graph lies"
+#     warnings are removed.
 #
-# Запускается ПОСЛЕ auto-pull.ps1 (HEAD актуален). Тихо при успехе. Никогда не ломает
-# старт сессии — exit 0 везде.
+# Runs AFTER auto-pull.ps1 (HEAD current). Silent on success. Never breaks session start
+# (exit 0 everywhere). ASCII-only on purpose (robust under PowerShell 5.1 / no-BOM).
 
 $ErrorActionPreference = 'SilentlyContinue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
@@ -19,14 +20,14 @@ $base    = Join-Path $HOME '.claude'
 $skel    = Join-Path $base 'graphify-out\skeleton.json'
 $builder = Join-Path $base 'skills\graphify\tools\skeleton_build.py'
 $pyfile  = Join-Path $base 'graphify-out\.graphify_python'
-if (-not (Test-Path $builder)) { exit 0 }   # скелет-инструмент ещё не раскатан — молчим
+if (-not (Test-Path $builder)) { exit 0 }   # skeleton tool not rolled out yet - stay silent
 
-# HEAD (short)
+# current HEAD (short)
 Push-Location $base
 $head = (git rev-parse --short HEAD 2>$null)
 Pop-Location
 
-# Свеж ли скелет? (built_at_commit == HEAD)
+# is the skeleton fresh? (built_at_commit == HEAD)
 $fresh = $false
 if ((Test-Path $skel) -and $head) {
   $raw = Get-Content $skel -Raw -Encoding UTF8
@@ -34,9 +35,9 @@ if ((Test-Path $skel) -and $head) {
     if ($Matches[1] -eq $head) { $fresh = $true }
   }
 }
-if ($fresh) { exit 0 }   # уже свежий — тихо
+if ($fresh) { exit 0 }   # already fresh - quiet
 
-# Пересобрать костяк (детерминированно, 0 токенов, секунды)
+# rebuild the skeleton (deterministic, 0 tokens, seconds)
 $py = 'python'
 if (Test-Path $pyfile) {
   $p = (Get-Content $pyfile -Raw -Encoding UTF8).Trim()
@@ -50,6 +51,6 @@ $ok = $?
 Pop-Location
 
 if ($ok) {
-  Write-Output "[graph] Навигатор базы (skeleton) пересобран и свеж — query: python skills/graphify/tools/graph_query.py ""<вопрос>"" (истина в source_file)."
+  Write-Output '[graph] base navigator (skeleton) rebuilt & fresh - query first: python skills/graphify/tools/graph_query.py "your question" (truth lives in source_file).'
 }
 exit 0
