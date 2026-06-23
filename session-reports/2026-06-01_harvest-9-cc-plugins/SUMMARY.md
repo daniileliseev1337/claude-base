@@ -11,7 +11,7 @@
 - ⚫ **Пропустить** — не подходит / уже есть лучше / риски
 
 ## ⚠ Глобальные constraints (от пользователя, действуют для всех 9)
-1. **Подписки не покупаются.** К-7 не оплачивает платные сервисы. Берём
+1. **Подписки не покупаются.** <организация> не оплачивает платные сервисы. Берём
    только **free tier / open-source / self-host**. Платный-only инструмент
    без free tier → отпадает или ищем open-source альтернативу.
 2. **Не списывать через «у нас уже есть X» без верификации** что X работает.
@@ -47,7 +47,7 @@
 - **Semantic search в `norm-lookup` v2** (из Exa) — когда библиотека норм
   разрастётся, добавить поиск по смыслу через локальный `fastembed` (он уже
   есть как зависимость `pdf-mcp`). **Без cloud**.
-- **Firecrawl self-host** (из Firecrawl) — open-source, на своём сервере К-7
+- **Firecrawl self-host** (из Firecrawl) — open-source, на своём сервере <организация>
   = бесплатно навсегда (constraint: подписки не покупаются). Предпочтительнее
   cloud API. Закрывает scraping каталогов производителей + 80-90% fail WebFetch.
 - **Explicit `/compound` step в наших chains** (из Compound Engineering) —
@@ -63,7 +63,7 @@
 | Инструмент | Раскат | Закрывает |
 |---|---|---|
 | **Exa** | команда (профильные) | semantic search (дыра) |
-| **Firecrawl** (self-host) | сервер К-7 | 80-90% fail WebFetch (дыра) |
+| **Firecrawl** (self-host) | сервер <организация> | 80-90% fail WebFetch (дыра) |
 | **Frontend Design** | все 9 (уже auto-installed) | внутренние UI, lazy |
 | **Codex** + consent | все 9 | cross-model review (новый capability) |
 | **Codeburn** | все 9 | метрики токенов, zero overhead |

@@ -50,7 +50,7 @@ for t in labels:
 from extract_dxf import find_stamp
 
 stamp = find_stamp("plan.dxf", stamp_layer="stamp")
-# {'project': 'МСУ-1', 'drawing_no': '5', 'scale': '1:50', 'stage': 'РД', ...}
+# {'project': '<проект>', 'drawing_no': '5', 'scale': '1:50', 'stage': 'РД', ...}
 ```
 
 ### Конвертация DWG -> DXF

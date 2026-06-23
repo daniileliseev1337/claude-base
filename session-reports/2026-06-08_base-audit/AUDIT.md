@@ -42,13 +42,13 @@
 Два системных дефекта:
 1. **16/18 нарушают 3-слойный стандарт — нет `tools/`** (10 без слоя, 5 держат скрипты в `scripts/`, 1 в корне).
 2. **~25+ битых ссылок.** Худшие: `spec-writer` (7/8 wikilinks мертвы — правила S/J/I/R висят без файлов), `karpathy-guidelines` (6, в т.ч. 3 несуществующих агента code-reviewer/lisp-improver/brainstorm-partner), `upd-parser` (4).
-- Обезличивание перед push: К-7 / ИНН 7724915051 / шифр R-090226727A в `word-helper`, `upd-parser`, `yandex-disk-uploader`, `spec-writer`, `cad-reader`, `pnr-vor-helper`.
+- Обезличивание перед push: <организация> / ИНН 7724915051 / шифр R-090226727A в `word-helper`, `upd-parser`, `yandex-disk-uploader`, `spec-writer`, `cad-reader`, `pnr-vor-helper`.
 
 ## КОМАНДЫ: все 3 здоровы (`/format`, `/harvest`, `/sync-base`) — действий нет.
 
 ## ПАМЯТЬ: ~26/47 без действий. Adversarial ОТКЛОНИЛ все 5 archive/merge
 (2026-05-07-pnr-ventilation, 2026-05-13_harvest-workflow, 2026-05-15_extras, 2026-05-18_lesson-15, role_detection — у каждого уникальный неабсорбированный контент → keep/fix). Реальные действия — точечные:
-- **`~/Desktop/K-7_audit_report.docx` битой ссылкой в 5 файлах разом** (backlog_promptfoo, backlog_teammate, project_designer_decomposition, rd_plugins_test_plan, chains-pattern) — почистить одним проходом.
+- **`~/Desktop/<организация>_audit_report.docx` битой ссылкой в 5 файлах разом** (backlog_promptfoo, backlog_teammate, project_designer_decomposition, rd_plugins_test_plan, chains-pattern) — почистить одним проходом.
 - **GPL-конфликт:** reference_licenses_k7.md (override) vs необновлённый harvest_workflow.md.
 - **reference_pyrevit_k7.md осиротел** (in_index=false) → добавить в MEMORY.md.
 - reference_mcp: битый `bin/diff-pdf/diff-pdf.exe`, добавить exa в опц. таблицу.
@@ -65,4 +65,4 @@
 3. **id-engineer / pyrevit-engineer / expertiza-responder:** оставить как редкие ИЛИ архив? Решать ТОЛЬКО после 20-30 сессий с исправленными триггерами.
 4. **scripts/→tools/ у 5 скиллов:** переименовать с правкой sys.path ИЛИ оставить scripts/ как задекларированный слой 3? (backlog_tools_layer_migration).
 5. **Битые feedback-заметки spec-writer/upd-parser:** создать реальные memory/*.md ИЛИ заинлайнить правила S/J/I/R в SKILL.md?
-6. **Обезличивание перед push:** заменить К-7/ИНН/шифр на плейсхолдеры сейчас ИЛИ в момент коммита?
+6. **Обезличивание перед push:** заменить <организация>/ИНН/шифр на плейсхолдеры сейчас ИЛИ в момент коммита?

@@ -222,7 +222,7 @@ heights из реального КП ЛС АХП v7).
 
 После 22+ итераций (<организация> АХП 16 + ЛС АХП 6) возникло подозрение что
 EasyOCR — источник нестабильности bbox и корень всех bug'ов с позицией.
-Запущен harvest (см. `session-reports/2026-05-20_k7-base-audit/harvested/
+Запущен harvest (см. `session-reports/2026-05-20_base-audit/harvested/
 scan-text-replace-alternatives.md`) — 5 кандидатов из 3 категорий.
 
 ### Эмпирический benchmark на КП ЛС АХП page3.png
@@ -282,4 +282,4 @@ OCR-движок даёт **diminishing returns** или, как в случае
 - `SKILL.md` — описание скилла
 - `ROADMAP-heavy-options.md` — другие подходы (CNN style transfer и др.)
 - `~/.claude/evals/test_image_text_replace.py` — regression-тесты
-- `~/.claude/session-reports/2026-05-20_k7-base-audit/harvested/scan-text-replace-alternatives.md` — полный отчёт harvest 5 кандидатов
+- `~/.claude/session-reports/2026-05-20_base-audit/harvested/scan-text-replace-alternatives.md` — полный отчёт harvest 5 кандидатов

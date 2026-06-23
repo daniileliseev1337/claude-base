@@ -50,11 +50,11 @@
   В этой сессии искать pdf/docx/xlsx skills на skills.sh + ComfyUI кластер (runcomfy,
   173K installs — проверить local vs cloud).
 - **Firecrawl** self-host — до конкретного кейса (тяжёлый JS/антиботы/краулинг).
-- **Qwen** cross-model review — где запускать (сервер К-7 с GPU? см. backlog).
+- **Qwen** cross-model review — где запускать (сервер <организация> с GPU? см. backlog).
 - **tools/ миграция** skills (инкрементально), **MCP cleanup** (adeu 0%, мусорные connectors).
 
 ## Открытые вопросы
-- Сервер К-7 — есть ли GPU? (решает Qwen локальный + Firecrawl self-host).
+- Сервер <организация> — есть ли GPU? (решает Qwen локальный + Firecrawl self-host).
 - domain-grilling — пороги/триггеры после теста (Skill Creator Eval).
 
 ## Ключевые факты для нового чата

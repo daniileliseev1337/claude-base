@@ -114,7 +114,7 @@ tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__excel__get_workbook_m
 По `task_type`:
 - ВОР → `.xlsx` по эталону / стандартной форме (если эталона нет —
   спросить шаблон у пользователя).
-- Спецификация → `.xlsx` через `spec-writer` skill (см. К-7 стиль).
+- Спецификация → `.xlsx` через `spec-writer` skill (см. <организация> стиль).
 - Пояснительная → `.docx` через `word-helper` skill.
 - Разнос материалов → `.xlsx` с разбивкой по позициям ВОР.
 

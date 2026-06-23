@@ -15,7 +15,7 @@ status: resolved (manual push) + open infra question
    синхронна. Per-machine: Exa MCP ✓, Codex CLI нет (опц.), Inkscape нет (надо доставить).
 2. В `git status` (первый прогон обрезал на `head -3`) заметил untracked session-reports.
    На вопрос пользователя про push — снял **полный** список: **15 untracked-папок**, не 4.
-3. **Главная находка:** 7 отчётов ПНР+ВОР Сит-Центра (+handoff) лежали локально и
+3. **Главная находка:** 7 отчётов ПНР+ВОР <объект-A>а (+handoff) лежали локально и
    **никогда не пушились**. Причина — не баг hook'а, а **дизайн consumer-режима**:
    ПК без `.developer-marker`; auto-push в consumer гоняет только feedback-collector,
    а session-reports в main **намеренно не коммитит** (CLAUDE.md «Consumer → НЕ

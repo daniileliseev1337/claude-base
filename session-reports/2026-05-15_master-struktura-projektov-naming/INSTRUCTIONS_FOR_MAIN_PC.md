@@ -139,8 +139,8 @@ Auto-classifier Claude Code блокирует прямое скачивание
 | `build_structure_diagram.py` | Графовая структурная схема через matplotlib+networkx |
 | `render_dxf_preview.py` | Превью DXF в PNG/SVG (matplotlib backend ezdxf) |
 | `test_paddleocr_pdf.py` | Извлечение текста из PDF в кривых через pypdfium2+PaddleOCR |
-| `Перенаименование_шкафов_ПСИ-158.xlsx` | П-таблица (43 шкафа, Л2) |
-| `Шкафы_ПСИ-158_v2_5сетей.xlsx` | Р-таблица (200 шкафов, 5 сетей МИС/СБ/ОП/СОТ/СВН) |
+| `Перенаименование_шкафов_<шифр-чертежа>.xlsx` | П-таблица (43 шкафа, Л2) |
+| `Шкафы_<шифр-чертежа>_v2_5сетей.xlsx` | Р-таблица (200 шкафов, 5 сетей МИС/СБ/ОП/СОТ/СВН) |
 | `project_master_structure_naming.md` | Методика naming `[Объект]-[Блок]-[Сеть]-[Тип][ЭП]` |
 | `reference_*.md` | Memory-знания (autocad-mcp путь, PDF OCR pipeline) |
 

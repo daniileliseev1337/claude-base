@@ -2,7 +2,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from extract_dxf import list_layers, extract_text_entities, find_stamp
 
-TEST_DXF = "artifacts/2026-04-skills-smoketest/test_drawing.dxf"
+TEST_DXF = "artifacts/smoketest/test_drawing.dxf"
 
 def test_list_layers():
     layers = list_layers(TEST_DXF)
@@ -18,7 +18,7 @@ def test_extract_text_entities_finds_room_label():
 
 def test_find_stamp():
     stamp = find_stamp(TEST_DXF, stamp_layer="stamp")
-    assert stamp.get("project") == "МСУ-1", stamp
+    assert stamp.get("project") == "TEST-1", stamp
     assert stamp.get("drawing_no") == "5", stamp
     print(f"OK: test_find_stamp ({stamp})")
 

@@ -65,7 +65,7 @@
 1. **Огромный context overhead** — 37 skills + 51 agent в каждой сессии.
    На ПК сотрудника-проектировщика это шум.
 2. **Generic SDE focus** — `/ce-strategy` для product roadmap не нужен в
-   «составь спецификацию К-7». Domain mismatch.
+   «составь спецификацию <организация>». Domain mismatch.
 3. **Английский** — конфликт с нашей дисциплиной русского общения
    (CLAUDE.md правило #5).
 4. **Slash-namespace конфликт** — `/ce-brainstorm` параллельно с

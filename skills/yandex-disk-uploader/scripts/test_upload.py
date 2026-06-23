@@ -3,18 +3,18 @@ sys.path.insert(0, os.path.dirname(__file__))
 from upload import resolve_target_path, FileType
 
 def test_resolve_target_path_contract():
-    p = resolve_target_path(project_code="МСУ-1", file_type=FileType.CONTRACT, filename="договор.pdf")
-    assert p == "02_Проекты/МСУ-1/02_Договор/договор.pdf", p
+    p = resolve_target_path(project_code="TEST-1", file_type=FileType.CONTRACT, filename="договор.pdf")
+    assert p == "02_Проекты/TEST-1/02_Договор/договор.pdf", p
     print("OK: test_resolve_target_path_contract")
 
 def test_resolve_target_path_invoice():
-    p = resolve_target_path(project_code="Балашиха", file_type=FileType.INVOICE, filename="счёт_001.pdf")
-    assert p == "02_Проекты/Балашиха/03_Финансы/счёт_001.pdf"
+    p = resolve_target_path(project_code="TEST-2", file_type=FileType.INVOICE, filename="счёт_001.pdf")
+    assert p == "02_Проекты/TEST-2/03_Финансы/счёт_001.pdf"
     print("OK: test_resolve_target_path_invoice")
 
 def test_resolve_target_path_correspondence():
-    p = resolve_target_path(project_code="МСУ-1", file_type=FileType.CORRESPONDENCE, filename="ответ.docx")
-    assert p == "02_Проекты/МСУ-1/02_Договор/05_Переписка/ответ.docx"
+    p = resolve_target_path(project_code="TEST-1", file_type=FileType.CORRESPONDENCE, filename="ответ.docx")
+    assert p == "02_Проекты/TEST-1/02_Договор/05_Переписка/ответ.docx"
     print("OK: test_resolve_target_path_correspondence")
 
 def test_resolve_target_path_unknown_project_raises():

@@ -1,5 +1,5 @@
 ;;; ============================================================================
-;;; acad_lisp_toolkit.lsp  —  K-7 toolkit для autocad-mcp recreation
+;;; acad_lisp_toolkit.lsp  —  <организация> toolkit для autocad-mcp recreation
 ;;; Загрузка: APPLOAD этого файла, либо (load "C:/.../acad_lisp_toolkit.lsp")
 ;;; Состав:
 ;;;   1) Динамические блоки — функции Lee Mac (lee-mac.com, свободно с атрибуцией)

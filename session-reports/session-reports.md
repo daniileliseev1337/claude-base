@@ -22,12 +22,12 @@ tags: [мета, индекс, sessions]
 - [[2026-05-22_team-rollout-and-installer/report|team-rollout-and-installer]] — раскатка команды + Installer actualization + research.
 - [[2026-05-21_vendors-xlsx-full-build/report|vendors-xlsx-full-build]] — Vendors.xlsx — полный build за одну сессию.
 - [[2026-05-21_sync-redesign/design|sync-redesign]] — Phase 2 sync-redesign (Developer/Consumer hub-and-spoke, CHANGELOG notification). `design.md` + `phase2-followup-feedback-setup.md`, без сводного report.md.
-- [[2026-05-21_lekciya-claude-dlya-komandy/report|lekciya-claude-dlya-komandy]] — подготовка вводной лекции о Claude для коллектива К-7.
+- [[2026-05-21_lekciya-claude-dlya-komandy/report|lekciya-claude-dlya-komandy]] — подготовка вводной лекции о Claude для коллектива <организация>.
 - [[2026-05-21_acad-mcp-hovs-tables/report|acad-mcp-hovs-tables]] — тестирование AutoCAD MCP + заполнение таблиц ХОВС конд/вент.
 - [[2026-05-20_setup-extras-bom-and-models/report|setup-extras-bom-and-models]] — setup-extras Stage 8: BOM-fix, HF token, SD download, диагностика git+proxy.
 - [[2026-05-20_kp-ls-ahp-modify-+15/report|kp-ls-ahp-modify-+15]] — КП ЛС АХП.pdf, +15% на стр. 3 (детальный отчёт за сессию).
 - `2026-05-20_kp-ls-ahp-plus15/` — артефакты без сводного report.md (см. `artifacts/`).
-- `2026-05-20_k7-base-audit/` — harvest-заметки без report.md (см. `harvested/`).
+- `2026-05-20_base-audit/` — harvest-заметки без report.md (см. `harvested/`).
 - `2026-05-20_ahp-balashiha-pz/` — harvest-заметки без report.md (см. `harvested/`).
 - [[2026-05-19_image-text-replace-v3-production/report|image-text-replace-v3-production]] — production v3.0 + scan-aware PDF routing.
 - [[2026-05-18_arm-sech-pdf-to-xlsx/report|arm-sech-pdf-to-xlsx]] — PDF→Excel pipeline для армирования сечений (Daniil на R-090226727A).

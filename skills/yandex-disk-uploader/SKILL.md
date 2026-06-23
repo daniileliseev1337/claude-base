@@ -38,7 +38,7 @@ from upload import upload_file, resolve_target_path, FileType, load_credentials
 user, password = load_credentials()
 
 target = resolve_target_path(
-    project_code="МСУ-1",
+    project_code="<проект>",
     file_type=FileType.CORRESPONDENCE,
     filename="2026-04-27-ответ-про-оплату.docx"
 )

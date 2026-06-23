@@ -26,7 +26,7 @@
   на задачах команды.
 - Subjective сигнал от пользователя: «по ощущениям не работает ни у кого,
   результат плохой когда подобные задачи были».
-- Image/video generation у К-7 **фактически не покрыто** — это дыра, не
+- Image/video generation у <организация> **фактически не покрыто** — это дыра, не
   «80% уже закрыто».
 - **Замена/дополнение**: Higgsfield (Veo + Soul + 30 моделей).
 - **Открытый вопрос**: работают ли Adobe MCP **editing** инструменты
@@ -56,5 +56,5 @@
   (WebFetch fail — кейс 1)
 - `~/.claude/session-reports/2026-06-01_harvest-9-cc-plugins/harvested/04-higgsfield.md`
   (Adobe Firefly fail — кейс 2)
-- `~/.claude/memory/reference_licenses_k7.md`
+- `~/.claude/memory/reference_licenses.md`
   (договорённости по AGPL)

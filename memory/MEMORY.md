@@ -20,7 +20,7 @@ tags: [мета, индекс, memory]
 - [[feedback_webfetch_reality_check]] — «уже есть» ≠ «работает». WebFetch (80-90% fail) и Adobe Firefly не работают на наших задачах; не списывать новый инструмент через «у нас уже есть X» без верификации. Источник — harvest 9 плагинов 2026-06-01.
 - [[feedback_web_doc_fetch_browser_antibot]] — добывание документов (паспорта/СС/datasheet) под антиботом: на 401/403 НЕ сдаваться, эскалация на реальный браузер `playwright` (открыть карточку → прямая CDN-ссылка → скачать). Приёмы поиска: B2B-поставщики, товарный запрос, watermark=источник. Приёмы, не жёсткие правила. Источник — docs-каскад ИД (кейс LUNDA) 2026-06-09.
 - [[feedback_cloud_tools_consent]] — для cloud-инструментов (Codex/Exa/Firecrawl/Higgsfield) consent-prompt в моменте (информированно), не жёсткий запрет обезличивания. Источник — harvest 9 плагинов 2026-06-01.
-- [[reference_licenses_k7]] — договорённости К-7 по лицензиям (AGPL Firecrawl не блокер при условии не-распространения за пределы К-7/смежных). Источник — harvest 9 плагинов 2026-06-01.
+- [[reference_licenses]] — договорённости <организация> по лицензиям (AGPL Firecrawl не блокер при условии не-распространения за пределы <организация>/смежных). Источник — harvest 9 плагинов 2026-06-01.
 - [[feedback_tool_sandbox_isolation]] — per-machine установки (npm -g, pip) через мои tool-команды идут в изолированное окружение, НЕ на реальный ПК. Давать команды для ручного запуска, не заявлять «установил». Источник — codex CLI кейс 2026-06-01.
 - [[2026-05-14_session-report-policy]] — обязательность session-report'а каждой сессии, формат.
 - [[2026-05-15_extras-distribution-mechanism]] — manifest + setup-extras + Install.ps1 Stage 8 архитектура распространения Python/MCP стека.
@@ -30,10 +30,10 @@ tags: [мета, индекс, memory]
 
 ### Архитектурные backlog'и (из аудитов чужих баз)
 
-- [[project_designer_decomposition]] — backlog stage-decomposition агента `designer` по pattern К-7 (S1→S2→S3→S4). Не активировать пока нет реального триггера. Источник — аудит К-7 от 2026-05-20.
-- [[backlog_promptfoo_semantic_tests]] — backlog promptfoo для семантических тестов LLM-агентов. Триггер — потребность тестировать вывод designer/word-checker на эталонах. Сейчас покрытие через pytest (см. `~/.claude/evals/`). Источник — аудит К-7 от 2026-05-20.
-- [[backlog_teammate_mode_tmux]] — backlog teammateMode tmux + AGENT_TEAMS (4.7 из roadmap'а). tmux отсутствует на Windows DANIILPC + env-правки требуют явного согласия. Альтернатива — `teammateMode: in-process`. Источник — аудит К-7 от 2026-05-20.
-- [[rd_plugins_test_plan]] — R&D test plan для свежеустановленных плагинов superpowers и claude-md-management (4.6, 4.8). Активны после перезапуска Claude Code. Источник — аудит К-7 от 2026-05-20.
+- [[project_designer_decomposition]] — backlog stage-decomposition агента `designer` по pattern <организация> (S1→S2→S3→S4). Не активировать пока нет реального триггера. Источник — аудит <организация> от 2026-05-20.
+- [[backlog_promptfoo_semantic_tests]] — backlog promptfoo для семантических тестов LLM-агентов. Триггер — потребность тестировать вывод designer/word-checker на эталонах. Сейчас покрытие через pytest (см. `~/.claude/evals/`). Источник — аудит <организация> от 2026-05-20.
+- [[backlog_teammate_mode_tmux]] — backlog teammateMode tmux + AGENT_TEAMS (4.7 из roadmap'а). tmux отсутствует на Windows DANIILPC + env-правки требуют явного согласия. Альтернатива — `teammateMode: in-process`. Источник — аудит <организация> от 2026-05-20.
+- [[rd_plugins_test_plan]] — R&D test plan для свежеустановленных плагинов superpowers и claude-md-management (4.6, 4.8). Активны после перезапуска Claude Code. Источник — аудит <организация> от 2026-05-20.
 - [[backlog_tools_layer_migration]] — миграция скриптов skills в слой `tools/` по Правилу 2 (skill-development). Инкрементально при касании, НЕ массовый рефактор. Источник — внедрение 4 правил Anthropic 2026-06-01.
 - [[backlog_cross_model_review_rf]] — cross-model review на РФ-доступной модели (Codex отпал — ChatGPT геоблок РФ). Кандидаты: GigaChat/YandexGPT (приватность) / DeepSeek/Qwen. Источник — harvest #6 2026-06-01.
 
@@ -55,7 +55,7 @@ tags: [мета, индекс, memory]
 
 - [[2026-05-07-pnr-ventilation]] — пуско-наладка вентиляции.
 - [[2026-05-08_pnr-cooling-9vs8]] — пуско-наладка холодоснабжения, кейс «9 vs 8 единиц».
-- [[reference_pyrevit_k7]] — PyRevit-плагины К-7 (IronPython + Revit .NET API): ловушки
+- [[reference_pyrevit]] — PyRevit-плагины <организация> (IronPython + Revit .NET API): ловушки
   WorksetTable/транзакций/фаз, генерация иконок. Новый домен (с 2026-05-28).
 - [[reference_av_multimedia]] — AV/мультимедиа-инсталляции (музеи/интерактив): шаблон ФТ,
   бренды, ловушка «цены не по памяти → harvest». Новый домен MSI-ZAHAROV (с 2026-05-20).

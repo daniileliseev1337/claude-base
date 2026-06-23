@@ -84,7 +84,7 @@ adversarial verify), **research** (мульти-поиск → синтез), **
 - `base-audit` — аудит claude-base фан-аутом (агенты/скиллы/memory/mojibake/индексы). Уже
   доказал пользу 2026-06-04 (делалось руками одним агентом).
 - `review-rd-komplekt` — ревью комплекта РД по разделам: parallel(excel-validator +
-  word-checker + norm-lookup) на каждый раздел. Кейс — серия ПНР+ВОР Сит-Центр (15 разделов).
+  word-checker + norm-lookup) на каждый раздел. Кейс — серия ПНР+ВОР <объект-A> (15 разделов).
 - `batch-akty-reformat` — pipeline переформата N актов (см. [[reference_docx_table_reformat]]).
 - `feedback-harvest` — параллельное чтение пачки feedback-отчётов → сводка кандидатов
   (делалось руками в этой сессии несколько раз).

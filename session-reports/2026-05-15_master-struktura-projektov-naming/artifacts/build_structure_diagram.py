@@ -1,6 +1,6 @@
 """
-Построение структурной схемы ЛВС ПСИ-158 (200 шкафов, 5 сетей)
-на основе xlsx Шкафы_ПСИ-158_v2_5сетей.xlsx
+Построение структурной схемы ЛВС <шифр-чертежа> (200 шкафов, 5 сетей)
+на основе xlsx Шкафы_<шифр-чертежа>_v2_5сетей.xlsx
 """
 import math
 from pathlib import Path
@@ -11,9 +11,9 @@ import matplotlib.patches as mpatches
 import networkx as nx
 
 BASE = Path(r"C:\Users\Deliseev\Desktop\Здадчака")
-XLSX = BASE / "Шкафы_ПСИ-158_v2_5сетей.xlsx"
-OUT_PNG = BASE / "Структурная_схема_ПСИ-158_v2.png"
-OUT_SVG = BASE / "Структурная_схема_ПСИ-158_v2.svg"
+XLSX = BASE / "Шкафы_<шифр-чертежа>_v2_5сетей.xlsx"
+OUT_PNG = BASE / "Структурная_схема_<шифр-чертежа>_v2.png"
+OUT_SVG = BASE / "Структурная_схема_<шифр-чертежа>_v2.svg"
 
 NET_COLORS = {
     "МИС": "#1F77B4",
@@ -182,8 +182,8 @@ ax.legend(handles=legend_handles, loc="upper left",
           fontsize=13, title="Сети", title_fontsize=15)
 
 ax.set_title(
-    "Структурная схема ЛВС ПСИ-158 — 200 шкафов в 5 сетях\n"
-    "(автогенерация из Шкафы_ПСИ-158_v2_5сетей.xlsx)",
+    "Структурная схема ЛВС <шифр-чертежа> — 200 шкафов в 5 сетях\n"
+    "(автогенерация из Шкафы_<шифр-чертежа>_v2_5сетей.xlsx)",
     fontsize=22,
 )
 ax.axis("off")

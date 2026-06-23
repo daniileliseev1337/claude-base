@@ -50,7 +50,7 @@
 
 ## Pending (решается в отдельных сессиях)
 - 🔥 **Word/PDF косяки** + **Higgsfield/ComfyUI** (image/video) — отдельная сессия
-- **Firecrawl self-host** — требует сервер К-7 + docker (Фаза 1, инфра-задача)
+- **Firecrawl self-host** — требует сервер <организация> + docker (Фаза 1, инфра-задача)
 - **domain-grilling раскат** — после теста через Skill Creator Eval
 - **Exa user scope** — сейчас local на developer-ПК; для постоянного
   использования в разных папках перевести в user scope

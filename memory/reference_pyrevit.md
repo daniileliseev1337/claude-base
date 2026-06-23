@@ -9,10 +9,10 @@ related:
   - [[rd_plugins_test_plan]]
 ---
 
-# PyRevit-плагины К-7 (IronPython + Revit .NET API) — новый домен
+# PyRevit-плагины <организация> (IronPython + Revit .NET API) — новый домен
 
 Загружать по триггерам: «PyRevit», «скрипт Revit», «pushbutton/pulldown», «Revit
-API», «workset/рабочий набор», «IronPython», правка `.extension` К-7.
+API», «workset/рабочий набор», «IronPython», правка `.extension` <организация>.
 
 ## Статус домена
 
@@ -59,7 +59,7 @@ API», «workset/рабочий набор», «IronPython», правка `.ext
 ## Генерация иконок для кнопок (pushbutton/pulldown)
 
 - Pillow: рисовать на холсте 96×96, `LANCZOS` downscale → 32×32, фон прозрачный.
-- Палитра К-7: `DARK = (7, 30, 34)`, `ORANGE = (252, 73, 18)`.
+- Палитра <организация>: `DARK = (40, 40, 40)`, `ORANGE = (255, 120, 0)`.
 - `icon.png` кладётся в папку каждого `.pushbutton` / `.pulldown`.
 
 ## Структура расширения
@@ -77,5 +77,5 @@ API», «workset/рабочий набор», «IronPython», правка `.ext
 
 ## Источник
 
-feedback `2026-05-28_k7-pyrevit-fixes-docs` от R-090226731A (16 багфиксов за 2 сессии,
+feedback `2026-05-28_pyrevit-fixes-docs` от R-090226731A (16 багфиксов за 2 сессии,
 6 итераций отчёта).

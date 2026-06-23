@@ -236,13 +236,13 @@ for key, value in expected_values.items():
 
 ## Фирменный шаблон письма
 
-В `templates/k7_letter_template.docx` лежит фирменный бланк <организация> с реквизитами (адрес, ИНН, ОГРН, контакты). Использовать для деловых писем от компании.
+В `templates/org_letter_template.docx` лежит фирменный бланк <организация> с реквизитами (адрес, ИНН, ОГРН, контакты). Использовать для деловых писем от компании.
 
 ```python
 from docxtpl import DocxTemplate
 from pathlib import Path
 
-tpl_path = Path.home() / ".claude/skills/word-helper/templates/k7_letter_template.docx"
+tpl_path = Path.home() / ".claude/skills/word-helper/templates/org_letter_template.docx"
 tpl = DocxTemplate(str(tpl_path))
 tpl.render({
     "recipient": "<организация-получатель>",

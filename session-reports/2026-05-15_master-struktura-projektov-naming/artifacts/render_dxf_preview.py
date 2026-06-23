@@ -6,9 +6,9 @@ from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 import matplotlib.pyplot as plt
 
 BASE = Path(r"C:\Users\Deliseev\Desktop\Здадчака")
-DXF = BASE / "Структурная_схема_ПСИ-158_v2.dxf"
-PNG = BASE / "Структурная_схема_ПСИ-158_v2_DXF.png"
-SVG = BASE / "Структурная_схема_ПСИ-158_v2_DXF.svg"
+DXF = BASE / "Структурная_схема_<шифр-чертежа>_v2.dxf"
+PNG = BASE / "Структурная_схема_<шифр-чертежа>_v2_DXF.png"
+SVG = BASE / "Структурная_схема_<шифр-чертежа>_v2_DXF.svg"
 
 doc = ezdxf.readfile(DXF)
 msp = doc.modelspace()

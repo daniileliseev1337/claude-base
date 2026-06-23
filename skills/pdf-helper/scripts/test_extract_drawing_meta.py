@@ -22,7 +22,7 @@ def test_find_stamp_data_returns_dict():
     """Стамп должен вернуть dict с ключами project, drawing_no, scale (или None)."""
     blocks = [
         {"text": "ООО <организация>", "bbox": (450, 50, 550, 65)},
-        {"text": "Проект: МСУ-1", "bbox": (450, 70, 580, 85)},
+        {"text": "Проект: TEST-1", "bbox": (450, 70, 580, 85)},
         {"text": "Лист: 5", "bbox": (450, 100, 500, 115)},
     ]
     stamp = find_stamp_data(blocks, page_size=(595, 842))
