@@ -6,6 +6,70 @@ Load this only when the user passed `--update` or `--cluster-only`. A first-time
 
 Use when you've added or modified files since the last run. Only re-extracts changed files - saves tokens and time.
 
+> ### ⚠ Windows hub / claude-base (DANIIL-LAPTOP) — use the deterministic helper
+>
+> On a Windows hub with a Cyrillic install path (`C:\Users\Даниил\.claude`), the
+> generic flow below silently corrupts the graph. Five traps (source:
+> `memory/graphify_update_windows_traps.md` + the build_merge analysis in
+> `session-reports/2026-06-23_graf-dovodka-bazy`):
+>
+> 1. **scan path** — `.graphify_root` stores a POSIX `/c/Users/...` path; Windows-Python
+>    can't resolve it → `detect_incremental` finds **0 files** → everything is flagged
+>    *deleted*. Needs a native `C:/Users/...` path.
+> 2. **encoding** — cp1251 console mangles Cyrillic in `print()` (`Даниил`→`������`).
+>    Always `PYTHONIOENCODING=utf-8 PYTHONUTF8=1`.
+> 3. **source_file** — extraction subagents sometimes park the path in `source_location`
+>    and leave `source_file:null` → orphan nodes, 300+ "missing source_file" warnings.
+> 4. **build_merge prunes new nodes too** — `graphify.build.build_merge` does
+>    `build(old + new)` and **then** prunes by `source_file` on the *combined* graph, so
+>    `prune_sources=[changed_file]` deletes the **freshly re-extracted** nodes of that
+>    changed file, not just the stale ones. The changed file's update vanishes. (This is
+>    why the generic flow's `prune = deleted + changed` is wrong for *changed* files, and
+>    why a hand-run controlled rebuild was needed last time.)
+> 5. **commit stamp** — the generic Step 4 `to_json()` never stamps `built_at_commit`, so
+>    the `graph-staleness-check.ps1` hook stays red after a by-the-book rebuild.
+>
+> **Helper:** `skills/graphify/tools/graph_update_win.py` (subcommands `detect` / `merge`
+> / `finalize`) encodes all five. The deterministic glue is in the script; the LLM
+> extraction (Step 3B subagents) still runs between `detect` and `merge`.
+>
+> **Flow (run from `~/.claude`, the dir holding `graphify-out/`):**
+> ```bash
+> PY=$(cat graphify-out/.graphify_python | tr -d '\r' | tr '\\' '/')
+> # 1. detect — native path + utf-8 (traps #1,#2). Writes incremental + detect JSON.
+> PYTHONIOENCODING=utf-8 PYTHONUTF8=1 "$PY" skills/graphify/tools/graph_update_win.py detect
+> #    (reads .graphify_root and coerces /c/->C:/; pass --root C:/Users/.../.claude to override)
+> ```
+> 2. **Extraction (Step 3 of SKILL.md):** read `.graphify_detect.json` (`files` = changed
+>    subset). If `code_only` was printed `True`, run only AST (Part A). Otherwise dispatch
+>    Step 3B subagents (`subagent_type="general-purpose"`, **model — ask the user**, last
+>    time sonnet) over the changed files → chunks → Part C merge into `.graphify_extract.json`.
+> ```bash
+> # 3. merge — manual controlled merge: prune ONLY old, layer new on top (traps #3,#4).
+> PYTHONIOENCODING=utf-8 PYTHONUTF8=1 "$PY" skills/graphify/tools/graph_update_win.py merge
+> # 4. finalize — build/cluster/report + to_json(built_at_commit=HEAD) (trap #5).
+> #    Default refuses on net node loss; re-run with --force only if the loss is verified.
+> PYTHONIOENCODING=utf-8 PYTHONUTF8=1 "$PY" skills/graphify/tools/graph_update_win.py finalize
+> ```
+> 5. Then **Step 5** (label communities — reads `.graphify_analysis.json`), **Step 6**
+>    (HTML viz), **Step 9** (manifest already saved by `merge`; do the cleanup + report).
+>
+> **Commit order matters (trap #5).** `built_at_commit` must equal a commit that already
+> contains the structural edits, or the hook re-reds immediately. `graphify-out/` is **not**
+> a structural path, so commit it separately and last:
+> ```bash
+> git add agents skills memory blocks chains CLAUDE.md mcp-manifest.json  # structural edits
+> git commit -m "..."                                                     # structural commit
+> HEAD=$(git rev-parse --short HEAD)                                      # capture AFTER it
+> #   → run detect/extract/merge, then: finalize --commit "$HEAD"
+> git add graphify-out && git commit -m "graphify: rebuild graph"         # non-structural, won't re-stale
+> ```
+>
+> The generic flow below is the upstream POSIX / single-source-format path — keep it for
+> other projects, but on the claude-base Windows hub prefer the helper above.
+
+### Generic flow (POSIX / single-format projects)
+
 ```bash
 $(cat graphify-out/.graphify_python) -c "
 import sys, json

@@ -401,7 +401,7 @@ print(f'Merged: {total} nodes, {edges} edges ({len(ast[\"nodes\"])} AST + {len(s
 ```bash
 mkdir -p graphify-out
 $(cat graphify-out/.graphify_python) -c "
-import sys, json
+import sys, json, subprocess
 from graphify.build import build_from_json
 from graphify.cluster import cluster, score_all
 from graphify.analyze import god_nodes, surprising_connections, suggest_questions
@@ -411,6 +411,15 @@ from pathlib import Path
 
 extraction = json.loads(Path('graphify-out/.graphify_extract.json').read_text(encoding=\"utf-8\"))
 detection  = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encoding=\"utf-8\"))
+
+# Stamp built_at_commit so staleness checks (e.g. graph-staleness-check.ps1) can
+# tell whether the graph lags HEAD. None for non-git corpora. NOTE: this captures
+# the CURRENT HEAD — commit structural edits BEFORE rebuilding, else the stamp
+# names a commit that predates them and the graph reads stale immediately.
+try:
+    _commit = subprocess.run(['git','rev-parse','--short','HEAD'], capture_output=True, text=True).stdout.strip() or None
+except Exception:
+    _commit = None
 
 G = build_from_json(extraction)
 communities = cluster(G)
@@ -424,7 +433,7 @@ questions = suggest_questions(G, communities, labels)
 
 report = generate(G, communities, cohesion, labels, gods, surprises, detection, tokens, '.', suggested_questions=questions)
 Path('graphify-out/GRAPH_REPORT.md').write_text(report, encoding=\"utf-8\")
-to_json(G, communities, 'graphify-out/graph.json')
+to_json(G, communities, 'graphify-out/graph.json', built_at_commit=_commit)
 
 analysis = {
     'communities': {str(k): v for k, v in communities.items()},
@@ -609,6 +618,13 @@ fi
 
 Both are non-default subcommands. `--update` re-extracts only new or changed files; `--cluster-only` reruns clustering on the existing graph. See `references/update.md` for both flows.
 
+> **Windows hub / claude-base:** on a Windows host with a Cyrillic install path, do NOT
+> hand-run the generic `--update` blocks — they hit five traps (native path, encoding,
+> `source_file`/`source_location`, `build_merge` pruning re-extracted nodes, and the
+> `built_at_commit` stamp). Use the deterministic helper `tools/graph_update_win.py`
+> (`detect` → subagents → `merge` → `finalize`); the Windows callout at the top of
+> `references/update.md` has the full flow and the required commit order.
+
 ---
 
 ## For /graphify query
@@ -636,6 +652,26 @@ Neither is part of the default build. When the user runs `/graphify add <url>` t
 When the user asks to install the post-commit auto-rebuild hook or wire graphify into a project's CLAUDE.md, see `references/hooks.md`.
 
 ---
+
+## Tools
+
+`tools/graph_update_win.py` — deterministic backbone for `graphify --update` on a Windows
+hub with a Cyrillic install path (claude-base / DANIIL-LAPTOP). The LLM extraction (Step 3B
+subagents) still runs between its subcommands; the script only does the deterministic glue
+that the generic flow gets wrong on Windows. Run from the dir holding `graphify-out/`, always
+with `PYTHONIOENCODING=utf-8 PYTHONUTF8=1`.
+
+- `detect [--root <path>]` — native-path (`/c/…`→`C:/…`) `detect_incremental` → writes
+  `.graphify_incremental.json` + `.graphify_detect.json`; prints `code_only`.
+- `merge [--marker <dir>]` — normalizes `source_file` (recovers paths misfiled into
+  `source_location`, relativizes absolutes), then a **manual** controlled merge: prunes only
+  the *old* graph by the changed/deleted set and layers new extraction on top (new wins on id
+  collision). Avoids `build_merge`, which would prune the re-extracted nodes too.
+- `finalize [--commit <sha>] [--force]` — build → cluster → report → `to_json` stamping
+  `built_at_commit` (default short HEAD). Refuses on net node loss unless `--force`.
+
+Full flow and the required commit order: the Windows callout at the top of
+`references/update.md`. Rationale: `memory/graphify_update_windows_traps.md`.
 
 ## Honesty Rules
 
