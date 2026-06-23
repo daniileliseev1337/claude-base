@@ -36,8 +36,11 @@ playwright использует ЛОКАЛЬНЫЙ браузер (Chromium/Chro
   нейтральный сайт открывается мгновенно → это гео-блок страницы, инструмент исправен; about:blank же =
   pending-докачка/прокси-env, не гео. Проверено вживую 2026-06-23 (DANIILPC, egress=Дубай AS13335): playwright +
   `pub.fsa.gov.ru/rss/certificate` = ERR_TIMED_OUT; curl с того же egress = `HTTP 000` (25с timeout); а
-  `example.com` через playwright = OK. Вывод: локальный playwright на иностранном egress для госсайта бесполезен
-  даже на ОТКРЫТИЕ страницы — нужен RU-exit (`--proxy-server=socks5://<RU>` / ScrapingAnt).
+  `example.com` через playwright = OK. Вывод: ГОЛОЙ playwright (без RU-proxy) на иностранном egress росс. госсайт
+  не откроет. НО это НЕ «сайт недоступен»: СТРАНИЦУ pub.fsa с того же Дубай-egress `ru_fetch.py` берёт за
+  `HTTP 200` (RU-SOCKS5, проверено тут же 2026-06-23) — голый playwright не годится из-за отсутствия RU-proxy,
+  а не из-за недоступности. Канал для СТРАНИЦ/PDF — `ru_fetch.py`; playwright+`--proxy-server=socks5://<RU>` —
+  только для DATA-слоя (SPA-поиск), который curl/ru_fetch не возьмёт.
 - ЧИТАТЬ росс. страницу в (b)/(c) → `exa` / `firecrawl` / `r.jina` (облачные, ходят СВОИМ каналом). Это
   «посмотреть глазами» вместо playwright-скриншота.
 - СКАЧАТЬ файл: (a)/(b) → `curl --noproxy "*"` (рос. B2B 200); (c) → --noproxy НЕ берёт росс. → качать
