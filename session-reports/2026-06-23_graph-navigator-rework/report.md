@@ -58,10 +58,11 @@ expertiza-responder, «составить смету КС-2»→сметчик, 
 - Свежесть лучше держать через SessionStart-rebuild (0 токенов) чем через нытьё «пересобери».
 
 ## Остаётся / follow-up
-- **Портативность скелета на консьюмеры без пакета `graphifyy`:** skeleton_build импортирует
-  graphify.build/cluster/export. Если у консьюмера нет пакета — хук тихо не пересоберёт, query
-  упадёт на committed graph.json. graphify ставится через sync-base, так что обычно ОК; для
-  100% — сделать skeleton_build dependency-free (писать node-link стдлибом). #1 hardening.
+- ~~#1 портативность скелета без `graphifyy`~~ **СДЕЛАНО (эта сессия):** skeleton_build пишет
+  node-link стдлибом, 0 импортов graphify/yaml. Доказано голым Python3.12 без graphifyy
+  (160 узлов/779 рёбер собраны + query отработал). Навигатор строится на любом ПК с python.
+  Распространение автоматическое: auto-pull → git pull + merge-shared-settings (мёржит hooks).
+  Осталось — слепой тест на реальном консьюмере (рабочий ПК пользователя).
 - 5 MINOR из реестра 41 (yandex-disk RU-триггеры, domain-grilling tooling, сирота
   feedback_manual_procedure_verbatim, local-osint-recon, verify-base «К-7») — батч-сессия.
 - Английские описания (graphify-скилл) не матчат RU-запрос — мелочь (CLAUDE.md-правило покрывает).
