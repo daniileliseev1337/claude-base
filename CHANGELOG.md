@@ -303,9 +303,9 @@ Code) — один раз запустить шифрование PAT:
 
 ---
 
-## 2026-05-20 — Импорт из К-7 audit
+## 2026-05-20 — Импорт из <организация> audit
 
-- Audit чужой базы К-7 (агенты) — отчёт `~/Desktop/K-7_audit_report.docx`
+- Audit чужой базы <организация> (агенты) — отчёт `~/Desktop/<организация>_audit_report.docx`
 - GH-600 study guide на русском — `~/Desktop/GH-600_study_guide_ru.docx`
 - chains/ создан как first-class сущность оркестратора
 - karpathy-guidelines §4 расширен — verify-criteria для делегаций

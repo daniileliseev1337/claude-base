@@ -3967,7 +3967,7 @@
       "captured_at": "2026-06-22",
       "author": "Daniil",
       "contributor": null,
-      "rationale": "Domain code agent for pyRevit extensions K-7: IronPython 2.7 + Revit .NET API; bugfixes, new pushbuttons/pulldowns, icon generation (Pillow), documentation; live model via MCP Revit-Connector; known API traps (transactions, static .NET methods, phases, worksets)",
+      "rationale": "Domain code agent for pyRevit extensions <организация>: IronPython 2.7 + Revit .NET API; bugfixes, new pushbuttons/pulldowns, icon generation (Pillow), documentation; live model via MCP Revit-Connector; known API traps (transactions, static .NET methods, phases, worksets)",
       "id": "agents_pyrevit_engineer_md",
       "community": 2,
       "norm_label": "agents/pyrevit-engineer.md"
