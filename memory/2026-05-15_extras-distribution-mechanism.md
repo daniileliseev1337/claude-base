@@ -1,7 +1,7 @@
 # Кейс: механизм распространения extras (MCP + Python pkgs) через manifest
 
 **Дата:** 2026-05-15
-**Контекст:** После handoff Daniil-а с DELISEEV-PC (autocad-mcp +
+**Контекст:** После handoff Daniil-а с <ПК-разработчика> (autocad-mcp +
 Python-stack из 7 пакетов) пользователь запросил «чтобы это
 автоматически подтягивалось через auto-sync на все ПК». Я сделал
 push back и предложил гибрид «manifest + ручной запуск с

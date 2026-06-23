@@ -34,7 +34,7 @@ VPS-прокси.
 
 ### Шаг 3 — Логи дали финальное доказательство
 
-После tail 300 main.log на DELISEEV-PC увидел:
+После tail 300 main.log на <ПК-разработчика> увидел:
 ```
 [warn] Blocked redirect to disallowed URL
 { href: 'https://www.anthropic.com/app-unavailable-in-region' }
@@ -44,7 +44,7 @@ VPS-прокси.
 
 ---
 
-## Цитаты из лога DELISEEV-PC (2026-05-26 15:23:20)
+## Цитаты из лога <ПК-разработчика> (2026-05-26 15:23:20)
 
 ```
 [warn] Blocked redirect to disallowed URL
@@ -114,7 +114,7 @@ GrowthBook (A/B config) **получает HTML** вместо JSON → знач
 - Auth token уже получен (один раз через VPN).
 - Дальнейшие API запросы идут с уже валидным token.
 
-**Проверять** на DELISEEV-PC отдельно.
+**Проверять** на <ПК-разработчика> отдельно.
 
 ### Вариант D — API ключ напрямую (без UI)
 
@@ -178,7 +178,7 @@ GrowthBook (A/B config) **получает HTML** вместо JSON → знач
 
 ## Источник
 
-Сессия 2026-05-26 «Team rollout + рефакторинг базы». DELISEEV-PC лог:
+Сессия 2026-05-26 «Team rollout + рефакторинг базы». <ПК-разработчика> лог:
 `%APPDATA%\Claude\logs\main.log` (2026-05-26 15:23:20).
 
 
@@ -192,7 +192,7 @@ GrowthBook (A/B config) **получает HTML** вместо JSON → знач
 **Тест:** на DANIILPC выключили VPN, запустили Claude из MS Store через
 `explorer.exe shell:AppsFolder\Claude_pzs8sxrjxfjjc!Claude`.
 
-**Результат:** **БЕЛЫЙ ЭКРАН** (то же что Direct installer на DELISEEV-PC).
+**Результат:** **БЕЛЫЙ ЭКРАН** (то же что Direct installer на <ПК-разработчика>).
 
 **Вывод:** MS Store не обходит геоблок. Способ установки **не имеет
 значения** — внутри один и тот же `claude.exe`, делает те же сетевые

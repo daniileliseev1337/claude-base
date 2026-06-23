@@ -3,8 +3,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$jsonPath = "C:\Users\Deliseev\.claude\projects\C--Users-Deliseev\2bd085c4-98fd-4f2f-8b40-46162fed05ef\output_table.json"
-$outPath = "C:\Users\Deliseev\Desktop\Было стало П и РД\СКС ЛВС было-стало 2026-05-13.xlsx"
+$jsonPath = "C:\Users\<разработчик>\.claude\projects\C--Users-<разработчик>\2bd085c4-98fd-4f2f-8b40-46162fed05ef\output_table.json"
+$outPath = "C:\Users\<разработчик>\Desktop\Было стало П и РД\СКС ЛВС было-стало 2026-05-13.xlsx"
 $sheetName = "ПДЦ"
 
 # Load data

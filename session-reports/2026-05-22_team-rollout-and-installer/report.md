@@ -8,7 +8,7 @@
 
 ## TL;DR
 
-1. **DELISEEV-PC чинили после merge-conflict** → база актуализирована, feedback flow E2E PASS.
+1. **<ПК-разработчика> чинили после merge-conflict** → база актуализирована, feedback flow E2E PASS.
 2. **PAT permissions bug** в GitHub UI (Repository permissions = 0 → 404 ложным failure) — починили через UI (Contents R+W).
 3. **Флешка для коллег** `D:\ClaudeBase_Update\` — двойной клик → актуализация любого ПК.
 4. **Updater + verify фиксы** (scoped log check, extract failed checks, robust bypass-check, skip pytest on consumer) — 5 коммитов в claude-base.
@@ -18,13 +18,13 @@
 
 ## Что сделано — детально
 
-### A. DELISEEV-PC rescue + E2E feedback flow
+### A. <ПК-разработчика> rescue + E2E feedback flow
 
 - Merge conflict на settings.json: `git restore --staged settings.json` + Phase 1 git pull → база догнала main (10 коммитов).
 - PAT diagnostic через REST API: `USER OK, REPO 404` → root cause = **0 repository permissions** на fine-grained PAT.
 - Fix в GitHub UI: Repository permissions → Contents → Read and write.
-- E2E PASS: branch `feedback/R-090226727A-deliseev` создана, smoke-test файл запушен.
-- На DANIILPC параллельно тоже E2E PASS: branch `feedback/DANIIL-daniileliseev1337`.
+- E2E PASS: branch `feedback/R-090226727A-<разработчик>` создана, smoke-test файл запушен.
+- На DANIILPC параллельно тоже E2E PASS: branch `feedback/DANIIL-<логин>`.
 
 ### B. Флешка `D:\ClaudeBase_Update\`
 
@@ -36,7 +36,7 @@
   4. Copy `.feedback-config.json`
   5. Git identity prompt (если пусто)
   6. Запуск `~/.claude/scripts/Update-ClaudeBase.bat`
-- Тестировано на DELISEEV-PC + рабочем ПК (R-090226727A): PASS после всех fix'ов.
+- Тестировано на <ПК-разработчика> + рабочем ПК (R-090226727A): PASS после всех fix'ов.
 
 ### C. claude-base — 5 коммитов сегодня
 
@@ -129,7 +129,7 @@
 
 ### Repo claude-base-feedback
 
-- 2 ветки feedback: `feedback/DANIIL-daniileliseev1337`, `feedback/R-090226727A-deliseev`
+- 2 ветки feedback: `feedback/DANIIL-<логин>`, `feedback/R-090226727A-<разработчик>`
 - На каждой — smoke-test feedback файлы
 - Compare-баннеры на github (намеренное — архив push'ей)
 

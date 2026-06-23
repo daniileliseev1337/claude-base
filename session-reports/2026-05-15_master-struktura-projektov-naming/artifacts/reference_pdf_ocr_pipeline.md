@@ -18,7 +18,7 @@ Windows-машине пользователя не установлен.
 - **PaddleOCR** (Apache 2.0) — OCR русского+английского без Tesseract. Pip-only,
   без админ-прав.
 
-**Скрипт-эталон:** `C:\Users\Deliseev\Desktop\Здадчака\test_paddleocr_pdf.py`
+**Скрипт-эталон:** `C:\Users\<разработчик>\Desktop\Здадчака\test_paddleocr_pdf.py`
 показал 331 уникальную строку из `Приложение к ЧТЗ_27_02_2026 Model (1).pdf` за ~4 мин.
 
 **Минимальный пример:**

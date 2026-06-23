@@ -1,4 +1,4 @@
-# Session report — 2026-05-15...18 — handoff DELISEEV→DANIILPC + manifest + Install.ps1 Stage 8 + <логин> 2>&1 инцидент
+# Session report — 2026-05-15...18 — handoff <разработчик>→DANIILPC + manifest + Install.ps1 Stage 8 + <логин> 2>&1 инцидент
 
 **Host:** DANIILPC (ноутбук)
 **Project cwd:** `C:\Users\Даниил\Desktop\Обучение и развитие Claude под наши задачи\` (v1-архив, переименование отложено до `/exit`)
@@ -13,7 +13,7 @@
 После закрытия infra-day 2026-05-14 (auto-sync hooks, стили, harvest,
 session-policy) продолжили со следующих задач:
 
-1. С рабочего ПК Daniil-а (DELISEEV-PC / R-090226727A) прилетели 4
+1. С рабочего ПК Daniil-а (<ПК-разработчика> / R-090226727A) прилетели 4
    коммита: **handoff** к DANIILPC с инструкцией воспроизвести его
    стек (autocad-mcp v3.0 + 7 Python-пакетов + AutoLISP для AutoCAD).
 2. Подключение **нового сотрудника** на ПК с прокси (та же
@@ -206,7 +206,7 @@ hostname и автоматически связал с единственным 
 | claude-base | `8865e2f` | memory: Урок 16 мета-самокритика |
 
 Параллельно подтянуты автоматически:
-- `bbbee62` + `cb12d9b` (Daniil-овские с DELISEEV-PC: 37 harvest заметок + master-structure session-report + autocad-mcp инструкции)
+- `bbbee62` + `cb12d9b` (Daniil-овские с <ПК-разработчика>: 37 harvest заметок + master-structure session-report + autocad-mcp инструкции)
 - `0b2a247` (auto-sync с R-090226727A)
 
 **На локальном диске пользователя:**
@@ -277,7 +277,7 @@ fresh-install сценарий. На <логин>-ПК — там pip дейст
 
 - «БУдем использовать B, так важная информация на GitHub прилетело
   очень много нового и полезного» — триггер посмотреть свежие
-  коммиты от DELISEEV-PC.
+  коммиты от <ПК-разработчика>.
 - «делаем Handoff» — старт воспроизведения autocad-mcp на DANIILPC.
 - «Так теперь надо чтобы все остольные ПК автоматически подтянули
   всё это это хорошее улучшение базы» — запрос на распространение
@@ -326,7 +326,7 @@ fresh-install сценарий. На <логин>-ПК — там pip дейст
 
 **В течение сессии:** многократные ручные `git pull --rebase
 --autostash` на этом ноутбуке для подтягивания свежих коммитов от
-DELISEEV-PC и <логин>. Один раз `fatal: update_ref failed for ref
+<ПК-разработчика> и <логин>. Один раз `fatal: update_ref failed for ref
 'ORIG_HEAD'` — лечил `rm .git/ORIG_HEAD`.
 
 **Конец сессии (прогноз auto-push):**
@@ -347,10 +347,10 @@ DELISEEV-PC и <логин>. Один раз `fatal: update_ref failed for ref
 
 По решению пользователя 2026-05-14 (репо public, обезличивание
 смягчено). В этом отчёте **есть**:
-- Hostnames: DANIILPC, R-090226727A, DELISEEV-PC, NB-HP-LQ6G,
+- Hostnames: DANIILPC, R-090226727A, <ПК-разработчика>, NB-HP-LQ6G,
   100226745A (<логин>-ПК)
-- GitHub-аккаунты: daniileliseev1337, <логин>, <логин>
-- Email: <логин>@<домен-организации>, Deliseev@<домен-организации>, <логин>@<домен-организации>
+- GitHub-аккаунты: <логин>, <логин>, <логин>
+- Email: <логин>@<домен-организации>, <email-разработчика> (<домен-организации>, <логин>@<домен-организации>
 - Прокси: scuf-meta.ru:10894
 
 В отчёте **нет**:
@@ -363,7 +363,7 @@ DELISEEV-PC и <логин>. Один раз `fatal: update_ref failed for ref
 ## Метрика сессии
 
 - **6 коммитов** в claude-base сегодня: `4a6ba71`, `5020dee`,
-  `8865e2f` от меня + 3 рабочих ПК (auto-sync от DELISEEV-PC и
+  `8865e2f` от меня + 3 рабочих ПК (auto-sync от <ПК-разработчика> и
   R-090226727A)
 - **1 коммит** в claude-lite-instaler: `1ad2b3e`
 - **4 ПК** подключены в auto-sync (DANIILPC + R-090226727A +

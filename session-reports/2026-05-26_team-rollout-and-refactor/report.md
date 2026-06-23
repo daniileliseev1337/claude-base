@@ -2,7 +2,7 @@
 
 **Дата начала:** 2026-05-25 (продолжение с прошлой сессии «Team rollout + Installer» 2026-05-22)
 **Дата окончания:** 2026-05-26
-**Host:** DANIILPC (developer); DELISEEV-PC (consumer testing)
+**Host:** DANIILPC (developer); <ПК-разработчика> (consumer testing)
 **Project cwd:** `C:\Users\Даниил\.claude\` (база) + `C:\Users\Даниил\Desktop\claude-lite-instaler\` (installer)
 **Источник:** Claude Code Desktop (Opus 4.7, 1M context, Extra high reasoning) + переключение на VS Code Extension не делалось
 
@@ -59,7 +59,7 @@
    - Stage 9 в Install.ps1 + Install-ClaudeDesktop.ps1 (commit `fd1dcba`).
    - Mode 3 (Desktop) в Start-Claude.ps1 (commit `08c0977`).
    - Замена `claude-lite-instaler-main` папки актуальной версией для коллег.
-   - **Тест на DELISEEV-PC:** установка прошла (UAC `Install Without Admin`),
+   - **Тест на <ПК-разработчика>:** установка прошла (UAC `Install Without Admin`),
      запуск показал **белый экран**.
 
 5. **Phase E — Диагностика расхода токенов:**
@@ -111,7 +111,7 @@
    - Memory с уроком: `memory/2026-05-26_anthropic_geoblock_ru.md` (commit
      `4f8a13f`).
 
-9. **Phase I — Verification на DELISEEV-PC:**
+9. **Phase I — Verification на <ПК-разработчика>:**
    - SessionStart auto-pull hook автоматически подтянул все обновления
      `~/.claude/` (CLAUDE.md, агенты, memory) на ПК коллеги.
    - После restart Claude Code → **15/15 агентов в available list**.
@@ -423,9 +423,9 @@ cache_control работает **только** через API/SDK request body,
   `C:\Program Files\WindowsApps\Claude_1.8555.2.0_x64__pzs8sxrjxfjjc\app\claude.exe`.
   AUMID `Claude_pzs8sxrjxfjjc!Claude`. Работает через VPN.
 
-**На DELISEEV-PC** установлено (через `Claude Setup.exe` + "Install Without Admin"):
+**На <ПК-разработчика>** установлено (через `Claude Setup.exe` + "Install Without Admin"):
 - **Claude Code Desktop (direct installer)** — путь
-  `C:\Users\Deliseev\AppData\Local\AnthropicClaude\claude.exe`.
+  `C:\Users\<разработчик>\AppData\Local\AnthropicClaude\claude.exe`.
   Без admin прав, без Cowork. **Не работает без VPN** (белый экран).
 
 **Other system changes:** нет. Сессия инфраструктурная-методологическая.
@@ -439,11 +439,11 @@ cache_control работает **только** через API/SDK request body,
 Нельзя: пароли, GitHub PAT, ПДн (паспорта, СНИЛС), банковские реквизиты.
 
 В этом отчёте **есть** (что вошло):
-- Hostnames: DANIILPC, DELISEEV-PC.
-- GitHub accounts: daniileliseev1337 (репо claude-base, claude-lite-instaler).
+- Hostnames: DANIILPC, <ПК-разработчика>.
+- GitHub accounts: <логин> (репо claude-base, claude-lite-instaler).
 - Proxy host: `scuf-meta.ru:10894` (внутренний корп-прокси, не секрет).
 - Proxy user: `danzombi` (логин на корп-прокси, не пароль).
-- Имена сотрудников: упоминается «Deliseev» как ПК-имя.
+- Имена сотрудников: упоминается «<разработчик>» как ПК-имя.
 
 В этом отчёте **нет** (что отфильтровано):
 - Пароль корп-прокси (никогда не пишется в repo, только в памяти session).
@@ -458,7 +458,7 @@ cache_control работает **только** через API/SDK request body,
   `32426c3`, `c5e2f82`, `e413994`, `87c4942`, `4f8a13f`). Plus после этого
   отчёта будет ещё один (auto-sync на SessionEnd).
 - **N коммитов** в `claude-lite-instaler`: **3** (`08c0977`, `fd1dcba`, `1c9da78`).
-- **N ПК затронуто:** **2** (DANIILPC developer + DELISEEV-PC consumer для
+- **N ПК затронуто:** **2** (DANIILPC developer + <ПК-разработчика> consumer для
   тестов раскатки и диагностики).
 - **N новых файлов:** **22** (10 агентов + 10 memory + 1 test_suite.py + 1
   Install-ClaudeDesktop.ps1).
@@ -490,7 +490,7 @@ cache_control работает **только** через API/SDK request body,
   посмотреть в следующей сессии.
 
 **Уже запушено в течение сессии:** 8 коммитов claude-base + 3 коммита
-claude-lite-instaler. На DELISEEV-PC уже подтянуто через auto-pull hook —
+claude-lite-instaler. На <ПК-разработчика> уже подтянуто через auto-pull hook —
 **подтверждено** что 15/15 агентов в available list на ПК коллеги.
 
 ---

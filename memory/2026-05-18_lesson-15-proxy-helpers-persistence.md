@@ -136,7 +136,7 @@ Or use Start Menu -> "Claude (with proxy)" for one-click launch.
 3. Удаление installer-папки **не ломает** доступ к хелперам.
 4. Открытие новой PS-сессии и `& "$HOME\.claude\bin\Set-Proxy.ps1"`
    ставит HTTP_PROXY/HTTPS_PROXY как раньше.
-5. На существующей машине (DANIILPC, DELISEEV-PC, NB-HP-LQ6G,
+5. На существующей машине (DANIILPC, <ПК-разработчика>, NB-HP-LQ6G,
    100226745A) — повторный запуск Install.ps1 идемпотентно копирует
    хелперы в `~/.claude/bin/` (если их там ещё нет).
 

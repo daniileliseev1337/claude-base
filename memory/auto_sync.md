@@ -7,7 +7,7 @@ _Вынесено из CLAUDE.md 2026-05-26 (Phase 1 refactoring для экон
 ## Auto-sync инфраструктура (информационно)
 
 `~/.claude/` склонирована через git из репо
-[claude-base](https://github.com/daniileliseev1337/claude-base). Между
+[claude-base](https://github.com/<логин>/claude-base). Между
 ПК синхронизация **автоматическая** через Claude Code hooks
 (`~/.claude/settings.json`):
 

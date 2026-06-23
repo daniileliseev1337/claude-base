@@ -69,7 +69,7 @@
 - Python 3.12.10 (через `winget install --id Python.Python.3.12 --scope user`)
 - Pip-пакеты: `openpyxl 3.1.5`, `rapidfuzz 3.14.5`, `python-docx 1.2.0`, `lxml`, `et-xmlfile`, `typing_extensions`
 
-Путь: `C:\Users\Deliseev\AppData\Local\Programs\Python\Python312\python.exe`
+Путь: `C:\Users\<разработчик>\AppData\Local\Programs\Python\Python312\python.exe`
 
 ## Артефакты
 

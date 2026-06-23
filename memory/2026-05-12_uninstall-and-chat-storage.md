@@ -25,13 +25,13 @@ extension показывают только те чаты, что относят
 ```
 ~/.claude/
 └── projects/
-    ├── C--Users-Deliseev/                                ← cwd = C:\Users\Deliseev\
+    ├── C--Users-<разработчик>/                                ← cwd = C:\Users\<разработчик>\
     │   ├── bb179323-59a8-...jsonl                        ← одна сессия = один файл
     │   └── f8cc9bf1-37e5-...jsonl
-    ├── C--Users-Deliseev-projects/                       ← cwd = C:\Users\Deliseev\projects\
+    ├── C--Users-<разработчик>-projects/                       ← cwd = C:\Users\<разработчик>\projects\
     │   ├── 529a2d29-fce8-...jsonl
     │   └── ...
-    └── C--Users-Deliseev-repos-claude-stroy-base/        ← cwd = C:\Users\Deliseev\repos\claude-stroy-base\
+    └── C--Users-<разработчик>-repos-claude-stroy-base/        ← cwd = C:\Users\<разработчик>\repos\claude-stroy-base\
         ├── 0e7da5...jsonl
         ├── 119329...jsonl
         └── ... (24+ файлов накопилось за месяцы работы)
@@ -60,7 +60,7 @@ cwd.
 - `projects/` был в `$PreservedItems` Uninstall.ps1 → НЕ удалялся.
 - В backup (`~/.claude.uninstall-backup-<ts>/`) — 34 `.jsonl` файла.
 - В текущей `~/.claude/projects/` — те же 34 `.jsonl` файла. Diff = 0.
-- VS Code был открыт в `C:\Users\Deliseev\` → Claude Extension показал
+- VS Code был открыт в `C:\Users\<разработчик>\` → Claude Extension показал
   только те 2 сессии что относились к этому cwd. Остальные 32 живые,
   но в других encoded-cwd-папках.
 

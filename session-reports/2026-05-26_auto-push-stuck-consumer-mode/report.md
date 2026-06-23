@@ -48,9 +48,9 @@ if (-not $isDeveloper) {
 
 ```
 hostname: R-090226727A
-user:     Deliseev
+user:     <разработчик>
 ~/.claude/.developer-marker:  отсутствует  →  consumer mode
-~/.claude/.feedback-config.json:  есть, указывает на `daniileliseev1337/claude-base-feedback` (отдельный feedback-репо с PAT — секрет в отчёт не записан)
+~/.claude/.feedback-config.json:  есть, указывает на `<логин>/claude-base-feedback` (отдельный feedback-репо с PAT — секрет в отчёт не записан)
 ```
 
 Лог auto-push'а текущей и предыдущих сессий — однотипный:
@@ -79,7 +79,7 @@ user:     Deliseev
 
 Возможные решения (на принятие пользователя):
 
-1. **Поставить `.developer-marker` на этот ПК** — если Deliseev де-факто developer (а не просто consumer-сотрудник). Тогда hook начнёт пушить как с DANIILPC.
+1. **Поставить `.developer-marker` на этот ПК** — если <разработчик> де-факто developer (а не просто consumer-сотрудник). Тогда hook начнёт пушить как с DANIILPC.
 2. **Расширить consumer-mode** в `auto-push.ps1`: даже без developer-marker пушить узкий whitelist (`session-reports/` + `memory/` + `harvested/`), а в main коммитить от имени consumer'а. Тогда session-reports не будут застревать ни на каком ПК.
 3. **Явно перенести feedback-collector** так, чтобы он сам забирал свежие session-reports и заливал их в `claude-base-feedback` (отдельный feedback-репо). Тогда consumer'ы не пишут в main, но отчёты всё равно где-то централизованно собираются.
 4. **Оставить как есть**, но добавить в первой реплике сессии явный warning «на этом ПК consumer-mode, push в main отключён — N untracked session-reports накопилось, запушить вручную?». Это поможет ловить раньше.
@@ -88,7 +88,7 @@ user:     Deliseev
 
 ## Что сделано (правильный путь — через feedback-репо)
 
-**Архитектурное напоминание (которое я сначала упустил):** на consumer ПК `session-reports/` **не идут** в `claude-base/main`. Правильный путь — `scripts/feedback-collector.ps1` → отдельный репо `daniileliseev1337/claude-base-feedback`, ветка `feedback/<hostname>-<userprefix>`. Daniil с DANIILPC сам подхватывает оттуда и решает что внедрить в shared.
+**Архитектурное напоминание (которое я сначала упустил):** на consumer ПК `session-reports/` **не идут** в `claude-base/main`. Правильный путь — `scripts/feedback-collector.ps1` → отдельный репо `<логин>/claude-base-feedback`, ветка `feedback/<hostname>-<userprefix>`. Daniil с DANIILPC сам подхватывает оттуда и решает что внедрить в shared.
 
 Алгоритм:
 

@@ -122,10 +122,10 @@
    `github_pat_<REDACTED_BY_PUSH_PROTECTION>` (полный токен в чате сессии).
    Создать **новый** fine-grained PAT, Contents:write только на
    claude-base-feedback, expiration 1 year.
-2. **3 invitations Pending** в claude-base-feedback (apolyakov6500-boop,
+2. **3 invitations Pending** в claude-base-feedback (<логин>-boop,
    <логин>, netesov002-stack) — ждут acceptance от сотрудников
    через email-уведомления GitHub.
-3. **End-to-end тест feedback flow** — на DELISEEV-PC (или любом
+3. **End-to-end тест feedback flow** — на <ПК-разработчика> (или любом
    consumer ПК) запустить `Update-ClaudeBase.bat`, ввести новый PAT,
    убедиться что smoke-test push в claude-base-feedback прошёл (Daniil
    видит файл в репозитории).

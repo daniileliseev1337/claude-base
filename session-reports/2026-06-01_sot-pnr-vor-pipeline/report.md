@@ -1,7 +1,7 @@
 # Session report: ПНР+ВОР комплект для раздела СОТ (<объект-A> 2-я Брестская)
 
 **Date:** 2026-06-01
-**Host:** DANIILPC (C:\Users\Deliseev\)
+**Host:** DANIILPC (C:\Users\<разработчик>\)
 **Project:** <объект-A>, 2-я Брестская — комплект документации ПД
 **Roles in play:** main Claude + excel-validator agent
 
@@ -21,7 +21,7 @@
 
 | Файл | Путь | Статус |
 |---|---|---|
-| ПНР и ВОРы.xlsx | `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.4_СОТ(выверенная спека)\ПНР и ВОРы\` | ✅ заполнен и провалидирован |
+| ПНР и ВОРы.xlsx | `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.4_СОТ(выверенная спека)\ПНР и ВОРы\` | ✅ заполнен и провалидирован |
 | Программа ПНР.dwg | там же | ✅ штамп `25/6729-ИОС4.4.ПНР`, Data Link на ЛВС-эталон |
 | Ведомость объемов работ.dwg | там же | ✅ штамп `25/6729-ИОС4.4.ВОР`, Data Link на ЛВС-эталон |
 | XREF.FIO.dwg | `5_ИОС4.4_СОТ\` | ✅ название «Система охранного теленаблюдения» |
@@ -31,9 +31,9 @@
 
 | Memory | Файл | Что |
 |---|---|---|
-| reference-pnr-template-method | `~/.claude/projects/C--Users-Deliseev/memory/reference_pnr_template_method.md` | Структура таблиц ПНР/ВОР, формула, иерархия группировки |
-| feedback-pnr-functions-source | `~/.claude/projects/C--Users-Deliseev/memory/feedback_pnr_functions_source.md` | Откуда брать число функций (правило: по логике типа оборудования, не выдумывать) |
-| reference-pnr-xlsx-pipeline | `~/.claude/projects/C--Users-Deliseev/memory/reference_pnr_xlsx_pipeline.md` | Pipeline через xlsx + Data Link, openpyxl, особенности шаблонов |
+| reference-pnr-template-method | `~/.claude/projects/C--Users-<разработчик>/memory/reference_pnr_template_method.md` | Структура таблиц ПНР/ВОР, формула, иерархия группировки |
+| feedback-pnr-functions-source | `~/.claude/projects/C--Users-<разработчик>/memory/feedback_pnr_functions_source.md` | Откуда брать число функций (правило: по логике типа оборудования, не выдумывать) |
+| reference-pnr-xlsx-pipeline | `~/.claude/projects/C--Users-<разработчик>/memory/reference_pnr_xlsx_pipeline.md` | Pipeline через xlsx + Data Link, openpyxl, особенности шаблонов |
 
 MEMORY.md обновлён (3 новые строки внизу).
 
@@ -139,7 +139,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Office\16.0\Excel\InstallRoot" 
 ; Открыть файл с русскими символами в пути (только через прямой vla-Open):
 (setq r (vl-catch-all-apply 'vla-Open
   (list (vla-get-Documents (vlax-get-acad-object))
-    "C:/Users/Deliseev/Desktop/.../Программа ПНР.dwg")))
+    "C:/Users/<разработчик>/Desktop/.../Программа ПНР.dwg")))
 
 ; Отдельным вызовом — активировать:
 (vlax-for d (vla-get-Documents (vlax-get-acad-object))
@@ -217,7 +217,7 @@ for i in [0, 4, 41]:  # 0-indexed
 - Группы-заголовки: только колонка C (для ВОР) или A (для ПНР) заполнена.
 - Стиль: thin border на всех ячейках, header bold, group italic+bold.
 
-Реальный рабочий код — см. `C:\Users\Deliseev\AppData\Local\Temp\build_sot_pnr_vor.py` (от этой сессии).
+Реальный рабочий код — см. `C:\Users\<разработчик>\AppData\Local\Temp\build_sot_pnr_vor.py` (от этой сессии).
 
 ### Этап 5 — валидация
 
@@ -237,18 +237,18 @@ for i in [0, 4, 41]:  # 0-indexed
 ## Полезные ссылки
 
 - **Эталоны проекта <объект-A>**:
-  - PDF большой ТХ2: `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\СЦ 25 6729-ТХ2 Мультимедийные решения 27.04.2026.pdf`
-  - PDF маленький ИОС4.2 (ЛВС): `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\25-6729-ИОС4.2.pdf`
-  - Редактируемые ЛВС: `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\Примеры\ЛВС\25-6729-ИОС4.2\`
-  - Редактируемые ТХ2: `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\Примеры\ТХ2\DWG\`
+  - PDF большой ТХ2: `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\СЦ 25 6729-ТХ2 Мультимедийные решения 27.04.2026.pdf`
+  - PDF маленький ИОС4.2 (ЛВС): `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\25-6729-ИОС4.2.pdf`
+  - Редактируемые ЛВС: `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\Примеры\ЛВС\25-6729-ИОС4.2\`
+  - Редактируемые ТХ2: `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\Примеры\ТХ2\DWG\`
 
 - **Memory сегодняшней сессии** (читать ОДНУ из этих при стартке новой задачи ПНР):
-  - `~/.claude/projects/C--Users-Deliseev/memory/reference_pnr_template_method.md`
-  - `~/.claude/projects/C--Users-Deliseev/memory/feedback_pnr_functions_source.md`
-  - `~/.claude/projects/C--Users-Deliseev/memory/reference_pnr_xlsx_pipeline.md`
+  - `~/.claude/projects/C--Users-<разработчик>/memory/reference_pnr_template_method.md`
+  - `~/.claude/projects/C--Users-<разработчик>/memory/feedback_pnr_functions_source.md`
+  - `~/.claude/projects/C--Users-<разработчик>/memory/reference_pnr_xlsx_pipeline.md`
 
 - **Скрипт-эталон** генерации xlsx (рабочий, можно копировать):
-  - `C:\Users\Deliseev\AppData\Local\Temp\build_sot_pnr_vor.py` (может быть стёрт; если нет — переделать по образцу из этого session-report)
+  - `C:\Users\<разработчик>\AppData\Local\Temp\build_sot_pnr_vor.py` (может быть стёрт; если нет — переделать по образцу из этого session-report)
 
 ## Что НЕ делать
 

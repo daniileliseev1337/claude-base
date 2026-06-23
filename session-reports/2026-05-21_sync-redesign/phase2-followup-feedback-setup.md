@@ -43,7 +43,7 @@ https://github.com/new
 
 Settings → Manage access → Add people:
 
-- `apolyakov6500-boop` — Write
+- `<логин>-boop` — Write
 - `<логин>` — Write
 - `netesov002-stack` — Write (когда примет invitation в основной репо)
 
@@ -73,7 +73,7 @@ https://github.com/settings/tokens?type=beta → **Generate new token**:
 ### 6. На каждом consumer ПК создать `.feedback-config.json`
 
 ```powershell
-# На DELISEEV-PC / R-090226727A / 100226745A
+# На <ПК-разработчика> / R-090226727A / 100226745A
 notepad $HOME\.claude\.feedback-config.json
 ```
 
@@ -81,7 +81,7 @@ notepad $HOME\.claude\.feedback-config.json
 
 ```json
 {
-  "github_repo": "daniileliseev1337/claude-base-feedback",
+  "github_repo": "<логин>/claude-base-feedback",
   "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
 ```
@@ -92,7 +92,7 @@ notepad $HOME\.claude\.feedback-config.json
 
 Settings → Manage access → Remove:
 
-- `apolyakov6500-boop` (read останется потому что repo public)
+- `<логин>-boop` (read останется потому что repo public)
 - `<логин>` (тоже)
 
 `netesov002-stack` (pending) — можно cancel invitation чтобы не запутаться.
@@ -110,7 +110,7 @@ Settings → Manage access → Remove:
 ### На GitHub UI
 
 После пары сессий на consumer ПК — в `claude-base-feedback` появятся branches:
-- `feedback/DELISEEV-PC-Deliseev`
+- `feedback/<ПК-разработчика>-<разработчик>`
 - `feedback/R-090226727A-...`
 - `feedback/100226745A-...`
 

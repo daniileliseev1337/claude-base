@@ -31,7 +31,7 @@
 - **Рабочий no-admin способ:** скачать `*-setup.exe` и РАСПАКОВАТЬ 7-Zip (`7z x setup.exe -oDIR`)
   — установка не нужна. Брать **win32**-сборку (win64 exe тоже импортирует 32-битную
   `libgcc_s_dw2-1.dll` — мешанина; win32 самодостаточен через WoW64).
-- Закреплено: `C:\Users\Deliseev\Tools\autotrace32\` (вне `.claude` — GPL не в claude-base).
+- Закреплено: `C:\Users\<разработчик>\Tools\autotrace32\` (вне `.claude` — GPL не в claude-base).
   11 файлов: autotrace.exe (x86) + glib/gobject/png/pcre2/intl/iconv/ffi/zlib/gcc_s_dw2/winpthread.
 - **ЕДИНСТВЕННЫЙ блокер:** не хватает `libssp-0.dll` (GCC stack-protector runtime, 32-бит) —
   её требуют ВСЕ glib-DLL → exe стартует и сразу выходит с кодом **127 без вывода**.

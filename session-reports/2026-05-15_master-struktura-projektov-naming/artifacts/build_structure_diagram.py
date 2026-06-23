@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import networkx as nx
 
-BASE = Path(r"C:\Users\Deliseev\Desktop\Здадчака")
+BASE = Path(r"C:\Users\<разработчик>\Desktop\Здадчака")
 XLSX = BASE / "Шкафы_<шифр-чертежа>_v2_5сетей.xlsx"
 OUT_PNG = BASE / "Структурная_схема_<шифр-чертежа>_v2.png"
 OUT_SVG = BASE / "Структурная_схема_<шифр-чертежа>_v2.svg"

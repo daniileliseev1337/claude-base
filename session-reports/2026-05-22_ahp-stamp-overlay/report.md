@@ -51,7 +51,7 @@
 
 ## Что осталось в файлах
 
-`C:\Users\Deliseev\Desktop\АХП <объект>\`:
+`C:\Users\<разработчик>\Desktop\АХП <объект>\`:
 - `_overlay_fitz.py` — рабочий скрипт pikepdf clip + PyMuPDF overlay (текущий)
 - `_etr_template.docx` — исходник шаблона ETR
 - `П (Проектная)\<шифр>_Том_ПД_сводный.pdf` (58 МБ) — текущий «v11» с проблемами

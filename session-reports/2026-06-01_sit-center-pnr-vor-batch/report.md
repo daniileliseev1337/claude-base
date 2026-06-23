@@ -1,7 +1,7 @@
 # Session report: ПНР+ВОР для 4 разделов <объект-A>а (СКУД, СПС, СОУЭ, АУГПТ)
 
 **Date:** 2026-06-01
-**Host:** Deliseev PC (продолжение DANIILPC сессии 2026-06-01_sot-pnr-vor-pipeline)
+**Host:** <разработчик> PC (продолжение DANIILPC сессии 2026-06-01_sot-pnr-vor-pipeline)
 **Project:** <объект-A>, 2-я Брестская — комплект ПД (стадия П)
 **Roles in play:** main Claude + excel-validator + word-checker + norm-lookup
 
@@ -22,7 +22,7 @@
 | ИОС4.7 СОУЭ | `5_ИОС4.7_СОЭУ(выверенная спека)\ПНР и ВОРы\ПНР и ВОРы СОУЭ.xlsx` | `Обоснование функций ПНР СОУЭ.docx` | 18 | 420 | 25/6729-ИОС4.7.ПНР |
 | ИОС4.8 АУГПТ | `5_ИОС4.8_АУГПТ(выверенная спека)\ПНР и ВОРы\ПНР и ВОРы АУГПТ.xlsx` | `Обоснование функций ПНР АУГПТ.docx` | 29 | 108 | 25/6729-ИОС4.8.ПНР |
 
-Все файлы лежат в `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\Разработка\П\<раздел>\ПНР и ВОРы\`.
+Все файлы лежат в `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\Разработка\П\<раздел>\ПНР и ВОРы\`.
 
 ### Memory обновлена (4 новых файла + индекс)
 
@@ -147,15 +147,15 @@ Pipeline отшлифован, методология стабильна. Люб
 ## Полезные ссылки
 
 - **Базовая память сессии:**
-  - `~/.claude/projects/C--Users-Deliseev/memory/reference_pnr_template_method.md`
-  - `~/.claude/projects/C--Users-Deliseev/memory/feedback_pnr_functions_source.md`
-  - `~/.claude/projects/C--Users-Deliseev/memory/reference_pnr_xlsx_pipeline.md`
-  - `~/.claude/projects/C--Users-Deliseev/memory/feedback_pnr_functions_justification.md` (новая)
-  - `~/.claude/projects/C--Users-Deliseev/memory/reference_sp_3_13130_2026.md` (новая)
-  - `~/.claude/projects/C--Users-Deliseev/memory/feedback_norms_via_norm_lookup.md` (новая)
+  - `~/.claude/projects/C--Users-<разработчик>/memory/reference_pnr_template_method.md`
+  - `~/.claude/projects/C--Users-<разработчик>/memory/feedback_pnr_functions_source.md`
+  - `~/.claude/projects/C--Users-<разработчик>/memory/reference_pnr_xlsx_pipeline.md`
+  - `~/.claude/projects/C--Users-<разработчик>/memory/feedback_pnr_functions_justification.md` (новая)
+  - `~/.claude/projects/C--Users-<разработчик>/memory/reference_sp_3_13130_2026.md` (новая)
+  - `~/.claude/projects/C--Users-<разработчик>/memory/feedback_norms_via_norm_lookup.md` (новая)
 
 - **Эталон шаблона xlsx** (использовать для копирования):
-  - `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.5_СКУД(выверенная спека)\ПНР и ВОРы\ПНР и ВОРы СКУД.xlsx`
+  - `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.5_СКУД(выверенная спека)\ПНР и ВОРы\ПНР и ВОРы СКУД.xlsx`
 
 - **Предыдущий session-report** (DANIILPC с СОТ):
   - `~/.claude/session-reports/2026-06-01_sot-pnr-vor-pipeline/report.md`

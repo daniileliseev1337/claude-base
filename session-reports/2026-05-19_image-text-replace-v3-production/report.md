@@ -30,12 +30,12 @@
 8. Production integration: refactor pipeline.py (full stack as
    first-class API), calibration.py CLI tool, SKILL.md переписан,
    LESSONS-LEARNED.md написан, mcp-manifest.json + diffusers/etc.
-9. DELISEEV-PC выявил несостыковку: CLAUDE.md обещал pdf-edit, но
+9. <ПК-разработчика> выявил несостыковку: CLAUDE.md обещал pdf-edit, но
    скрипт только на <логин>-PC. User: «pdf-edit нам не нужен» →
    cleanup из всех актуальных файлов.
 10. setup-extras Step 4: auto-download LaMa + EasyOCR + SD. Token
     architecture: `.hf-token` per-PC (gitignored). 3 уровня
-    notification про контакт Даниила (Deliseev@<домен-организации>).
+    notification про контакт Даниила (<email-разработчика> (<домен-организации>).
 11. pdf-helper SKILL.md: scan-detection как обязательный first step
     + routing на image-text-replace OCR. image-text-replace SKILL.md:
     OCR primary, text replace secondary.
@@ -139,7 +139,7 @@ Font calibration sheet (render same string в 12 шрифтах рядом со
 ## Открытые задачи на следующую сессию
 
 1. **HF token rotation** — текущий в чат-логах, создать новый read-only.
-2. **DELISEEV-PC SD setup** — у него нет .hf-token, нужно скопировать +
+2. **<ПК-разработчика> SD setup** — у него нет .hf-token, нужно скопировать +
    запустить setup-extras для скачивания SD.
 3. **Test profanity toggle** на чистом старте сессии (без
    .profanity-marker) — AskUserQuestion должен сработать автоматически.
@@ -158,7 +158,7 @@ rotation), но в коде/коммитах НЕТ.
 
 - 18 коммитов в claude-base
 - 0 коммитов в claude-lite-instaler
-- 2 ПК активно затронуты (DANIILPC + DELISEEV-PC параллельно)
+- 2 ПК активно затронуты (DANIILPC + <ПК-разработчика> параллельно)
 - 16 итераций v0.1 → v3.0
 - 34 task через TaskCreate
 - 3 архитектурных push back

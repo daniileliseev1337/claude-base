@@ -7,7 +7,7 @@ metadata:
   originSessionId: fb892ce7-0051-4258-b832-c80cab5ecb76
 ---
 
-**Где живёт:** `C:\Users\Deliseev\.claude\mcp-servers\autocad-mcp\`
+**Где живёт:** `C:\Users\<разработчик>\.claude\mcp-servers\autocad-mcp\`
 
 **Источник:** [puran-water/autocad-mcp](https://github.com/puran-water/autocad-mcp), 250 ⭐, MIT (на 2026-05-15).
 **Установка через ZIP** (git clone не пробил корп-прокси), затем `uv sync`.
@@ -16,7 +16,7 @@ metadata:
 ```powershell
 claude mcp add autocad-mcp -s user -e AUTOCAD_MCP_BACKEND=auto -- "<repoDir>\.venv\Scripts\python.exe" -m autocad_mcp
 ```
-Запись попала в `C:\Users\Deliseev\.claude.json`. После рестарта сессии Claude Code
+Запись попала в `C:\Users\<разработчик>\.claude.json`. После рестарта сессии Claude Code
 загружает MCP tools автоматически.
 
 **8 групп tools** (после рестарта сессии):
@@ -35,7 +35,7 @@ claude mcp add autocad-mcp -s user -e AUTOCAD_MCP_BACKEND=auto -- "<repoDir>\.ve
 
 **Запуск вне Claude Code** (для отладки):
 ```powershell
-& "C:\Users\Deliseev\.claude\mcp-servers\autocad-mcp\.venv\Scripts\python.exe" -m autocad_mcp
+& "C:\Users\<разработчик>\.claude\mcp-servers\autocad-mcp\.venv\Scripts\python.exe" -m autocad_mcp
 ```
 
 **Связанные:** [[reference-ezdxf-dxf-generation]], [[reference-harvest-tools-2026-05]]

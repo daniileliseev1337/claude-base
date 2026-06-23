@@ -139,7 +139,7 @@
 
 3. **PaddleOCR 3.5 predictor RuntimeError** — `parse_error.101: parse error at line 1, column 1: attempting to parse an empty input`. Похоже на неполный config download или version-specific bug. Не блокер (primary OCR — EasyOCR), но если задача потребует PaddleOCR (table OCR / structure recognition где он сильнее), надо разобраться. Repro: `python -c "from paddleocr import PaddleOCR; PaddleOCR(lang='ru')"` на DANIILPC.
 
-4. **diff-pdf v0.5.3 не интегрирован в `setup-extras.ps1`**. CLAUDE.md упоминает его как «дополнительный портативный бинарь», но в manifest его нет — устанавливается per-machine вручную. Можно добавить секцию `portable_binaries` в manifest + расширить `setup-extras.ps1` чтобы качал/распаковывал. На DELISEEV-PC он уже стоит (по `session-reports/2026-05-15_setup-doc-tooling/report.md`), теперь и на DANIILPC. Дальше — для других ПК всё ещё ручная процедура.
+4. **diff-pdf v0.5.3 не интегрирован в `setup-extras.ps1`**. CLAUDE.md упоминает его как «дополнительный портативный бинарь», но в manifest его нет — устанавливается per-machine вручную. Можно добавить секцию `portable_binaries` в manifest + расширить `setup-extras.ps1` чтобы качал/распаковывал. На <ПК-разработчика> он уже стоит (по `session-reports/2026-05-15_setup-doc-tooling/report.md`), теперь и на DANIILPC. Дальше — для других ПК всё ещё ручная процедура.
 
 5. **`auto-pull.ps1` от 2026-05-20 03:08:37 в auto-sync.log** показал `fatal: Cannot rebase onto multiple branches` + `auto-pull: FAILED (exit=128), aborting rebase`. Возможно в local git config несколько upstream'ов прописано (или ветка отслеживает что-то странное). Не моя проблема в этой сессии, но flag для разбора.
 
@@ -172,9 +172,9 @@
 Репо `claude-base` private, обезличивание смягчено.
 
 **В этом отчёте есть** (по новому правилу — допустимо):
-- Hostnames: `DANIILPC`, `DELISEEV-PC`, `100226745A` (последнее — из auto-sync log, не моё)
-- GitHub-аккаунт: `daniileliseev1337`
-- Email: `Deliseev@<домен-организации>` (из строки в setup-extras.ps1, не моё добавление)
+- Hostnames: `DANIILPC`, `<ПК-разработчика>`, `100226745A` (последнее — из auto-sync log, не моё)
+- GitHub-аккаунт: `<логин>`
+- Email: `<email-разработчика> (<домен-организации>` (из строки в setup-extras.ps1, не моё добавление)
 - Proxy host: `scuf-meta.ru:10894` (упомянут в `feedback_git_no_proxy.md`, важен для urocheв)
 - Proxy username: упомянут в memory (не в этом report'е, чтобы не дублировать)
 

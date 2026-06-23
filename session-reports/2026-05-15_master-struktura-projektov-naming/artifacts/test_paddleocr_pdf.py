@@ -10,7 +10,7 @@ import pypdfium2 as pdfium
 from PIL import Image
 import numpy as np
 
-BASE = Path(r"C:\Users\Deliseev\Desktop\Здадчака")
+BASE = Path(r"C:\Users\<разработчик>\Desktop\Здадчака")
 PDF = BASE / "Приложение к ЧТЗ_27_02_2026 Model (1).pdf"
 OUT_TXT = BASE / "ChTZ_OCR_paddleocr.txt"
 OUT_PNG = BASE / "ChTZ_region_render.png"

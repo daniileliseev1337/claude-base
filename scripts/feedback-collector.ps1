@@ -58,7 +58,7 @@ if (-not (Test-Path $PendingDir)) {
 # session-reports/<date>_<тема>/report.md. На consumer-ПК (без
 # .developer-marker) auto-push.ps1 не пушит эти отчёты в claude-base/main
 # (hub-and-spoke). Без этого блока отчёты копились локально и терялись
-# для Daniil'а (см. R-090226727A 2026-05-26 — Deliseev накопил 5 untracked
+# для Daniil'а (см. R-090226727A 2026-05-26 — <разработчик> накопил 5 untracked
 # отчётов за 5 дней, потом ошибочно git push origin main → revert).
 #
 # Логика:

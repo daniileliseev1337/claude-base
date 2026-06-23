@@ -43,7 +43,7 @@ if (-not (Test-Path "$env:USERPROFILE\.claude\.hf-token") -and -not $env:HF_TOKE
     Write-Host ""
     Write-Host "[INFO] Перед началом установки:" -ForegroundColor Cyan
     Write-Host "  Для полной функциональности (image-text-replace v3.0 SD-полировка)" -ForegroundColor Cyan
-    Write-Host "  нужен HuggingFace токен. Получить можно у Даниила: Deliseev@k-7.tech" -ForegroundColor Cyan
+    Write-Host "  нужен HuggingFace токен. Получить можно у Даниила: <email-разработчика>" -ForegroundColor Cyan
     Write-Host "  GitHub: daniileliseev1337" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Без токена: image-text-replace будет работать в v2 режиме (без SD)" -ForegroundColor Gray
@@ -405,7 +405,7 @@ if (Test-Path $HFTokenFile) {
     Write-Host "|                                                                         |" -ForegroundColor Yellow
     Write-Host "|  ЧТОБЫ ВКЛЮЧИТЬ SD:                                                     |" -ForegroundColor Yellow
     Write-Host "|                                                                         |" -ForegroundColor Yellow
-    Write-Host "|  1. Напиши Даниилу: Deliseev@k-7.tech                               |" -ForegroundColor Yellow
+    Write-Host "|  1. Напиши Даниилу: <email-разработчика>                               |" -ForegroundColor Yellow
     Write-Host "|     (GitHub: daniileliseev1337)                                         |" -ForegroundColor Yellow
     Write-Host "|     Запроси HuggingFace токен для распространения SD моделей.           |" -ForegroundColor Yellow
     Write-Host "|                                                                         |" -ForegroundColor Yellow
@@ -419,7 +419,7 @@ if (Test-Path $HFTokenFile) {
     Write-Host "|                                                                         |" -ForegroundColor Yellow
     Write-Host "+=========================================================================+" -ForegroundColor Yellow
     Write-Host ""
-    Log "SD skipped — no .hf-token, user notified to contact Daniil (Deliseev@k-7.tech)"
+    Log "SD skipped — no .hf-token, user notified to contact Daniil (<email-разработчика>)"
 }
 
 $SDCacheDir = 'C:\sd-cache'  # ASCII-safe, обязательно для HF symlinks
@@ -549,7 +549,7 @@ Write-Host ""
 # Финальный reminder про SD если token отсутствует
 if (-not (Test-Path $HFTokenFile) -and -not $env:HF_TOKEN) {
     Write-Host "Если нужна полная функциональность image-text-replace v3.0 (SD scan-полировка):" -ForegroundColor Magenta
-    Write-Host "  Напиши Даниилу (Deliseev@k-7.tech) — он даст HuggingFace token" -ForegroundColor Magenta
+    Write-Host "  Напиши Даниилу (<email-разработчика>) — он даст HuggingFace token" -ForegroundColor Magenta
     Write-Host "  → положи в $HFTokenFile → запусти setup-extras снова" -ForegroundColor Magenta
     Write-Host ""
 }

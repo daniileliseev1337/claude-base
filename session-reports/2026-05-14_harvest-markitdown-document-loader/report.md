@@ -58,7 +58,7 @@
 ### Раунд 1 — с прокси (env HTTP_PROXY/HTTPS_PROXY активны)
 
 ```
-fatal: unable to access 'https://github.com/daniileliseev1337/claude-base.git/':
+fatal: unable to access 'https://github.com/<логин>/claude-base.git/':
   Proxy CONNECT aborted
 ```
 
@@ -67,19 +67,19 @@ fatal: unable to access 'https://github.com/daniileliseev1337/claude-base.git/':
 ### Раунд 2 — без прокси (env очищены в подпроцессе, `git -c http.proxy= -c https.proxy=`)
 
 ```
-remote: Permission to daniileliseev1337/claude-base.git denied to <логин>.
-fatal: unable to access 'https://github.com/daniileliseev1337/claude-base.git/':
+remote: Permission to <логин>/claude-base.git denied to <логин>.
+fatal: unable to access 'https://github.com/<логин>/claude-base.git/':
   The requested URL returned error: 403
 ```
 
-То есть на этой машине **прокси для git не нужен** — без него сеть до GitHub доходит мгновенно. Проблема в **аутентификации**: Windows Credential Manager отдаёт токен личного аккаунта `<логин>`, у которого нет push-прав в `daniileliseev1337/claude-base`.
+То есть на этой машине **прокси для git не нужен** — без него сеть до GitHub доходит мгновенно. Проблема в **аутентификации**: Windows Credential Manager отдаёт токен личного аккаунта `<логин>`, у которого нет push-прав в `<логин>/claude-base`.
 
 ### Что нужно для нормальной работы auto-sync на машине `NB-HP-LQ6G`
 
 1. **Снять proxy-env для git** (или для всей сессии Claude Code) — env-vars `HTTP_PROXY`/`HTTPS_PROXY` на корп-прокси `scuf-meta.ru:10894` ломают git push, хотя сам git может ходить напрямую. Варианты:
    - `git config --global http.proxy ""` + удалить env в `Start-Claude.bat`/PROFILE.
    - Или в hook `auto-push.ps1` явно очищать `$env:HTTP_PROXY`/`$env:HTTPS_PROXY` перед `git push`.
-2. **Дать `<логин>` push-доступ в репо** `daniileliseev1337/claude-base` (Daniil → Settings → Collaborators).
+2. **Дать `<логин>` push-доступ в репо** `<логин>/claude-base` (Daniil → Settings → Collaborators).
    - **Либо** переписать credential на токен с правом push в репо.
 3. **Hook `auto-push.ps1` должен логировать failure**. Сейчас при ошибке push строки `auto-push: failed: <reason>` в `auto-sync.log` нет — лог обрывается на `pushing to origin/main...`. Это та же ловушка 8 из коммита `79a8561`.
 
@@ -100,7 +100,7 @@ fatal: unable to access 'https://github.com/daniileliseev1337/claude-base.git/':
 
 - `claude mcp list` — все 8 серверов ✓ Connected (uvx работает, ставит пакеты).
 - `WebFetch` / `WebSearch` через Claude Code — работают, ходят на github.com и pypi.org успешно.
-- **`git push origin main` из PowerShell** — `fatal: unable to access 'https://github.com/daniileliseev1337/claude-base.git/': Proxy CONNECT aborted`.
+- **`git push origin main` из PowerShell** — `fatal: unable to access 'https://github.com/<логин>/claude-base.git/': Proxy CONNECT aborted`.
 - `auto-sync.log` за 13:13:00–13:13:01: hook сделал commit `8a6acb3`, начал `pushing to origin/main...`, но **завершающей строки `auto-push: ok` или `failed` нет** — push молча подвис. Лог обрывается на `pushing to origin/main...` без result-строки.
 
 ### Диагностика на машине `NB-HP-LQ6G` (Windows 11, <логин>)

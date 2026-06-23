@@ -11,7 +11,7 @@ import openpyxl
 import ezdxf
 from ezdxf import zoom
 
-BASE = Path(r"C:\Users\Deliseev\Desktop\Здадчака")
+BASE = Path(r"C:\Users\<разработчик>\Desktop\Здадчака")
 XLSX = BASE / "Шкафы_<шифр-чертежа>_v2_5сетей.xlsx"
 OUT = BASE / "Структурная_схема_<шифр-чертежа>_v2.dxf"
 

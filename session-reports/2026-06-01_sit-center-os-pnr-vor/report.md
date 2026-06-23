@@ -1,7 +1,7 @@
 # Session report: ПНР+ВОР для раздела ИОС4.3 ОС (<объект-A>)
 
 **Date:** 2026-06-01
-**Host:** Deliseev PC (продолжение batch'а ПНР <объект-A>а, см. также `2026-06-01_sit-center-pnr-vor-batch/`)
+**Host:** <разработчик> PC (продолжение batch'а ПНР <объект-A>а, см. также `2026-06-01_sit-center-pnr-vor-batch/`)
 **Project:** <объект-A>, 2-я Брестская — комплект ПД (стадия П)
 **Раздел:** 25/6729-ИОС4.3 «Система охранной сигнализации»
 **Roles in play:** main Claude + excel-validator + word-checker + norm-lookup
@@ -48,7 +48,7 @@
 
 ### 3. Локальная библиотека норм СПДС обнаружена
 
-`C:\Users\Deliseev\Yandex.Disk-deliseev@<домен-организации>\Claude_Library\spds\` — 8 PDF норм. Среди них **ГЭСНм 81-03-10-2022** (Связь, 184 стр.) — раздел 10-08 с таблицами по сигнализации (10-08-001 Аппараты приёмные, 10-08-002 Извещатели, и т.д.). Применяется через pdf-mcp до обращения к WebFetch.
+`C:\Users\<разработчик>\Yandex.Disk-<разработчик>@<домен-организации>\Claude_Library\spds\` — 8 PDF норм. Среди них **ГЭСНм 81-03-10-2022** (Связь, 184 стр.) — раздел 10-08 с таблицами по сигнализации (10-08-001 Аппараты приёмные, 10-08-002 Извещатели, и т.д.). Применяется через pdf-mcp до обращения к WebFetch.
 
 Зафиксировано в memory [[reference-spds-library]] для будущих сессий.
 
@@ -116,8 +116,8 @@ word-checker отметил что подзаголовки разделов 1-5
 
 ## Файлы артефактов
 
-- `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.3_ОС(выверенная спека)\ПНР и ВОРы\ПНР и ВОРы ОС.xlsx`
-- `C:\Users\Deliseev\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.3_ОС(выверенная спека)\ПНР и ВОРы\Обоснование функций ПНР ОС.docx`
+- `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.3_ОС(выверенная спека)\ПНР и ВОРы\ПНР и ВОРы ОС.xlsx`
+- `C:\Users\<разработчик>\Desktop\Сит Центр, 2-я Брестская\Разработка\П\5_ИОС4.3_ОС(выверенная спека)\ПНР и ВОРы\Обоснование функций ПНР ОС.docx`
 
 ## Новые memory
 
@@ -127,9 +127,9 @@ word-checker отметил что подзаголовки разделов 1-5
 ## Auto-push прогноз
 
 При закрытии Claude Code будут запушены изменения:
-- `~/.claude/projects/C--Users-Deliseev/memory/feedback_pnr_zip_methodology.md` (новый)
-- `~/.claude/projects/C--Users-Deliseev/memory/reference_spds_library.md` (новый)
-- `~/.claude/projects/C--Users-Deliseev/memory/MEMORY.md` (+ 2 ссылки внизу)
+- `~/.claude/projects/C--Users-<разработчик>/memory/feedback_pnr_zip_methodology.md` (новый)
+- `~/.claude/projects/C--Users-<разработчик>/memory/reference_spds_library.md` (новый)
+- `~/.claude/projects/C--Users-<разработчик>/memory/MEMORY.md` (+ 2 ссылки внизу)
 - `~/.claude/session-reports/2026-06-01_sit-center-os-pnr-vor/report.md` (этот отчёт)
 
 Файлы артефактов проекта (xlsx/docx) — на Desktop, в репо не пушатся (правильно, это локальные продукты проекта).

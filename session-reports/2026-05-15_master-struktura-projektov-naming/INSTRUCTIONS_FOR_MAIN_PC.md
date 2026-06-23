@@ -1,7 +1,7 @@
 # Инструкция для главного ПК (DANIILPC)
 
-> **Источник:** сессия 2026-05-15 на DELISEEV-PC. Подробности — в `report.md` рядом.
-> **Цель:** воспроизвести на главном ПК всю инфраструктуру, поднятую на DELISEEV-PC,
+> **Источник:** сессия 2026-05-15 на <ПК-разработчика>. Подробности — в `report.md` рядом.
+> **Цель:** воспроизвести на главном ПК всю инфраструктуру, поднятую на <ПК-разработчика>,
 > чтобы можно было продолжать работу с DWG/PDF/инженерными xlsx с теми же
 > возможностями.
 
@@ -25,7 +25,7 @@ cd ~/.claude
 git pull --rebase
 ```
 
-Это подтянет с DELISEEV-PC:
+Это подтянет с <ПК-разработчика>:
 - `session-reports/2026-05-15_master-struktura-projektov-naming/` (включая artifacts/)
 - 37 harvest-заметок в `harvested/` (если whitelist включает корень `harvested/`)
 
@@ -196,7 +196,7 @@ python -c "import ezdxf; doc=ezdxf.new(); doc.modelspace().add_text('Hello'); do
 python -c "from paddleocr import PaddleOCR; PaddleOCR(lang='ru', enable_mkldnn=False); print('PaddleOCR OK')"
 ```
 
-Если все 4 проверки прошли — главный ПК готов работать на уровне DELISEEV-PC.
+Если все 4 проверки прошли — главный ПК готов работать на уровне <ПК-разработчика>.
 
 ## 7. Связанные документы в этой папке
 

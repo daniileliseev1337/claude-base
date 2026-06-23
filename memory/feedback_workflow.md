@@ -32,7 +32,7 @@
    см. `projects/.../memory/feedback_pull_feedback_routine.md`).
 
 ## Конфиг
-`~/.claude/.feedback-config.json`: `github_repo: daniileliseev1337/claude-base-feedback`,
+`~/.claude/.feedback-config.json`: `github_repo: <логин>/claude-base-feedback`,
 PAT зашифрован DPAPI (расшифровать может только тот же user+machine — см.
 `projects/.../memory/feedback_dpapi_pat_storage.md`). Установка токена —
 `scripts/Set-FeedbackToken.ps1`.

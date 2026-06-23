@@ -2,8 +2,8 @@
 
 **Дата начала:** 2026-05-15
 **Дата обновления:** 2026-05-15 (расширена: ЧТЗ-разбор + harvest + autocad-mcp)
-**Host:** DELISEEV-PC
-**Project cwd:** `C:\Users\Deliseev`
+**Host:** <ПК-разработчика>
+**Project cwd:** `C:\Users\<разработчик>`
 **Источник:** VS Code Extension
 
 ---
@@ -26,7 +26,7 @@
 ## Что делал (хронология)
 
 1. STOP-процедура: MCP-аудит (8/8 серверов), подтверждение чтения CLAUDE.md.
-2. Поиск файла в `C:\Users\Deliseev\Desktop\Здадчака\` — нашёл
+2. Поиск файла в `C:\Users\<разработчик>\Desktop\Здадчака\` — нашёл
    `Мастер структура_проектов.xlsx` (≈15 KB).
 3. Через `excel` MCP прочитал метаданные — 7 листов.
 4. Параллельно прочитал все 7 листов (Мастер_Структура, Правила_Naming,
@@ -89,9 +89,9 @@
 Итоговых файлов в cwd пользователя не клал. Работа велась с базой
 Claude:
 
-- `~/.claude/projects/C--Users-Deliseev/memory/project_master_structure_naming.md` — основная методика
-- `~/.claude/projects/C--Users-Deliseev/memory/reference_master_structure_source_file.md` — указатель на источник
-- `~/.claude/projects/C--Users-Deliseev/memory/MEMORY.md` — обновлён индекс
+- `~/.claude/projects/C--Users-<разработчик>/memory/project_master_structure_naming.md` — основная методика
+- `~/.claude/projects/C--Users-<разработчик>/memory/reference_master_structure_source_file.md` — указатель на источник
+- `~/.claude/projects/C--Users-<разработчик>/memory/MEMORY.md` — обновлён индекс
 
 В чате пользователю выдана сводная таблица с финальной методикой и
 списком 8 открытых вопросов.

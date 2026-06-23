@@ -518,7 +518,7 @@ git rev-list --left-right --count HEAD...origin/main
 #### Сценарий 12a — `denied to <owner-of-repo>` = истёкший / неподходящий PAT
 
 ```
-remote: Permission to daniileliseev1337/claude-base.git denied to daniileliseev1337.
+remote: Permission to <логин>/claude-base.git denied to <логин>.
                                                                 ^^^^^^^^^^^^^^^^^^
                                                                 владелец репо
 ```
@@ -536,12 +536,12 @@ git push origin main
 # -> новый PAT с правильным scope
 ```
 
-Подтверждено на рабочем ПК Deliseev (Daniil, R-090226727A) 2026-05-14.
+Подтверждено на рабочем ПК <разработчик> (Daniil, R-090226727A) 2026-05-14.
 
 #### Сценарий 12b — `denied to <другой-user>` = WRONG ACCOUNT
 
 ```
-remote: Permission to daniileliseev1337/claude-base.git denied to <логин>.
+remote: Permission to <логин>/claude-base.git denied to <логин>.
                                                                 ^^^^^^^^^^^^^^^^
                                                                 ЛИЧНЫЙ аккаунт
                                                                 сотрудника, не owner

@@ -9,12 +9,12 @@
 
 ## Раздел 1. Свод текущих проблем
 
-Текущая модель — все 4 ПК (DANIILPC, R-090226727A, 100226745A, DELISEEV-PC) push'ат напрямую в `main` ветку private-репозитория `claude-base`. Симметричная peer-to-peer-репликация через git hooks (`auto-pull.ps1` на SessionStart, `auto-push.ps1` на SessionEnd). Это даёт следующие фундаментальные проблемы:
+Текущая модель — все 4 ПК (DANIILPC, R-090226727A, 100226745A, <ПК-разработчика>) push'ат напрямую в `main` ветку private-репозитория `claude-base`. Симметричная peer-to-peer-репликация через git hooks (`auto-pull.ps1` на SessionStart, `auto-push.ps1` на SessionEnd). Это даёт следующие фундаментальные проблемы:
 
-1. **`settings.json` в git — антипаттерн.** Claude Code UI постоянно дописывает в файл (`theme`, `viewMode`, MRU-настройки). Каждое UI-изменение на ПК = potential merge conflict при следующем `git pull --rebase --autostash` на другом ПК. Сегодня заблокировал pull на DELISEEV-PC, потребовался manual stash+rebase. **Корень проблемы:** файл semantically `local`, но whitelist'нут как `shared` (decision 2026-05-20 после которого начались проблемы).
+1. **`settings.json` в git — антипаттерн.** Claude Code UI постоянно дописывает в файл (`theme`, `viewMode`, MRU-настройки). Каждое UI-изменение на ПК = potential merge conflict при следующем `git pull --rebase --autostash` на другом ПК. Сегодня заблокировал pull на <ПК-разработчика>, потребовался manual stash+rebase. **Корень проблемы:** файл semantically `local`, но whitelist'нут как `shared` (decision 2026-05-20 после которого начались проблемы).
 2. **Race conditions.** 4 ПК асинхронно push'ат в один main. `auto-push.ps1` делает `git push` без pre-`pull --rebase` (заведомо — в hook context pull-rebase hang'ается). Если на origin кто-то опередил → push отклоняется, локальный коммит остаётся ahead, следующая сессия делает rebase. **Сегодня было 5+ таких циклов.** Eventually consistent, но шумно и непрозрачно.
 3. **Auto-push timeouts.** Hook убивается через 60 сек (`timeout: 60` в settings.json). На медленной/нестабильной сети `git push` не успевает за 60 сек (особенно когда нужны 3 retry × 5 сек pause). Лог обрывается на `auto-push: start` без `DONE`. Silent failure. **Сегодня — interrupted hook на DANIILPC в 13:40, заметили только в 16:38 при следующем старте сессии.**
-4. **Тихая рассинхронизация.** ПК думает что push'ил (hook завершился), а реально нет (timeout убил процесс между `git commit` и `git push`, либо push failed но pre-flight `git rev-list --count origin/main..HEAD` не запустился). **DELISEEV-PC сегодня отставал на 6 коммитов — Claude не заметил, продолжал работать как обычно, читал устаревший CLAUDE.md.**
+4. **Тихая рассинхронизация.** ПК думает что push'ил (hook завершился), а реально нет (timeout убил процесс между `git commit` и `git push`, либо push failed но pre-flight `git rev-list --count origin/main..HEAD` не запустился). **<ПК-разработчика> сегодня отставал на 6 коммитов — Claude не заметил, продолжал работать как обычно, читал устаревший CLAUDE.md.**
 5. **Конфликты на shared файлах.** При параллельной правке `CLAUDE.md` или `anti-patterns.md` rebase падает, hook делает `git rebase --abort`, оставляет working tree dirty. Следующая сессия не может pull'ить пока пользователь не сделает manual resolve. **Блокирует работу.**
 
 **Дополнительные фундаментальные limitations:**
@@ -185,12 +185,12 @@
 
 **Tasks:**
 1. **Убрать `settings.json` из whitelist** в `.gitignore` (вернуть на gitignore'нутое). Создать `settings.shared.json` с теми ключами что реально нужны shared (`hooks`, `autoMode.allow`, `agentPushNotifEnabled`). Добавить в `auto-pull.ps1` merge-шаг: после pull читать `settings.shared.json` и патчить shared-ключи в `settings.json`.
-2. **Создать репо `claude-base-feedback`** (private) на GitHub. Создать ветки `feedback/R-090226727A`, `feedback/100226745A`, `feedback/DELISEEV-PC`.
+2. **Создать репо `claude-base-feedback`** (private) на GitHub. Создать ветки `feedback/R-090226727A`, `feedback/100226745A`, `feedback/<ПК-разработчика>`.
 3. **На ПК сотрудников:** заменить `auto-push.ps1` на версию которая push'ит только в свою ветку `feedback-репо`, не в `claude-base`. Whitelist для feedback — другой (CLAUDE.local.md, session-reports/, harvested/).
 4. **На GitHub:** убрать write-access у сотрудников к `claude-base`. Выдать им fine-grained PAT с `repo:read` для `claude-base` и `repo:write` только для своей ветки `claude-base-feedback`.
 5. **Добавить `CHANGELOG.md`** в `claude-base`. Daniil обновляет руками при каждом значимом push.
 
-**Verify Phase 1:** на DELISEEV-PC попытаться `git push origin main` — должно вернуть 403. На DANIILPC закоммитить и push'нуть CHANGELOG entry, на DELISEEV-PC начать новую сессию — в auto-sync.log должна появиться строка `notify: ...`, Claude в первой реплике должен её показать.
+**Verify Phase 1:** на <ПК-разработчика> попытаться `git push origin main` — должно вернуть 403. На DANIILPC закоммитить и push'нуть CHANGELOG entry, на <ПК-разработчика> начать новую сессию — в auto-sync.log должна появиться строка `notify: ...`, Claude в первой реплике должен её показать.
 
 ### Phase 2 — следующая итерация, ~1 рабочий день
 

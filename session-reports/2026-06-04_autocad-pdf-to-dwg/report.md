@@ -176,7 +176,7 @@
 ---
 
 ## ПРИЛОЖЕНИЕ — memory-записи этой сессии (дословно)
-Файлы в `~/.claude/projects/C--Users-Deliseev/memory/`:
+Файлы в `~/.claude/projects/C--Users-<разработчик>/memory/`:
 - `project_proektirovanie_ov_dwg_recreation.md` (project) — задача, разбор эталона, прогресс, ВСЕ рецепты (см. разделы 2,4 выше — это его содержимое).
 - `reference_autocad_mcp_cyrillic.md` (reference) — кириллица вход/выход, open, перебор объектов (раздел 4.1 выше).
 - `feedback_pdf_backdrop_cleanup.md` (feedback) — слой недостаточен, позиция+геометрия+обход, скрин зоны, блок→масштаб, откат (разделы 4.4-4.8 выше).

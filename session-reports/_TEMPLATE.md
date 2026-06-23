@@ -2,7 +2,7 @@
 
 **Дата начала:** YYYY-MM-DD
 **Дата окончания:** YYYY-MM-DD (если сессия многодневная)
-**Host:** %COMPUTERNAME% (например, DANIILPC, DELISEEV-PC)
+**Host:** %COMPUTERNAME% (например, DANIILPC, <ПК-разработчика>)
 **Project cwd:** `C:\Users\<...>\<папка проекта>` (где работал Claude)
 **Источник:** Claude Code CLI / VS Code Extension / Cowork (нужное)
 
