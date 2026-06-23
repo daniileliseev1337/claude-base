@@ -64,6 +64,13 @@ python ~/.claude/skills/ru-gov-access/tools/ru_fetch.py <URL> [-o out.html|out.p
   ```
   рендерит SPA с RU-IP → данные грузятся. Либо антибот-API с browser+`country=RU`: **ScrapingAnt**
   (10k/мес free) / Bright Data.
+  ⚠ Проверено вживую 2026-06-23 (DANIILPC, egress=Дубай AS13335): локальный playwright БЕЗ RU-прокси на
+  `pub.fsa.gov.ru/rss/certificate` → `net::ERR_TIMED_OUT`; curl с того же egress → `HTTP 000` (timeout 25с).
+  Блок на уровне САМОЙ страницы — сетевой/гео, НЕ Cloudflare-челлендж и НЕ about:blank. playwright при этом
+  исправен (`example.com` открылся мгновенно) → дело не в инструменте/прокси-докачке браузера, а в egress.
+  Итог: на иностранном egress локальный playwright для pub.fsa бесполезен даже для ОТКРЫТИЯ страницы —
+  обязателен RU exit-IP (`--proxy-server=socks5://<RU>` / ScrapingAnt). «about:blank-сценарий» здесь НЕ
+  воспроизвёлся (версия `@0.0.76` закреплена, браузер стартует и навигирует).
 - ⛔ **curl-реплей API не работает нигде** (403 даже с RU-IP) — не тратить на это время, сразу браузер.
   ⚠ И синтетический `fetch()` ИЗ браузерной консоли с самодельным телом → тоже **403**: SPA-handshake
   им не воспроизвести. Нужен **реальный UI-ввод/клик «Найти»**, чтобы SPA сам сформировал запрос

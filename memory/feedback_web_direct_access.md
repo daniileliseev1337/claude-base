@@ -32,6 +32,12 @@ playwright использует ЛОКАЛЬНЫЙ браузер (Chromium/Chro
 - playwright = about:blank при пустом proxy-env → возможна (c) ИЛИ pending-докачка сервера (версия закреплена
   @0.0.76, см. [[playwright-mcp-pin-version]]). Проверь ipinfo. (Эмпирика 2026-06-22: на @0.0.76 navigate
   на зарубеж РАБОТАЕТ, about:blank ушёл.)
+- РАЗЛИЧАТЬ ДВА СИМПТОМА в (c): на росс. ГОССАЙТ playwright даёт `net::ERR_TIMED_OUT` (НЕ about:blank!), а
+  нейтральный сайт открывается мгновенно → это гео-блок страницы, инструмент исправен; about:blank же =
+  pending-докачка/прокси-env, не гео. Проверено вживую 2026-06-23 (DANIILPC, egress=Дубай AS13335): playwright +
+  `pub.fsa.gov.ru/rss/certificate` = ERR_TIMED_OUT; curl с того же egress = `HTTP 000` (25с timeout); а
+  `example.com` через playwright = OK. Вывод: локальный playwright на иностранном egress для госсайта бесполезен
+  даже на ОТКРЫТИЕ страницы — нужен RU-exit (`--proxy-server=socks5://<RU>` / ScrapingAnt).
 - ЧИТАТЬ росс. страницу в (b)/(c) → `exa` / `firecrawl` / `r.jina` (облачные, ходят СВОИМ каналом). Это
   «посмотреть глазами» вместо playwright-скриншота.
 - СКАЧАТЬ файл: (a)/(b) → `curl --noproxy "*"` (рос. B2B 200); (c) → --noproxy НЕ берёт росс. → качать
