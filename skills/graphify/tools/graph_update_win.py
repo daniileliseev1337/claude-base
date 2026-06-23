@@ -210,10 +210,15 @@ def cmd_detect(args) -> int:
 
 
 # ==========================================================================
-# merge
+# merge  (manual controlled merge — NOT build_merge)
 # ==========================================================================
+# Why not graphify.build.build_merge: it does build(old + new) and THEN prunes
+# by source_file on the *combined* graph, so prune_sources=[changed_file] removes
+# the freshly re-extracted nodes too — the changed file's update vanishes. The
+# manual flow prunes ONLY the old graph, then layers new on top (new wins on id
+# collision). This is the controlled rebuild prescribed in
+# memory/graphify_update_windows_traps.md.
 def cmd_merge(args) -> int:
-    from graphify.build import build_merge
     from graphify.detect import save_manifest
     marker = args.marker
 
@@ -229,43 +234,70 @@ def cmd_merge(args) -> int:
     s_new = normalize_extraction(new_extraction, marker)
     print(f"[merge] new extraction: recovered {s_new['recovered']} source_file from "
           f"source_location, relativized {s_new['relativized']}")
-    _write_json(extract_p, new_extraction)
 
-    # trap #4: also normalize the EXISTING graph so prune matches one form.
-    if graph_p.exists():
-        old_graph = _read_json(graph_p, {})
-        s_old = normalize_extraction(old_graph, marker)
-        if s_old["recovered"] or s_old["relativized"]:
-            _write_json(graph_p, old_graph)
-            print(f"[merge] existing graph normalized: recovered {s_old['recovered']}, "
-                  f"relativized {s_old['relativized']}")
-        else:
-            print("[merge] existing graph already in relative form (no change)")
+    # load + normalize the existing graph (trap #4: one form for prune matching)
+    old_graph = _read_json(graph_p, {"nodes": [], "links": [], "hyperedges": []})
+    s_old = normalize_extraction(old_graph, marker)
+    old_nodes = list(old_graph.get("nodes", []))
+    old_edges = list(old_graph.get("links", old_graph.get("edges", [])))
+    old_hyper = list(old_graph.get("hyperedges", []))
+    print(f"[merge] existing graph: {len(old_nodes)} nodes, {len(old_edges)} edges "
+          f"(normalized: recovered {s_old['recovered']}, relativized {s_old['relativized']})")
 
-    # build prune set: deleted ∪ changed, relativized to the same anchor
+    # prune set: deleted ∪ changed, relativized to the same anchor
     deleted = list(incremental.get("deleted_files", []))
     changed = [f for files in incremental.get("new_files", {}).values() for f in files]
-    prune_raw = list(dict.fromkeys(deleted + changed))
-    prune = [relativize(p, marker) for p in prune_raw] or None
-    print(f"[merge] prune set: {len(prune or [])} source(s) (deleted+changed, relative)")
+    prune = {relativize(p, marker) for p in (deleted + changed) if p}
+    print(f"[merge] prune set: {len(prune)} source(s) (deleted+changed, relative)")
 
-    G = build_merge([new_extraction], graph_path=str(graph_p), prune_sources=prune)
-    print(f"[merge] build_merge -> {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
+    # keep old nodes whose source_file is NOT pruned
+    kept_old = [n for n in old_nodes if n.get("source_file") not in prune]
+    pruned_n = len(old_nodes) - len(kept_old)
+    print(f"[merge] pruned {pruned_n} stale node(s) from old graph")
 
-    merged_out = {
-        "nodes": [{"id": n, **d} for n, d in G.nodes(data=True)],
-        "edges": [
-            {**{k: val for k, val in d.items() if k not in ("_src", "_tgt", "source", "target")},
-             "source": d.get("_src", u), "target": d.get("_tgt", v)}
-            for u, v, d in G.edges(data=True)
-        ],
-        "hyperedges": list(G.graph.get("hyperedges", [])),
+    # combine: new first (wins on id collision), then surviving old; dedup by id
+    seen, combined = set(), []
+    for n in list(new_extraction.get("nodes", [])) + kept_old:
+        nid = n.get("id")
+        if nid and nid not in seen:
+            seen.add(nid)
+            combined.append(n)
+    node_ids = seen
+
+    # edges: keep old edges not pruned and with both endpoints alive; add new edges
+    # whose endpoints survive; dedup by (source, target, relation)
+    def _alive(e):
+        return e.get("source") in node_ids and e.get("target") in node_ids
+    kept_old_edges = [e for e in old_edges
+                      if e.get("source_file") not in prune and _alive(e)]
+    new_edges = [e for e in new_extraction.get("edges", []) if _alive(e)]
+    eseen, combined_edges = set(), []
+    for e in new_edges + kept_old_edges:
+        key = (e.get("source"), e.get("target"), e.get("relation"))
+        if key not in eseen:
+            eseen.add(key)
+            combined_edges.append(e)
+
+    # hyperedges: keep those whose member nodes all survive; dedup by id
+    all_hyper = list(new_extraction.get("hyperedges", [])) + old_hyper
+    hseen, combined_hyper = set(), []
+    for h in all_hyper:
+        hid = h.get("id")
+        members = h.get("nodes", [])
+        if members and all(m in node_ids for m in members) and hid not in hseen:
+            hseen.add(hid)
+            combined_hyper.append(h)
+
+    merged = {
+        "nodes": combined,
+        "edges": combined_edges,
+        "hyperedges": combined_hyper,
         "input_tokens": new_extraction.get("input_tokens", 0),
         "output_tokens": new_extraction.get("output_tokens", 0),
     }
-    _write_json(extract_p, merged_out)
-    print(f"[merge] merged extraction written ({len(merged_out['nodes'])} nodes, "
-          f"{len(merged_out['edges'])} edges)")
+    _write_json(extract_p, merged)
+    print(f"[merge] merged extraction written ({len(combined)} nodes, "
+          f"{len(combined_edges)} edges, {len(combined_hyper)} hyperedges)")
 
     # save manifest so the NEXT --update diffs against today's state
     if incremental.get("files"):
