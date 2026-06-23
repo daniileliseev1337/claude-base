@@ -1,5 +1,7 @@
 # Урок: «у нас уже есть» ≠ «у нас работает» — verify before dismissing
 
+> **ПОГЛОЩЕНО по веб-доступу:** актуальная механика веб-доступа — [[feedback_web_direct_access]]. Здесь оставлен только урок «verify before dismissing» (история harvest 2026-06).
+
 > Источник: пользователь, 2026-06-01, серия harvest-анализов
 > (Exa+Firecrawl, Higgsfield).
 

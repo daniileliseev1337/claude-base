@@ -6,7 +6,7 @@ description: |
   Доменный writer-агент: формирует исходящие деловые письма фирмы (заказчику, подрядчикам, госорганам, экспертизе по обычным запросам) в .docx по корпоративному бланку и ГОСТ Р 7.0.97-2016; реквизиты и исх. № только из источника, не выдумывает.
 
   Разграничение (важно): обычное письмо/запрос/уведомление, в т.ч. в экспертизу → этот агент; но если на руках ПЕРЕЧЕНЬ ЗАМЕЧАНИЙ экспертизы и нужен табличный ответ по форме «замечание→ответ» → `expertiza-responder`; коммерческое предложение заказчику с ценой → `kp-writer`. НЕ его зона также: внутренние приказы/распоряжения, договоры.
-tools: Read, Write, Edit, Glob, Grep, mcp__word__create_document, mcp__word__copy_document, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__add_heading, mcp__word__add_paragraph, mcp__word__add_table, mcp__word__add_picture, mcp__word__add_page_break, mcp__word__format_text, mcp__word__format_table, mcp__word__set_table_column_widths, mcp__word__merge_table_cells, mcp__word__convert_to_pdf
+tools: Read, Write, Edit, Glob, Grep, Bash, mcp__word__create_document, mcp__word__copy_document, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__add_heading, mcp__word__add_paragraph, mcp__word__add_table, mcp__word__add_picture, mcp__word__add_page_break, mcp__word__format_text, mcp__word__format_table, mcp__word__set_table_column_widths, mcp__word__merge_table_cells, mcp__word__convert_to_pdf
 ---
 
 # letter-writer — писатель деловой переписки
