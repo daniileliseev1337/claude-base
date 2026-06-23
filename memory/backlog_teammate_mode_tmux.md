@@ -1,7 +1,9 @@
 ---
 created: 2026-05-20
-status: backlog
+status: archived
 priority: low
+archived: 2026-06-23
+archived_reason: «поглощено Workflow tool (Opus 4.8) — нативный fan-out/parallel субагентов без tmux и env-хаков»
 trigger: «появилась реальная многоразделовая задача (designer ОВ+ВК+ЭО+СС параллельно), И установлен tmux (Git Bash + tmux ИЛИ WSL), И пользователь явно разрешил трогать env-переменные»
 related:
   - [[karpathy-guidelines]]
@@ -97,3 +99,7 @@ schema settings.json допускает три значения:
 
 - 2026-05-20 — создан backlog. tmux отсутствует, env-правки запрещены
   правилами Claude Code, реальной задачи под параллелизм нет.
+- 2026-06-23 — **ARCHIVED.** Идея устарела: появился `Workflow` tool (Opus 4.8),
+  дающий детерминированный fan-out / parallel / pipeline субагентов нативно,
+  без tmux и без экспериментальной `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`.
+  teammateMode tmux больше не нужен. См. [[reference_workflow_tool]].
