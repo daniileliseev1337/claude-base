@@ -184,6 +184,21 @@ is_scan = text_total < 50 * n_pages
 5. **Площади с/без балконов** — зафиксировать в `cite.quote` или warning.
 6. **TOC vs реальные страницы** расходятся — сверять `cite.page` через `pdf_read_pages`.
 
+## Tools (слой 3) — готовые скрипты
+
+Детерминированные проверки вынесены в `tools/tep_validate.py`
+(skill-development правило 2) — не переписывать inline:
+
+```bash
+python skills/pd-tep-extractor/tools/tep_validate.py detect ОПЗ.pdf        # Stage 2: text|scan
+python skills/pd-tep-extractor/tools/tep_validate.py check <объект>-tep.json # cite + sanity (Stage 4-5)
+```
+
+`check` возвращает exit 2 и список, если есть заполненное поле без cite
+(нарушение главного правила) либо sanity-warnings. Или `import`:
+`detect_pdf_type`, `validate_cites`, `sanity_checks`, `validate`.
+`detect` требует `pdfplumber` (системный Python, не uv-tool graphify).
+
 ## Связь с другими скиллами
 
 - [[pdf-helper]] — определяет тип PDF (text/scan), методы чтения.

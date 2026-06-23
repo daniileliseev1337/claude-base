@@ -35,6 +35,23 @@ description: |
 | Чтение формул как текст vs значений | `openpyxl` с `data_only=False` (формулы) или `data_only=True` (значения) | По умолчанию формулы |
 | Запись формул | excel-mcp поддерживает; openpyxl: `cell.value = "=SUM(A1:A10)"` | Excel пересчитает при открытии |
 
+## Tools (слой 3) — готовые скрипты, не переписывать inline
+
+Стабильные детерминированные функции вынесены в `tools/excel_diff.py`
+(skill-development правило 2). Сначала использовать их, не воспроизводить
+код заново — ниже по тексту те же функции дублируются как справка/для
+кастомизации, но рабочий путь — готовый скрипт:
+
+```bash
+python skills/excel-helper/tools/excel_diff.py celldiff  v1.xlsx v2.xlsx out.xlsx   # diff с подсветкой
+python skills/excel-helper/tools/excel_diff.py formuladiff v1.xlsx v2.xlsx          # расхождения формул
+python skills/excel-helper/tools/excel_diff.py errors    file.xlsx                  # #REF!/#DIV/0!/#NAME?
+python skills/excel-helper/tools/excel_diff.py dupes     file.xlsx ID               # дубликаты по ключу
+```
+
+Или `import`: `cell_diff`, `formula_diff`, `find_formula_errors`, `find_duplicates`.
+Запускать Python'ом с установленными `openpyxl`/`pandas` (системный, не uv-tool graphify).
+
 ## БОЕВОЕ ПРАВИЛО чтения чужого файла: сначала формулы, потом выводы
 
 Перед ЛЮБЫМ анализом значений (особенно денег) в существующем xlsx — обязательный скан:
