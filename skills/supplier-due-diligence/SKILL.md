@@ -25,16 +25,11 @@ description: |
 - **Подлинность присланного PDF** → рабочий скрипт `tools/verify_pdf_metadata.py` (offline, pikepdf).
 - **Реальность фирмы / санкции / домен** → через web-инструменты Claude (см. секцию «Веб-доступ» ниже).
 
-## Веб-доступ (актуально 2026-06)
-Полная модель — `memory/feedback_web_direct_access.md` (читать при веб-работе). Кратко:
-- **Лестница чтения:** `exa` → `firecrawl` → `fetch` → `playwright` → `WebFetch` (последняя).
-  Провал ступени ≠ «в интернете нет» — иди на следующую.
-- **Гео зависит от машины** (диагностика `curl --noproxy "*" https://ipinfo.io/json`): RU-egress →
-  росс. сайты напрямую; иностранный egress (системный VPN) → росс. сайты только облаком
-  (exa / firecrawl / WebFetch / r.jina — ходят своим IP).
-- **Росс. ГОССАЙТЫ** (pub.fsa / ЕГРЮЛ / АРШИН): страницы/PDF → скилл `ru-gov-access`; ДАННЫЕ из API
-  реестров = только браузер (playwright с RU-IP), curl=403 везде.
-- **Файлы (PDF)** качать `curl --noproxy "*"`, проверять сигнатуру `head -c4`=`%PDF`.
+## Веб-доступ
+Канон (лестница exa→firecrawl→fetch→playwright→WebFetch, гео/egress-модель, проверка `%PDF`) —
+[[feedback_web_direct_access]] + CLAUDE.md §«Веб-доступ». Ключевое для due-diligence: росс. госсайты-реестры
+(ЕГРЮЛ/АРШИН/pub.fsa) при иностранном egress → скилл [[ru-gov-access]] (страницы/PDF); **ДАННЫЕ из API
+реестров = только браузер** (playwright с RU-IP), curl=403 на любом IP.
 
 ## Workflow
 
