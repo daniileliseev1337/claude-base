@@ -30,7 +30,7 @@ playwright использует ЛОКАЛЬНЫЙ браузер (Chromium/Chro
 
 **По состояниям:**
 - playwright = about:blank при пустом proxy-env → возможна (c) ИЛИ pending-докачка сервера (версия закреплена
-  @0.0.76, см. [[playwright-mcp-pin-version]]). Проверь ipinfo. (Эмпирика 2026-06-22: на @0.0.76 navigate
+  @0.0.76, см. [[playwright_mcp_pin_version]]). Проверь ipinfo. (Эмпирика 2026-06-22: на @0.0.76 navigate
   на зарубеж РАБОТАЕТ, about:blank ушёл.)
 - РАЗЛИЧАТЬ ДВА СИМПТОМА в (c): на росс. ГОССАЙТ playwright даёт `net::ERR_TIMED_OUT` (НЕ about:blank!), а
   нейтральный сайт открывается мгновенно → это гео-блок страницы, инструмент исправен; about:blank же =

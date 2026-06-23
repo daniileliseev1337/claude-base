@@ -97,5 +97,5 @@ python ~/.claude/skills/ru-gov-access/tools/ru_fetch.py <URL> [-o out.html|out.p
 mcp-manifest и личный free-ключ.
 
 ## Связи
-[[feedback_web_direct_access]] (ШАГ −1, гео-модель 3 состояний), [[web_access_survey_2026_06]]
+[[feedback_web_direct_access]] (ШАГ −1, гео-модель 3 состояний), `session-reports/2026-06-22_web-access-survey/`
 (полный каталог), CLAUDE.md §«Веб-доступ — лестница» (гео-разрез).

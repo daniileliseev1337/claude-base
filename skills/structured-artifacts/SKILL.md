@@ -7,7 +7,7 @@ description: |
   в чате»: контекст перегружен, агенты дублируют рассуждения, главный
   Claude забывает ранние решения.
 
-  Источник идеи — gsd-redux Концепт 2 (см. [[gsd-redux]]). Адоптировано
+  Источник идеи — gsd-redux Концепт 2 (см. gsd-redux). Адоптировано
   2026-05-26 после рефакторинга CLAUDE.md → memory/ (когда стало ясно
   что cascade loading — рабочая практика, а не теория).
 
@@ -163,7 +163,7 @@ description: |
 
 ## Источник методологии
 
-- **Концепт 2** из [[gsd-redux]] (gsd-build/get-shit-done, MIT, 63K stars).
+- **Концепт 2** из gsd-redux (gsd-build/get-shit-done, MIT, 63K stars).
 - Адоптировано: SKILL.md + 5 шаблонов в `references/`, методика
   cascade loading.
 - Изменено vs upstream: имена файлов остались (ROADMAP/STATE/PLAN/REVIEW/

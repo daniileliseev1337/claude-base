@@ -15,7 +15,7 @@ _Вынесено из CLAUDE.md 2026-05-26 (Phase 1 refactoring для экон
 
 ### CHANGELOG notification в первой реплике
 
-После строки `✓ прочитан CLAUDE.md (MCP: X/9)` и строки про auto-pull статус
+После строки `✓ прочитан CLAUDE.md (MCP: X/11)` и строки про auto-pull статус
 — **проверить `CHANGELOG.md` на новые записи**:
 
 1. Прочитать первые 20 строк `~/.claude/CHANGELOG.md`.
