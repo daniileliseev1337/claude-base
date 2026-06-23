@@ -26,7 +26,7 @@
 **Доменные reference (2026-06):**
 - [[reference_autocad_pdf_svg_markup]], [[reference_autocad_pdf_overlay_mcp]] — правка/перерисовка графики на PDF-чертежах (CCTV-кейс, verified)
 - [[reference_inkscape_pdf_editing]] — удаление/перемещение объекта в вектор-PDF (verified)
-- [[reference_pyrevit_k7]] — Revit-плагины (IronPython + .NET API)
+- [[reference_pyrevit]] — Revit-плагины (IronPython + .NET API)
 - [[reference_av_multimedia]] — AV/мультимедиа-инсталляции (новый домен)
 
 **Главные уроки:**

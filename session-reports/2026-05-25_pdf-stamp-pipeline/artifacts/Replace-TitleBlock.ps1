@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Replace title block (stamp) in K-7 project documentation PDFs.
+  Replace title block (stamp) in <организация> project documentation PDFs.
 
 .DESCRIPTION
   Two-stage pipeline:
