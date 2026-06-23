@@ -74,6 +74,30 @@ tags: [мета, индекс, memory]
 - [[backlog_id_assembly_session]] — **BACKLOG: ИД (исполнительная документация) — отдельная сессия.**
   Устройство тома ИД, замечания ТЗ, прокачка id-engineer. Невероятно важный кейс (по слову пользователя).
 
+### Инфраструктура базы (cascade-load из CLAUDE.md)
+
+- [[reference_mcp]] — эталон 11 core MCP-серверов: детали, прогрев холодного uvx-кэша, статусы.
+- [[reference_agents]] — эталон 16 доменных агентов: детали, живые фразы-триггеры, разграничения.
+- [[auto_sync]] — auto-pull (SessionStart) / auto-push (SessionEnd) хуки синхронизации claude-base.
+- [[role_detection]] — определение роли ПК (hub / consumer) по `.developer-marker`.
+- [[updater_v2]] — Updater 2.0: настройка claude-base на новом ПК.
+- [[sessions_policy]] — обязательный session-report каждой сессии: формат и зачем.
+- [[token_economy]] — экономия токенов: гейт сессий, матрица моделей субагентов, мониторинг ccusage.
+- [[profanity_marker]] — стиль общения, мат opt-in через маркер.
+- [[auto_memory_policy]] — что и куда сохранять в auto-memory (типы записей, триггеры).
+- [[context_discipline]] — дисциплина контекстного окна, handoff в новый чат.
+- [[named_chains]] — именованные цепочки (named chains): когда и как создавать.
+- [[harvest_workflow]] — методология harvest (поиск внешних инструментов): GitHub → skills.sh → MCP registry.
+- [[harvest_proactive]] — проактивное предложение harvest при признаках задачи под инструмент.
+- [[archive_v1]] — архив v1 (claude-stroy-base) — НЕ источник действующих правил.
+- [[feedback_workflow]] — feedback consumer→hub: куда писать уроки/правки/косяки базы (Why + How).
+- [[feedback_web_direct_access]] — добыча документов качества с B2B-сайтов: скрин-first, `--noproxy`, cookies, антибот. Главный веб-док.
+- [[feedback_id_doc_search_method]] — КАК искать документы качества ИД: запросы, порядок, инструменты, watermark=источник.
+- [[feedback_user_rules_docs_cascade]] — правила пользователя по DOCS-каскаду ИД: порядок работы, даты документ↔акт, поиск, складирование.
+- [[feedback_manual_procedure_verbatim]] — процедуры из мануалов переносить ДОСЛОВНО по шагам, не пересказом по памяти.
+- [[playwright_mcp_pin_version]] — playwright MCP about:blank = @latest авто-апдейт через прокси виснет; пин @0.0.76.
+- [[web_access_r_jina_fallback]] — fallback веб-доступа: префикс `https://r.jina.ai/` при непробитии exa/WebFetch.
+
 ## Когда писать в memory
 
 - Пользователь скорректировал подход (с «почему» и «как применять»).
