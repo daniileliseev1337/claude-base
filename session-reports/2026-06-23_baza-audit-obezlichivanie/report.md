@@ -38,3 +38,27 @@ rd-coordinator секция «When NOT to invoke»; letter-writer без Bash; e
 ## Уроки
 - **Workflow-аудит окупился:** нашёл блокер обезличивания (имя организации в ~100 файлах), который не видели sync-base/verify и прошлые сессии. Рекомендация реестра: добавить **grep-гард на идентификаторы в verify-claude-base.ps1** — чтобы ловить автоматически перед push.
 - Обезличивание делается детерминированным скриптом (словарь замен) по ВСЕМ расширениям, не только .md; .gitignore (без расширения) и бинарники — отдельно.
+
+## ДОВОДКА ВЫПОЛНЕНА (2026-06-23, 15 коммитов от cb30c12)
+
+**CRITICAL — закрыто полностью:**
+- Обезличены орг/объекты/шифры (git grep = 0), бинарный бланк убран из git.
+- **+ ФИО/email/домен/hostname** (Ivan Fesenko, Поляков, Deliseev, k-7.tech, DELISEEV-PC) —
+  обезличены в методбазе + scripts-текст (70+ файлов). Намеренно оставлен `daniileliseev1337/claude-base-feedback`
+  в github_repo-конфиге scripts (функциональный owner feedback-канала).
+- **verify-base PII-гард [7]** (Select-String регистронезависимо) — СРАЗУ окупился: нашёл ФИО/email,
+  что регистрозависимый grep и 30-агентный Workflow пропустили; ловит даже свежие auto-sync файлы.
+
+**MAJOR — ~12/13 закрыто:** все битые ссылки (0 в shared), shared→auto миграция (3 заметки),
+эталон MCP /9→/11, designer.md word/excel-MCP, block-behavior→companion, веб-лестница дубли свёрнуты,
+harvest стейл. Открыт #8 (pd-tep Layer-3 → scripts — разработка).
+
+**MINOR — ключевые:** verify-base [7]+[8] (PII-гард + эталоны MCP==11/agents==16/JSON), letter-writer Bash,
+cad-reader RU-триггеры, id-engineer→id-tom-priemka handoff, пометки «ПОГЛОЩЕНО».
+
+**ОСТАЁТСЯ (хвост):**
+- **Граф базы** — пересобрать (79 структурных файлов изменено, навигатор устарел; крупная операция субагентов).
+- pd-tep/excel-helper Layer-3 (вынос Python в scripts/) — разработка.
+- backlog-статусы (rd_plugins_test_plan, 3 backlog) — нужно решение пользователя (active→archived?).
+- Мелочь: MEMORY.md индекс полнота, rd-coordinator секция «When NOT» структурно, orphan acad-recreation/local-video указатели.
+- verify-base.ps1 паттерны гарда содержат «К-7» как сигнатуры — git grep их видит (не PII, детектор); при желании обфусцировать.
