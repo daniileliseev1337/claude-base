@@ -20,6 +20,8 @@ $base    = Join-Path $HOME '.claude'
 $skel    = Join-Path $base 'graphify-out\skeleton.json'
 $builder = Join-Path $base 'skills\graphify\tools\skeleton_build.py'
 $pyfile  = Join-Path $base 'graphify-out\.graphify_python'
+$log     = Join-Path $base 'graphify-out\skeleton-hook.log'
+function Write-HookLog($m){ try { Add-Content -LiteralPath $log -Value ((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')+' | '+$m) -Encoding UTF8 -EA SilentlyContinue } catch {} }
 if (-not (Test-Path $builder)) { exit 0 }   # skeleton tool not rolled out yet - stay silent
 
 # current HEAD (short)
@@ -35,7 +37,7 @@ if ((Test-Path $skel) -and $head) {
     if ($Matches[1] -eq $head) { $fresh = $true }
   }
 }
-if ($fresh) { exit 0 }   # already fresh - quiet
+if ($fresh) { Write-HookLog "HEAD=$head action=fresh-skip"; exit 0 }   # already fresh - quiet
 
 # rebuild the skeleton (deterministic, 0 tokens, seconds)
 $py = 'python'
@@ -51,6 +53,9 @@ $ok = $?
 Pop-Location
 
 if ($ok) {
+  Write-HookLog "HEAD=$head action=REBUILT-ok"
   Write-Output '[graph] base navigator (skeleton) rebuilt & fresh - query first: python skills/graphify/tools/graph_query.py "your question" (truth lives in source_file).'
+} else {
+  Write-HookLog "HEAD=$head action=REBUILD-FAILED"
 }
 exit 0
