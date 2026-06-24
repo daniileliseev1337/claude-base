@@ -23,7 +23,10 @@ description: |
 ## Когда подключаться
 
 Любая задача воссоздания/правки чертежа через живой AutoCAD (autocad-mcp, backend file_ipc).
-Сначала `system status` → при `ezdxf` сделать `system init` (нужен file_ipc для живого AutoCAD).
+Сначала `system status` → должен быть `file_ipc`. С **backend-priority патчем** (см. ниже)
+сервер в режиме `auto` НИКОГДА не сваливается молча на ezdxf: AutoCAD закрыт → сам его
+запустит (autostart), а не вышло → внятная ошибка «открой AutoCAD». ezdxf — ТОЛЬКО явным
+`AUTOCAD_MCP_BACKEND=ezdxf` (headless без GUI).
 
 ## Установка на ПК (для команды)
 
@@ -32,8 +35,9 @@ description: |
 powershell -File "$env:USERPROFILE\.claude\skills\acad-recreation\tools\install.ps1"
 ```
 Скрипт (idempotent): копирует toolkit в `C:\ProgramData\K7-acad` (ASCII-путь, т.к. профиль
-бывает кириллический), применяет **cp1251-патч** к `file_ipc.py` (+ бэкап), печатает строку
-автозагрузки для `acad.lsp`. **После патча — перезапустить Claude Code.** Автозагрузку toolkit
+бывает кириллический), применяет **cp1251-патч** к `file_ipc.py` (+ бэкап) и
+**backend-priority патч** к `config.py` (живой AutoCAD приоритетнее, autostart, ezdxf только
+явный; + бэкап), печатает строку автозагрузки для `acad.lsp`. **После патча — перезапустить Claude Code.** Автозагрузку toolkit
 в `acad.lsp` прописать вручную (скрипт даёт готовую строку; чужой acad.lsp вслепую не трогаем).
 
 > Проверка после установки (в живом AutoCAD): `execute_lisp (type LM:getdynprops)` → `SUBR`.
@@ -47,6 +51,7 @@ powershell -File "$env:USERPROFILE\.claude\skills\acad-recreation\tools\install.
 | `tools/acad_lisp_toolkit.lsp` | Lee Mac dynblock-функции + канонический скелет-обёртка + safety-блоклист | APPLOAD в AutoCAD |
 | `tools/pdf_multiview.py` | 9-tile multi-scale препроцессинг PDF (overview + 2×2 + угловые deep-zoom) | Python, автономный |
 | `tools/file_ipc_cp1251.patch` | Патч сервера: fallback cp1252 → cp1251 (русский AutoCAD) | применить на ПК с сервером |
+| `tools/autocad_config_k7.py` | Эталон `config.py`: backend-priority (живой AutoCAD + autostart, ezdxf только явный). install.ps1 копирует поверх upstream | применяется install.ps1 |
 | `tools/cherry_pick_batch.md` | Инструкция вливания batch-инструментов из prumputira/autocad-mcp v5.0 | на рабочем ПК |
 
 ### 1. LISP-toolkit (`acad_lisp_toolkit.lsp`)
