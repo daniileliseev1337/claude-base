@@ -55,6 +55,29 @@ if (Test-Path $fip) {
     Write-Host "[2/3] server not found at $fip - skip (install autocad-mcp first)"
 }
 
+# --- 2b. backend-priority patch to config.py (idempotent) ---
+# Forces live AutoCAD (file_ipc) in auto mode + autostart; ezdxf only via explicit flag.
+# Upstream zip restores the vanilla config.py, so this re-applies our reference copy.
+$cfg = Join-Path $env:USERPROFILE '.claude\mcp-servers\autocad-mcp\src\autocad_mcp\config.py'
+$cfgRef = Join-Path $PSScriptRoot 'autocad_config_k7.py'
+if (Test-Path $cfg) {
+    $cfgContent = [IO.File]::ReadAllText($cfg)
+    if ($cfgContent -match 'K7 patch') {
+        Write-Host "[2b/3] backend-priority already present - skip"
+    } elseif (-not (Test-Path $cfgRef)) {
+        Write-Host "[2b/3] WARN: reference autocad_config_k7.py missing - cannot patch"
+    } elseif ($cfgContent -match 'backend_env in \("auto", "file_ipc"\)') {
+        # Known upstream baseline detected -> safe to overwrite with our reference.
+        Copy-Item $cfg "$cfg.bak" -Force
+        Copy-Item $cfgRef $cfg -Force
+        Write-Host "[2b/3] backend-priority patch applied (RESTART Claude Code to activate). Backup: $cfg.bak"
+    } else {
+        Write-Host "[2b/3] WARN: config.py differs from known upstream (server version changed?). Patch manually from autocad_config_k7.py"
+    }
+} else {
+    Write-Host "[2b/3] server config.py not found - skip (install autocad-mcp first)"
+}
+
 # --- 3. autoload line for acad.lsp ---
 $loadLine = '(load "C:/ProgramData/K7-acad/acad_lisp_toolkit.lsp")'
 Write-Host "[3/3] Add toolkit autoload to AutoCAD:"
