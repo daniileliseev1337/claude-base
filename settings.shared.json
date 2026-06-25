@@ -88,6 +88,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\log-tool-usage.ps1\"",
+            "shell": "powershell",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
 
