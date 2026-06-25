@@ -186,3 +186,16 @@ graphify-out/
 
 # Фирменный бланк с реквизитами — НЕ раздавать (правило 6)
 skills/word-helper/templates/*.docx
+
+# =====================================================================
+# Локальные дизайн-скиллы (UI UX Pro Max комплект, github nextlevelbuilder)
+# Установлены 2026-06-26 ТОЛЬКО на хаб (DANIILPC) для Claude Design.
+# НЕ раздавать в базу. Перебивают whitelist !skills/** выше (последнее правило выигрывает).
+# =====================================================================
+skills/ui-ux-pro-max/
+skills/design/
+skills/design-system/
+skills/ui-styling/
+skills/brand/
+skills/slides/
+skills/banner-design/
