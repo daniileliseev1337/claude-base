@@ -50,3 +50,23 @@ MAX_PATH-граблей кириллицы + node_modules):
   инлайн-bundle = готовый ui-resource. Подтверждена ставка прошлой сессии (вариант B).
 - Всё, кроме apps-surface рендера, тестируется БЕЗ хоста (headless + browser-preview) — это
   снимает зависимость от неизвестного и даёт быструю итерацию.
+
+## Разворот 2026-06-28: «нужно везде, включая телефон» → remote
+- «Везде/телефон» = НЕ Stdio (он только локальный ПК): нужен ОДИН remote-сервер по URL,
+  к нему подключаются все хосты (claude.ai/телефон — custom connector; Desktop — mcp-remote;
+  Code — `--transport http`). claude.ai — документированный apps-surface (в отличие от Code).
+- В `server.mjs` добавлен выбор транспорта по env `TRANSPORT=http` (express + StreamableHTTP,
+  stateless, `/mcp` + `/health`). Stdio сохранён. Локально HTTP проверен curl: initialize +
+  capabilities OK.
+- **Грабля (важно): cloudflared quick-tunnel в этой сети НЕ держится.** Сначала QUIC падал
+  («failed to dial to edge with quic: timeout») — фикс `--protocol http2` (corp/UDP режет QUIC),
+  но и http2 рвёт control stream каждые ~40с («client disconnected») → Error 1033 снаружи.
+  Диагностика egress: через прокси → Дубай/Cloudflare AS13335; напрямую (`--noproxy`) → RU
+  Mytishchi/softvideo. Нестабильный исходящий канал рвёт длинные соединения. Код НИ ПРИ ЧЁМ.
+- **Вывод:** для «везде/телефон» quick-tunnel с этого ПК не годится. Кандидаты (следующая
+  сессия): (1) сервер на домашнем ПК-хабе DANIILPC — там Telegram-бот держит длинный канал
+  стабильно; (2) named Cloudflare tunnel с retry-конфигом; (3) VPS. Безопасность публичного
+  endpoint (rate-limit/auth) — обязательна до постоянной публикации.
+- **Промежуточный путь, НЕ требующий сети:** вопрос «рендерит ли apps-surface» можно закрыть
+  Stdio-вариантом в Claude Desktop (точно умеет) — локально, без туннеля. Это отвязано от
+  телефон-задачи и проверяет главный риск виджета.
