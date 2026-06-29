@@ -58,3 +58,24 @@
 
 ## Финиш фазы
 После Tasks 10–13 — `superpowers:finishing-a-development-branch`: прогнать `npm run build`, ручная проверка сценариев, влить feature/customer-2.0 в main (PR или merge — по выбору владельца).
+
+---
+
+## Фронт-фаза (Tasks 10–13) + деплой — добавлено 2026-06-29
+
+**Метод:** superpowers:executing-plans. Все правки App.jsx (9.2k строк) — через PowerShell [IO.File] ReadAllText→.Replace→WriteAllText (UTF8 без BOM) с нормализацией CRLF под файл; guard count==1 на каждый якорь (грабля forced-fsync на F: ломает Edit).
+
+- **Task 10** (6406dfc): 6 обёрток DATA OPERATIONS + расширение существующей fetchMyClientProjects (добавлены visibility, openTaskCount, Number()-коэрция). Сигнатуры RPC (create/accept/reject_project_request, list_available_executors, client_set_task_status, get_my_client_projects) сверены с миграциями 0003/0006/0007/0009 — совпали.
+- **Task 11** (c9d3020): портал заказчика. CreateRequestModal (режим quick/detailed; путь marketplace/assignee; select исполнителя из list_available_executors), бейдж openTaskCount на карточке, ClientProjectTasksModal (приёмка: Принять→Готово, Вернуть→В работе). Переиспользование комментариев/ТЗ внутри портала отложено (вне verify-критерия, риск employee-допущений в компонентах).
+- **Task 12** (8e971aa): EmployeeRequestsPage + вкладка «Заявки» (Inbox) в employee-ветке TABS + ветка рендера. Принять/Отклонить, бейдж пути подбора.
+- **Task 13**: §7 верифицирован СТАТИЧЕСКИ (правка не нужна). Клиент берёт проекты ТОЛЬКО через fetchMyClientProjects (все 3 setClientProjects из RPC); клиент-only видит лишь вкладку myorders, effectiveTab жёстко ⊂ TABS → на projects не попасть; CommandPalette restricted + projects урезан RLS после §7-фикса.
+
+**Верификация:** vitest 96/96 зелёные, build зелёный. Браузерный E2E (заявки/приёмка/§7-изоляция в Network) НЕ прогнан автоматически (нет логина тест-клиента) — оформлен в интерактивный виджет ~/Desktop/klimat-test-checklist.html (секции 7–10, 15 пунктов, прогресс в localStorage).
+
+**Деплой:** merge feature/customer-2.0 → main (FF, 12 коммитов). npm run build → `wsl bash -c "bash /mnt/f/*/redesign-v2-fresh/deploy/nextcloud/deploy-web.sh"` → контейнер nginx daniil-web (127.0.0.1:8080→80). Проверено: HTTP 200, отдаёт свежий index-D_M5dfP5.js.
+
+**Грабли:**
+- Верификация nginx через `wsl -c` с ДВОЙНЫМИ кавычками PowerShell ломается (PowerShell съедает $/;): использовать ОДИНАРНЫЕ кавычки PowerShell (литерал) → bash получает строку целиком.
+- Деплой-скрипт запускать как ФАЙЛ (не inline): glob /mnt/f/*/redesign-v2-fresh/dist раскрывается надёжно и обходит кириллицу в пути.
+
+**Открыто:** main впереди origin/main на 14 коммитов (push в GitHub klimat-pro-AI не делал — деплой локальный). Ветка feature/customer-2.0 НЕ удалена (держу до прогона E2E). PWA service-worker: новый sw.js с новыми хэшами — клиенты обновятся при следующем заходе (при «залипании» — hard-reload).
