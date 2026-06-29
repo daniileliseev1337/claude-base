@@ -1,0 +1,60 @@
+# Заказчик 2.0 — backend реализован, фронт остался (session-report 2026-06-29)
+
+## TL;DR
+- Фаза «Заказчик 2.0» CRM-проекта (self-hosted Supabase): заказчику дана активная роль в своих проектах + создание проектов-заявок + закрыта marketplace-утечка.
+- Закрыто: дизайн-спека v4 (одобрена, отревьюена), план реализации (14 задач), **весь backend — 9 миграций применены, RLS-тесты зелёные, закоммичены**.
+- Осталось: **фронт (Tasks 10–13)** — правки монолита `src/App.jsx` (8800+ строк).
+
+## Среда
+- Репо: `F:\Сайт\redesign-v2-fresh`, ветка **`feature/customer-2.0`** (от main).
+- БД: self-hosted Supabase, контейнер `supabase-db` в WSL Docker.
+- Накат миграции: `Get-Content -Raw <file> | wsl docker exec -i supabase-db psql -U postgres -d postgres -v ON_ERROR_STOP=1` (PowerShell).
+- RLS-тест: `begin; set local role authenticated; set local request.jwt.claims='{"sub":"<UUID>","role":"authenticated"}'; <запрос>; rollback;`
+- ⚠ ГРАБЛЯ: Edit-инструмент падает на `App.jsx` (forced-fsync на F:). Фронт-правки — через PowerShell `[IO.File]::ReadAllText`→`.Replace(old,new)`→`[IO.File]::WriteAllText($p,$t,(New-Object Text.UTF8Encoding $false))` (точечная замена, не держать весь файл в контексте).
+
+## Артефакты на диске
+- Спека: `F:\Сайт\redesign-v2-fresh\docs\superpowers\specs\2026-06-28-customer-2.0-design.md` (v4, закоммичена в main `f2dbcc6`).
+- План: `F:\Сайт\redesign-v2-fresh\docs\superpowers\plans\2026-06-29-customer-2.0.md` (закоммичен main `c74b9fa`, обновлён на feature-ветке под найденные баги).
+- Тестовые UUID: `C:\Temp\test_uuids.txt`.
+
+## Сделано (backend, 9 миграций на feature/customer-2.0)
+| Коммит | Файл | Что |
+|---|---|---|
+| 045bb2c | 20260629_0001_is_employee.sql | `is_employee()` = approved + роль employee в user_roles |
+| 745f755 | 20260629_0002_client_task_tz_access.sql | `can_access_project_comments`+`is_project_client`; `propose_tz_version`+`is_project_client` (B-1) |
+| afc3591 | 20260629_0003_client_set_task_status.sql | RPC приёмки (На проверке→Готово/В работе) |
+| e21061b | 20260629_0004_assigned_to_guard.sql | триггер: заказчик не назначает вне executors (B-3) |
+| 0730991 | 20260629_0005_project_requests.sql | таблица заявок + RLS + хелпер `is_my_client_record` |
+| f3b8263 | 20260629_0006_list_available_executors.sql | узкий список исполнителей {id,name,position} |
+| 4a0eb15 | 20260629_0007_project_request_rpcs.sql | create/accept/reject_project_request |
+| e422617 | 20260629_0009_client_projects_task_count.sql | get_my_client_projects + visibility + open_task_count |
+| 94195c9 | 20260629_0008_marketplace_leak_fix.sql | §7: is_employee вместо is_approved в marketplace-ветках |
+
+Все миграции протестированы psql-имитацией JWT — тесты зелёные (см. план, секции Task N Step «тест»).
+
+## Два бага плана, пойманы тестами и починены
+1. **Task 5 (RLS clients):** прямой `exists(clients ...)` в `WITH CHECK` возвращал false — заказчик НЕ видит свою clients-запись под RLS (`clients_select`=owner/admin). Решение: SECURITY DEFINER хелпер `is_my_client_record(client_id)`. План обновлён.
+2. **Task 9 (тип возврата):** `create or replace` не меняет тип возврата функции. Решение: `drop function if exists` перед create. План обновлён.
+
+## Ключевые решения (зафиксированы с владельцем)
+- §7 marketplace-утечка — чинить В фазе (сделано).
+- §8 clients — у заказчика одна запись (данными), селектор в UI не нужен.
+- Подбор исполнителя — **оба пути**: маркетплейс (готовый broadcast+take_project) ИЛИ прямое назначение из списка.
+- Материализация заявки — **сотрудник, 1 клик**, `owner_id`=сотрудник (НЕ заказчик: owner_id=ключ RLS-доступа ко всей строке; заказчик-owner пробил бы изоляцию §1). Заказчик заносит все данные в заявке.
+- `is_employee()` на роли `employee` (НЕ `NOT am_i_client`) — учёт гибрида client+employee.
+
+## Осталось — фронт (Tasks 10–13 плана)
+- **Task 10** — обёртки DATA OPERATIONS в `App.jsx` (рядом со стр 433–471): `fetchMyClientProjects`, `createProjectRequest`, `acceptProjectRequest`, `rejectProjectRequest`, `listAvailableExecutors`, `fetchProjectRequests`, `clientSetTaskStatus`. Полный код — в плане Task 10.
+- **Task 11** — портал заказчика (`isClientOnly` ~стр 8778): индикатор `openTaskCount` на карточке, модалка «Создать проект» (режим quick/detailed + путь marketplace/assignee + select исполнителя), экран задач с приёмкой (Принять/Вернуть).
+- **Task 12** — интерфейс сотрудника: список входящих заявок (status='Новая'), кнопки Принять/Отклонить, бейдж пути подбора.
+- **Task 13** — верификация §7 на фронте: КЛЮЧЕВОЕ — убедиться, что клиентский портал берёт проекты через `fetchMyClientProjects` (RPC), а НЕ через `fetchProjects` (прямой `from('projects')` стр 368, вызывается в bootstrap 8578/8648). После §7-фикса заказчик прямым запросом НЕ получит marketplace-проекты. Если портал зависит от `fetchProjects` — переключить на RPC.
+
+## Открытые вопросы / на что смотреть
+- Task 13 — реальный ли регресс: проверить, откуда `clientView`/`isClientOnly` берёт список проектов (стр ~8560–8670, 8778). Если из `fetchMyClientProjects` — §7 безопасен; если из `fetchProjects` — баг, чинить.
+- Уведомления: схема `notifications` = `user_id/type/title/body/url` (все NOT NULL). RPC вставляют от SECURITY DEFINER (owner bypass RLS). Если во фронте есть отдельный список уведомлений — заявки кладут `type='project_request'`, `url='/requests'` (сотруднику) / `/orders` (заказчику).
+
+## Cleanup (после приёмки всей фазы)
+Тестовые данные в БД (НЕ в git): аккаунт `00000000-0000-4000-8000-00000000c111`, его clients/проекты/заявки, «Чужой маркет-проект», e2e-проекты. Скрипт очистки — в плане, секция Cleanup. Временные `C:\Temp\*.sql`.
+
+## Финиш фазы
+После Tasks 10–13 — `superpowers:finishing-a-development-branch`: прогнать `npm run build`, ручная проверка сценариев, влить feature/customer-2.0 в main (PR или merge — по выбору владельца).

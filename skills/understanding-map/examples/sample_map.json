@@ -10,7 +10,11 @@
     { "zone": "ok", "tag": "Р2 · решено", "title": "Телефон отложен", "detail": "Хотелка, не блокер. На телефоне виджет только через remote MCP — доделаем после главного." },
     { "zone": "ok", "tag": "Р3 · решено", "title": "VS Code — только HTML-файл", "detail": "show_widget в VS Code-расширении недоступен (нет инструмента, проверено ToolSearch). MCP-app там тоже текст. Остаётся standalone HTML." },
     { "zone": "ok", "tag": "Р4 · решено", "title": "Два режима — два визуала", "detail": "show_widget = нативные CDS-карточки; standalone = чертёжный лист с миллиметровкой и ГОСТ-штампом. Разные среды — разные ограничения CSS." },
-    { "zone": "ok", "tag": "Р5 · решено", "title": "Оформляем скиллом", "detail": "understanding-map: render_map.py (JSON→HTML, 2 режима) + SKILL.md + пример. Постоянство по триггеру, а не каждый раз с нуля." }
+    { "zone": "ok", "tag": "Р5 · решено", "title": "Оформляем скиллом", "detail": "understanding-map: render_map.py (JSON→HTML, 2 режима) + SKILL.md + пример. Постоянство по триггеру, а не каждый раз с нуля." },
+    { "zone": "as", "tag": "Д1 · допущение", "title": "show_widget = только Desktop", "detail": "Проверено: env entrypoint=claude-desktop, в VS Code инструмента нет. Что у этого хоста так всегда — держим допущением, не аксиомой." },
+    { "zone": "as", "tag": "Д2 · допущение", "title": "Desktop Chat — другой стек", "detail": "Там Artifacts + MCP-app (understanding-map) уже рендерят; show_widget туда не нужен." },
+    { "zone": "pe", "tag": "В1 · вопрос", "title": "Возврат правок в новом канале", "detail": "show_widget шлёт через sendPrompt (текст в чат). Хватает ли этого vs структурный app.sendMessage в MCP-app — решим по опыту." },
+    { "zone": "pe", "tag": "В2 · вопрос", "title": "Судьба understanding-mcp", "detail": "Сервер остаётся для Desktop Chat и (через remote) телефона. Развивать его или заморозить — открыто." }
   ],
   "flowTitle": "Как шёл разбор — честно",
   "flow": [

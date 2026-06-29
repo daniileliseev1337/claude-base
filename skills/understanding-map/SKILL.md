@@ -43,7 +43,18 @@ description: >
 
 `show_widget` (MCP `visualize`) есть только при `CLAUDE_CODE_ENTRYPOINT=claude-desktop`.
 В VS Code / CLI его НЕТ — там единственный путь к виджету это **standalone HTML-файл**.
-Проверка доступности: есть ли среди инструментов `mcp__visualize__show_widget`.
+
+**Как выбрать канал (Claude определяет сам, не угадывая среду):** смотри не «какая среда»,
+а **есть ли у тебя инструмент `mcp__visualize__show_widget`**:
+1. Инструмент доступен (виден в наборе инструментов ИЛИ находится через ToolSearch
+   `visualize`) → **widget-режим** (это Claude Desktop) + параллельно сохрани HTML-файл.
+2. Инструмента нет (ToolSearch по `visualize`/`show_widget` пуст) → **только standalone
+   HTML-файл** (VS Code / CLI / прочее).
+
+Запасной сигнал среды — `CLAUDE_CODE_ENTRYPOINT` (`claude-desktop` → виджет есть; читается
+`$env:CLAUDE_CODE_ENTRYPOINT`). Но проверка самого инструмента прямее. Подтверждено
+эмпирически: в Desktop show_widget в активных инструментах; в VS Code-расширении ToolSearch
+его не находит.
 
 ## Как делать (по шагам)
 
