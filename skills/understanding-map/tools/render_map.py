@@ -370,10 +370,14 @@ def build_widget(d):
     parts.append(_arch_cds(d))
     parts.append(_stamp_cds(d))
     parts.append(
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">'
+        '<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;">'
+        '<div style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:8px">Сверка — всё верно или поправить?</div>'
+        '<textarea id="um-fix" rows="2" placeholder="Что я понял не так? Укажи пункт и как правильно — уйдёт мне как правка" '
+        'style="width:100%;font-size:13px;margin-bottom:8px"></textarea>'
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
         '<button onclick="sendPrompt(\'Карта понимания верна — можно работать\')">Понял верно ↗</button>'
-        '<button onclick="sendPrompt(\'В карте понимания есть расхождения, сейчас уточню какие\')">Есть расхождения ↗</button>'
-        "</div>"
+        '<button onclick="var t=document.getElementById(\'um-fix\').value.trim();sendPrompt(t?(\'Правка карты понимания: \'+t):\'В карте понимания есть расхождения, сейчас уточню какие\')">Отправить правку ↗</button>'
+        "</div></div>"
     )
     parts.append("</div>")
     return "".join(p for p in parts if p)
