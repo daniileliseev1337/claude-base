@@ -31,4 +31,43 @@
 
 ## Долги (after-merge, из финального ревью)
 
-T3 param naming (`supabase` vs `client`); T4/setTab dead ternary; T7 `key={i}`; T8 async cleanup (общий паттерн — чинить согласованным проходом), `fmtD`→`fmtDM`, Wallet-иконка ×2. Плюс: браузерный E2E под заказчиком не проводился (нет кред тест-аккаунта); `origin/main` не пушен (local ahead); ветка `feature/client-access-model` не удалена.
+T3 param naming (`supabase` vs `client`); T4/setTab dead ternary; T7 `key={i}`; T8 async cleanup (общий паттерн — чинить согласованным проходом), `fmtD`→`fmtDM`, Wallet-иконка ×2.
+
+---
+
+# Продолжение сессии: шип client-access + вторая фича admin-create-user + §1-E2E
+
+## client-access-model — ЗАШИПАНО на прод
+По explicit-«го» владельца (после того как авто-гейт дважды правильно удержал на размытом «го»):
+миграция 20260701_0001 применена к живой БД + verify `CLIENT_PAYMENTS_RLS_OK`; FF-merge в main;
+build; deploy → прод живой (`DEPLOY_LIVE_MATCH`, https://<vps>.sslip.io HTTP 200). Побочно починен
+баг verify-скрипта (owner_id в selftest INSERT).
+
+## admin-create-user — новая фича, полный цикл superpowers + шип
+brainstorming → spec → writing-plans → SDD (5 задач, каждая implementer(sonnet)→task-review(sonnet)):
+T1 RPC `admin_finalize_new_user`; T2 `userCreateValidation` (TDD, vitest); T3 Edge Function
+`admin-create-user` (GoTrue admin API, service_role); T4 форма в AdminPage; T5 verify.sh. Финальный
+whole-branch review (opus): Ready to merge (5 security-инвариантов держатся). Затем по «го»: миграция
+20260701_0002 применена, функция задеплоена, verify `ADMIN_CREATE_USER_OK` (создание→approved/роль/
+логин/аудит→cleanup), merge в main, deploy фронта. Фича: админ создаёт юзера (email+пароль+роль
+client|employee, approved) — форма на проде.
+
+## §1-E2E заказчика (через новый инструмент) — ПРОЙДЕН
+Создан client-only юзер функцией → вход (реальный client JWT) → под ним: `get_my_client_projects`=0,
+`get_my_project_payments`=0 (проекции без чужого); ПРЯМЫЕ `transactions`=0, `project_shares`=0,
+`projects`=0 — RLS блокирует чувствительные таблицы реальной клиентской сессии. §1 подтверждён на
+рантайме данных (не только статикой). Cleanup выполнен.
+
+## Новые уроки среды (в дополнение к drvfs-граблям)
+1. **Edge-функции с кириллицей в комментах деплоить ТОЛЬКО `cp` с /mnt/f** (Linux-сторона, UTF-8
+   цел). `Get-Content|wsl` stdin ДРОПАЕТ кириллические байты → битый UTF-8 → Deno не грузит модуль
+   («could not find an appropriate entrypoint», при этом grep U+FFFD=0 — байты дропнуты, не заменены).
+   Коммитнутый `deploy-edge-function.sh` (cp) — правильный; я зря пайпил, потерял время.
+2. **`UID` — readonly builtin в bash** (numeric user id): `UID=$(...)` падает. В скриптах — другое имя (NUID).
+3. **`find` для локации в /mnt/f**: правильный `maxdepth` (файл на глубине N от /mnt/f, не угадывать мелко).
+4. **Авто-гейт классификатора** надёжно ловит размытое «го» на прод-запись/merge/деплой/секреты — это
+   правильно; на необратимо-наружных шагах брать **явное адресное** подтверждение (AskUserQuestion), не инференс.
+
+## Статус
+Обе фичи в main (local ahead origin на 12 коммитов — НЕ пушено), на проде живые. Долги обеих фич —
+after-merge (в ledger `.superpowers/sdd/progress.md`). Ветки `feature/*` не удалены.
