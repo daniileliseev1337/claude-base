@@ -142,6 +142,15 @@
       "max_python": "3.12",
       "size_mb": 2,
       "tier": "optional"
+    },
+    {
+      "name": "claude-agent-sdk",
+      "import_name": "claude_agent_sdk",
+      "purpose": "Официальный Anthropic Agent SDK — canUseTool авто-надзор для скилла supervisor (headless-арбитр: allow/deny/escalate по правилам, deny-by-default). Ставить только если используешь supervisor. Telegram-алерт опционален (env SUPERVISOR_TG_TOKEN/SUPERVISOR_TG_CHAT), деградирует в durable-лог. pip-name=claude-agent-sdk, import-name=claude_agent_sdk.",
+      "min_python": "3.10",
+      "max_python": "3.13",
+      "size_mb": 5,
+      "tier": "optional"
     }
   ],
   "mcp_servers": [
