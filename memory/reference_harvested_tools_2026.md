@@ -37,3 +37,13 @@ OmniRoute — осторожный пилот. Приоритеты владел
 Loopy — заявка искажена, memanto — приватность-блокер. 5 из 8 отклонены с обоснованием.
 
 Детали каждого — `session-reports/2026-07-01_harvest-8-tools/_оценки_накопитель.md`.
+
+## Фаза 1b (2026-07-01): забытое из harvested/ + backlog → +17 в трекер (47→64)
+
+Прочёсаны 26 harvested-папок (138 заметок) + 5 backlog. Добавлены забытые-НЕ-отвергнутые:
+- **harvested (14):** open-webui, markitdown-ocr, litellm-agent-platform, ollama-admin, claude-mem, docling, OCRmyPDF, camelot, jztan-pdf-mcp, redact_mcp, terrastruct-d2, mingrammer/diagrams, acad-api-skill, netbox-topology.
+- **backlog (3):** cross-model-review (РФ-модель), promptfoo, tools/-миграция.
+- **ДОЛГ ИСПОЛНЕНИЯ (ключевое):** docling/OCRmyPDF/camelot решены «используем» (15.05), НЕ установлены (pip global пусто, siblings pdfplumber/pymupdf стоят) → база теряет РЕШЕНИЯ, не инструменты (доказано фактом).
+- **Дубли-переоткрытия:** MinerU 2× (16.05 entera-analog + 01.07); claude-mem≈memanto (авто-память).
+- **Отсеяно как решённое-НЕТ (НЕ забытьё):** marker/surya (GPL «не интегрируем»), rsp2k (непроверенность). teammate-tmux архивирован (поглощён Workflow).
+Детали — `0_СТАТУС_программы.md` + session-report `2026-07-01_faza1b-zabytoe`.
