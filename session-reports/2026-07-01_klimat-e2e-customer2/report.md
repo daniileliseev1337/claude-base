@@ -75,3 +75,20 @@ RLS режет их в `[]` (утечки чужих данных НЕТ, изо
 - FRP: frpc active ≠ туннель жив; смотреть `journalctl -u frpc` (login write timeout = frps недоступен).
 - PowerShell→wsl: одинарные кавычки; сложные SQL — файлом через `docker exec -i < file` + PGCLIENTENCODING=UTF8.
 - Разделять «фронт работает» и «внешний доступ работает»: при туннеле это два разных отказа.
+
+## РАЗРЕШЕНО — причина была VPN, не хостер
+Догадка владельца («может из-за VPN?») оказалась верной. Диагностика:
+- Windows-route к VPS шёл через `happ-tun` (клиент Happ / sing-box; процессы sing-box+xray).
+- MTU-probe: `ping -M do -s 1208 <vps>` проходит, `-s 1400` → «Message too long». VPN-инкапсуляция
+  урезала path MTU (~1236) → крупные пакеты (FRP-login, SSH-banner) дропались (blackhole),
+  мелкий handshake проходил → «порт открыт, обмен виснет».
+- ВМ у хостера была активна всё время; проблема — локальный VPN заворачивал росс. VPS в туннель.
+
+**Фикс:** Happ → Настройки туннеля → Правила маршрутизации → Редактировать → **Direct** →
+добавлено `193.124.130.236` (IP с точками — frpc ходит по IP) + `193-124-130-236.sslip.io` (домен).
+Порядок Block→Direct→Proxy → VPS ушёл напрямую. После переподключения VPN: frpc `login success`,
+proxy [api web] up, sslip.io web = 200.
+
+**Обход откачен:** `.env.production.local` удалён, пересборка на sslip.io, деплой
+(bundle index-DumW_1Es.js → VITE_SUPABASE_URL=sslip.io). Проверено: localhost:8080=200, sslip.io=200.
+Штатная конфигурация восстановлена полностью.
