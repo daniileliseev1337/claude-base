@@ -43,7 +43,7 @@ rd-coordinator секция «When NOT to invoke»; letter-writer без Bash; e
 
 **CRITICAL — закрыто полностью:**
 - Обезличены орг/объекты/шифры (git grep = 0), бинарный бланк убран из git.
-- **+ ФИО/email/домен/hostname** (Ivan Fesenko, Поляков, Deliseev, k-7.tech, DELISEEV-PC) —
+- **+ ФИО/email/домен/hostname** (реальные ФИО/email/домен/hostname — здесь обезличены) —
   обезличены в методбазе + scripts-текст (70+ файлов). Намеренно оставлен `daniileliseev1337/claude-base-feedback`
   в github_repo-конфиге scripts (функциональный owner feedback-канала).
 - **verify-base PII-гард [7]** (Select-String регистронезависимо) — СРАЗУ окупился: нашёл ФИО/email,
@@ -61,4 +61,4 @@ cad-reader RU-триггеры, id-engineer→id-tom-priemka handoff, помет
 - pd-tep/excel-helper Layer-3 (вынос Python в scripts/) — разработка.
 - backlog-статусы (rd_plugins_test_plan, 3 backlog) — нужно решение пользователя (active→archived?).
 - Мелочь: MEMORY.md индекс полнота, rd-coordinator секция «When NOT» структурно, orphan acad-recreation/local-video указатели.
-- verify-base.ps1 паттерны гарда содержат «К-7» как сигнатуры — git grep их видит (не PII, детектор); при желании обфусцировать.
+- verify-base.ps1 паттерны гарда содержат реальные сигнатуры объектов/организации — git grep их видит (не PII, детектор); при желании обфусцировать.
