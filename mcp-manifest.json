@@ -1,7 +1,7 @@
 {
   "$schema_version": 1,
   "$schema_doc": "Manifest of MCP servers and Python user-packages used across the team. Read by scripts/setup-extras.ps1 to install/register missing items on the local machine. Read by scripts/auto-pull.ps1 to notify user about pending diff between manifest and local state. WHEN ADDING A NEW MCP SERVER OR PACKAGE: edit this file, commit + push -- auto-sync will distribute it. Other PCs will see notification 'extras-diff: N pending' in auto-sync.log and the user can run setup-extras.ps1 to apply. FIELDS (2026-06-09): 'tier'='core'|'optional' -- core ставится /sync-base молча, optional предлагается пользователю (отказ пишется в .local-state/declined.json, но в инвентаре /sync-base показывается ВСЕГДА); 'needs_admin' -- требует админ-прав (на корп-ПК пропускать с пометкой); 'needs_key' -- требует API-ключ (без ключа честно сообщать 'нужен ключ от разработчика', не пропускать молча). setup-extras.ps1 интерпретацию tier получит при следующей правке на dev-ПК; до тех пор поля инертны (unknown method -> skip уже поддержан).",
-  "$last_updated": "2026-06-09",
+  "$last_updated": "2026-07-01",
   "python_user_packages": [
     {
       "name": "matplotlib",
@@ -37,6 +37,24 @@
       "min_python": "3.10",
       "max_python": "3.12",
       "tier": "core"
+    },
+    {
+      "name": "PyMuPDF",
+      "import_name": "fitz",
+      "purpose": "Извлечение текст-слоя из PDF — рабочая лошадка скилла doc-extract (выписки/договоры/ПЗ/вектор-чертежи, мгновенно и локально). pip-name=PyMuPDF, import-name=fitz",
+      "min_python": "3.10",
+      "max_python": "3.12",
+      "size_mb": 20,
+      "tier": "core"
+    },
+    {
+      "name": "docling",
+      "purpose": "Локальный layout-aware парсер PDF->markdown (структурный слой скилла doc-extract; подстраховка MinerU-облака для неавторизованных и больших томов, без лимитов/токена).",
+      "min_python": "3.10",
+      "max_python": "3.13",
+      "size_mb": 500,
+      "post_install_note": "НЕ drop-in на Win с кириллицей в пути Python: (1) нужен ASCII-junction на папку Python (mklink /J C:\\py312 <PythonDir>) — docling-parse (C++) не открывает глифы под non-ASCII путём; (2) требует transformers>=5.0 (layout-модель rt_detr_v2). Модели качаются при 1-м запуске с HuggingFace (~62с). OCR-ветка — EasyOCR (ru). Детали — skills/doc-extract/SKILL.md.",
+      "tier": "optional"
     },
     {
       "name": "paddleocr",
@@ -362,6 +380,18 @@
       "tier": "core",
       "needs_key": false,
       "post_install_note": "HTTP-transport MCP, ставится одной командой claude mcp add (см. register_command). setup-extras.ps1 пока пропустит (unknown method) -- ставит /sync-base."
+    },
+    {
+      "name": "mineru",
+      "purpose": "MinerU cloud — парсер сканов/структуры PDF->markdown (pipeline+ru). Для сканов ИД/сертификатов/спек без текст-слоя. Скилл doc-extract + хелпер skills/doc-extract/tools/mineru_extract.py (авто-сплит больших томов на батчи).",
+      "method": "npx",
+      "install_args": ["mineru-mcp"],
+      "register_args": ["-s","user","-e","MINERU_DEFAULT_MODEL=pipeline","--","npx","-y","mineru-mcp"],
+      "size_mb": 20,
+      "requires_internet": true,
+      "needs_key": true,
+      "post_install_note": "needs_key: каждый пользователь регистрирует СВОЙ бесплатный токен на mineru.net/apiManage/token (JWT ~90 дней) и добавляет через -e MINERU_API_KEY=<token>. Без токена — Flash-режим (<=20стр/10МБ). ДЕФОЛТ pipeline (НЕ vlm — vlm калечит кириллицу). ПРИВАТНОСТЬ: облако mineru.net (КНР) — данные уходят на их серверы, НЕ для конфиденциального ИД без разрешения владельца. Неавторизованным и приватному — локальный слой (pymupdf+easyocr/docling), облако не трогать. Community MCP linxule/mineru-mcp (тонкий API-клиент). Restart Claude Code для tools. Детали — skills/doc-extract/SKILL.md.",
+      "tier": "optional"
     }
   ]
 }
