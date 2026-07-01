@@ -29,3 +29,17 @@
 - `Трекер_реворк_базы.xlsx`, `build_tracker.py` (папка программы).
 - harvested/: 26 папок `session-reports/*/harvested/`; backlog: `~/.claude/memory/backlog_*.md`.
 - Сверка исходного списка владельца: транскрипт харвест-сессии `74460c9b`.
+
+---
+
+## Продолжение сессии (тот же день): аудит скиллов + Fable 5 + OSINT
+
+**Аудит 34 скиллов (forensic 246 транскриптов):**
+- **12/34 = 0 активаций.** 8 доменных (spec-writer/pnr-vor-helper/upd-parser/co-verify/cad-reader/pd-tep-extractor/supplier-due-diligence/doc-finder) = per-machine (как мёртвые агенты) → Фаза 2. + pdf-helper (покрыт pdf-mcp+image-text-replace), stroy-formatting, structured-artifacts, local-video-digest.
+- Дизайн-кластер ×7 → **консолидация: banner-design + slides РЕТАЙР** (байт-дубли внутри `design`, 0 потерь, **34→32**). brand/design-system/ui-styling ОСТАВЛЕНЫ (уникальный код: ui-styling 5.6 МБ шрифтов + shadcn/tailwind + тесты; design-system токены; brand color-скрипты). Предохранитель «смотри перед удалением» окупился — «7→2» по описаниям было бы потерей возможностей.
+
+**Fable 5 (верифиц. `anthropic.com/news/redeploying-fable-5`):** редеплой 01.07 (США сняли экспорт-контроль 12.06). Правило CLAUDE.md swap: «fable офлайн — не использовать» → «`fable` — ждём штатной». Политика (владелец): главная модель сессии по запросу пользователя (лучший оркестратор), НЕ субагент; до 07.07 в лимитах, потом платный API → ждём штатной как Opus 4.8.
+
+**OSINT-arsenal (опознан):** «злой мультитул» владельца = 250+ offensive-тулов, каталог на Desktop (вне git), `local-osint-recon` отложен 23.06 → трекер, возобновить ПАССИВНЫЙ легальный сабсет под due-diligence.
+
+**Трекер:** 47 → **67** (+17 Фаза 1b, +3 доп.: OSINT/видео/аудит-скиллов). Скиллы **34 → 32**. CLAUDE.md: fable-свап.
