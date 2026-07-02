@@ -185,6 +185,45 @@ try {
             & git add -- $path 2>&1 | Out-Null
         }
 
+        # === Обезличивание (2026-07-02, смягчённое правило владельца) ===
+        # Строгий ярус (ФИО/шифры/реквизиты — regex в stoplist) → файл СНИМАЕТСЯ со
+        # staging (не уезжает, лежит локально до ручной чистки) + лог + pending-файл.
+        # Warn-ярус (имена объектов — разрешены по делу) → только строка в лог, пуш идёт.
+        # Словарь НЕ в git (.local-state гитигнорен — сам словарь содержит маркеры).
+        $stopFile = Join-Path $claudeDir '.local-state\anonymize-stoplist.txt'
+        if (Test-Path $stopFile) {
+            $strictPats = @(); $warnPats = @()
+            foreach ($line in (Get-Content $stopFile -Encoding UTF8)) {
+                $t = $line.Trim()
+                if (-not $t -or $t.StartsWith('#')) { continue }
+                if ($t.StartsWith('strict:'))   { $strictPats += $t.Substring(7).Trim() }
+                elseif ($t.StartsWith('warn:')) { $warnPats   += $t.Substring(5).Trim() }
+            }
+            $stagedFiles = & git diff --cached --name-only 2>$null
+            $pendingFile = Join-Path $claudeDir '.local-state\anonymize-pending.txt'
+            foreach ($f in $stagedFiles) {
+                $full = Join-Path $claudeDir $f
+                if (-not (Test-Path $full)) { continue }              # удалённые — мимо
+                if ($f -notmatch '\.(md|txt|json|yaml|yml|py|ps1|csv)$') { continue }
+                $content = ''
+                try { $content = [IO.File]::ReadAllText($full, [Text.Encoding]::UTF8) } catch { continue }
+                $hit = $null
+                foreach ($p in $strictPats) { if ($content -match $p) { $hit = $p; break } }
+                if ($hit) {
+                    & git reset -q -- $f 2>&1 | Out-Null
+                    Write-SyncLog "ANONYMIZE-BLOCK: $f (strict-маркер) -- НЕ запушен; вычисти и закоммить вручную"
+                    Add-Content -Path $pendingFile -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm') | $f"
+                    continue
+                }
+                foreach ($p in $warnPats) {
+                    if ($content -match [regex]::Escape($p)) {
+                        Write-SyncLog "ANONYMIZE-WARN: $f содержит '$p' (разрешено; проверь, что умышленно)"
+                        break
+                    }
+                }
+            }
+        }
+
         # Commit (skip if nothing was actually staged after add)
         $hostname = $env:COMPUTERNAME
         $msg = "auto-sync: session $(Get-Date -Format 'yyyy-MM-dd HH:mm') from $hostname"
