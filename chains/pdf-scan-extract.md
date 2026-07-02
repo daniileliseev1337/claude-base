@@ -9,7 +9,7 @@ triggers:
   - «OCR PDF»
   - «найди значение в скане»
 related_skills:
-  - [[pdf-helper]]
+  - [[doc-extract]]
   - [[image-text-replace]]
   - [[karpathy-guidelines]]
 ---
@@ -28,8 +28,8 @@ related_skills:
 
 Прочитать PDF через `pdfplumber.extract_text()`. Если
 text length ≈ 0 + есть images на странице → это **скан**, переход
-на Stage 2 OCR. Иначе → выход из chain (использовать стандартный
-pdf-helper для текстового PDF).
+на Stage 2 OCR. Иначе → выход из chain (текстовый PDF извлекает
+skill doc-extract, pymupdf-ветка).
 
 **Verify:** явный признак scan vs text (text length, image count)
 задокументирован в выводе.
@@ -67,8 +67,8 @@ OCR не справился, нужен исходник).
 
 ## Когда НЕ использовать
 
-- Текстовый PDF с text layer — стандартный pdf-helper справится
-  без OCR.
+- Текстовый PDF с text layer — skill doc-extract справится
+  без OCR (pymupdf).
 - Растровое изображение (PNG/JPG) без PDF-обёртки → переход напрямую
   в `image-text-replace` скилл, не через chain.
 - Скан низкого разрешения (< 150 dpi) — OCR даст мусор, лучше

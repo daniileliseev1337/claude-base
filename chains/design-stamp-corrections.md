@@ -11,7 +11,7 @@ triggers:
   - «применить замечания к АРМ»
   - «фикс hard-coded формул штампа»
 related_skills:
-  - [[pdf-helper]]
+  - [[doc-extract]]
   - [[excel-helper]]
   - [[stroy-formatting]]
   - [[karpathy-guidelines]]

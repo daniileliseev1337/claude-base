@@ -11,7 +11,8 @@ PDF, которые на самом деле чертежи:
 
 ```python
 import sys
-sys.path.insert(0, ".claude/skills/pdf-helper/scripts")
+from pathlib import Path
+sys.path.insert(0, str(Path.home() / ".claude/skills/doc-extract/tools"))
 from extract_drawing_meta import extract_text_blocks
 
 blocks = extract_text_blocks("plan_floor1.pdf", page=0)

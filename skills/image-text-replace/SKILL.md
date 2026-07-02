@@ -19,7 +19,8 @@ description: |
   - "найди в скане X" (например, сумму, шифр, дату)
   - "что написано на скане", "прочитай scan-PDF"
   - "значение в ячейке скана", "label → value скан"
-  - после `pdf-helper` определил что PDF это скан (нет text layer)
+  - после `doc-extract` определил, что PDF — скан (нет текст-слоя) и нужен
+    OCR со структурой (bbox, label→value)
 
   Триггеры (text replace, secondary):
   - "замени текст на картинке/скане"
@@ -79,13 +80,13 @@ default — цифры устойчивее к SD distortion.
 ## Когда подключать
 
 - Пользователь приложил скан/PDF и сказал «здесь должно быть X вместо Y»
-- В рамках pdf-helper/word-helper нужно поменять текст в **картинке**
+- В рамках pdf-edit/word-helper нужно поменять текст в **картинке**
   внутри документа
 - Batch-замена однотипного текста в 10+ сканах (например, шифры,
   даты, проценты)
 
 **Не подключать:**
-- Векторный PDF где текст редактируется напрямую → используй pikepdf/pypdf напрямую (см. pdf-helper)
+- Векторный PDF где текст редактируется напрямую → используй pikepdf/pypdf напрямую (см. skill pdf-edit)
 - Просто извлечь текст → `paddleocr`/`easyocr` напрямую
 - Один-два файла с Photoshop/Acrobat под рукой → user делает руками
 
@@ -224,7 +225,8 @@ snapshot_download(
 
 - `LESSONS-LEARNED.md` (в папке скилла) — 16-итераций retrospective + anti-patterns
 - `ROADMAP-heavy-options.md` (в папке скилла) — 4 heavy techniques (PSF, Borrow, SD, CNN)
-- скилл `pdf-helper` — связка PDF → image → этот скилл → PDF
+- скилл `doc-extract` — единственный вход извлечения из PDF; сканы без текст-слоя маршрутизирует сюда
+- скилл `pdf-edit` — редактирование PDF (связка PDF → image → этот скилл → PDF)
 - harvest-источники см. в секции «Источники (harvest)» ниже (Appt-OCR, IOPaint, PaddleOCR)
 
 ## Источники (harvest)
