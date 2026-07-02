@@ -25,7 +25,7 @@ metadata:
 |---|---|---|
 | cad-reader | 3 | при касании |
 | image-text-replace | 2 | при касании (сложный pipeline — осторожно) |
-| pdf-helper | 2 | при касании |
+| ~~pdf-helper~~ | — | ✓ закрыто 2026-07-02: скилл разрезан (Блок 3 реворка) — extraction-скрипты уехали в `doc-extract/tools/`, editing-остаток переименован в `pdf-edit` (кода в корне нет) |
 | yandex-disk-uploader | 2 | при касании |
 | spec-writer | 1 | при касании |
 | upd-parser | 1 | при касании |

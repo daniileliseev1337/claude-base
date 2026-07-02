@@ -108,7 +108,7 @@ python pipeline.py `
 ```powershell
 # 1. Извлечь страницу как PNG через pypdfium2 или pikepdf
 # 2. Применить наш скилл
-# 3. Вставить обратно (см. skill pdf-helper)
+# 3. Вставить обратно (см. skill pdf-edit)
 ```
 
 ## Тонкая настройка
@@ -301,5 +301,5 @@ label, value = find_value_near_label(matches, r"Итог.*сумм")
 
 - [SKILL.md](SKILL.md) — методология подключения
 - [[../skills|каталог скиллов]]
-- [[../pdf-helper/SKILL|pdf-helper]] — частая связка (PDF → картинка → этот скилл → вставка)
+- [[../pdf-edit/SKILL|pdf-edit]] — частая связка (PDF → картинка → этот скилл → вставка)
 - [[../../session-reports/2026-05-15_handoff-manifest-extras-installer-stage8/harvested/image-text-replace-stack|harvest заметки]]

@@ -29,7 +29,7 @@ except Exception:
 
 
 def detect_pdf_type(path):
-    """Stage 2: text vs scan по плотности текстового слоя (как в pdf-helper)."""
+    """Stage 2: text vs scan по плотности текстового слоя (как в doc-extract)."""
     import pdfplumber
     with pdfplumber.open(path) as pdf:
         text_total = sum(len((p.extract_text() or "").strip()) for p in pdf.pages)

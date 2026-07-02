@@ -67,7 +67,7 @@ description: |
 
 ### Stage 2 — определить тип PDF (text vs scan)
 
-Стандартная проверка из `pdf-helper`:
+Стандартная проверка из `doc-extract`:
 
 ```python
 import pdfplumber
@@ -201,7 +201,7 @@ python skills/pd-tep-extractor/tools/tep_validate.py check <объект>-tep.js
 
 ## Связь с другими скиллами
 
-- [[pdf-helper]] — определяет тип PDF (text/scan), методы чтения.
+- [[doc-extract]] — определяет тип PDF (text/scan), маршрутизация извлечения.
 - [[image-text-replace]] — OCR-routing для сканов ОПЗ.
 - [[facts-layer]] — куда записать добытые факты (FACTS.md = единый источник правды;
   этот скилл — КАК корректно добыть их из ОПЗ с cite).
