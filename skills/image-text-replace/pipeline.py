@@ -22,8 +22,8 @@ v0.2 changelog:
 
 CLI usage:
     python pipeline.py --input scan.png \\
-        --find "Ф.2024.123456789" \\
-        --replace "Ф.2026.987654321" \\
+        --find "Ф.2024.NNNNNNNNN" \\
+        --replace "Ф.2026.MMMMMMMMM" \\
         --font "C:/Windows/Fonts/arial.ttf" \\
         --mode lama
 

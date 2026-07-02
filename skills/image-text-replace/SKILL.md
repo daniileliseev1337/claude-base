@@ -113,8 +113,8 @@ python ~/.claude/skills/image-text-replace/calibration.py `
 ```powershell
 python ~/.claude/skills/image-text-replace/pipeline.py `
     --input scan.png `
-    --find "Ф.2024.123456789" `
-    --replace "Ф.2026.987654321" `
+    --find "Ф.2024.NNNNNNNNN" `
+    --replace "Ф.2026.MMMMMMMMM" `
     --font "C:/Windows/Fonts/timesbd.ttf"  ` # ← из calibration!
     --mode lama `
     --sd-refine `                          # ← v3.0 финальный SD pass

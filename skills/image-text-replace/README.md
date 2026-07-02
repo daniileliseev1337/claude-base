@@ -67,8 +67,8 @@ python "$HOME\.claude\skills\image-text-replace\pipeline.py" `
 ```powershell
 python pipeline.py `
     --input "C:\Documents\AOSR_skan.png" `
-    --find "Ф.2024.123456789" `
-    --replace "Ф.2026.987654321" `
+    --find "Ф.2024.NNNNNNNNN" `
+    --replace "Ф.2026.MMMMMMMMM" `
     --font "C:\Windows\Fonts\arial.ttf"
 ```
 
@@ -203,15 +203,15 @@ TODO для следующей итерации.
 ### Test 1 — синтетический скан (smoke)
 
 Генерация: `tmp/make-test-scan.py` создаёт PNG 1200×800 с текстом
-«Шифр документа: Ф.2024.123456789» + другой контент.
+«Шифр документа: Ф.2024.NNNNNNNNN» + другой контент.
 
 Запуск:
 ```powershell
 python pipeline.py --input test-scan-input.png `
-    --find "Ф.2024.123456789" --replace "Ф.2026.987654321" --mode lama
+    --find "Ф.2024.NNNNNNNNN" --replace "Ф.2026.MMMMMMMMM" --mode lama
 ```
 
-Результат: «Ф.2024.123456789» заменён на «Ф.2026.987654321», цвет
+Результат: «Ф.2024.NNNNNNNNN» заменён на «Ф.2026.MMMMMMMMM», цвет
 подобран автоматически из bbox оригинала, шов после LaMa инпейнта
 не виден. **PASSED.**
 
