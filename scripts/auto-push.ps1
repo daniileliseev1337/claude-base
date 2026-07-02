@@ -85,31 +85,6 @@ try {
     }
 } catch {}
 
-# === Гейт эфемерных сессий (2026-07-02, «правильное» по разбору Блока 3) ===
-# ФАКТ (зонд): one-shot/headless-инвокации (claude -p, служебные хелперы) дают
-# полный цикл SessionStart→SessionEnd за секунды и их SessionEnd свипал в коммит
-# ЧУЖУЮ незавершённую работу (кейс 12:18–12:25 02.07). Субагенты SessionEnd
-# НЕ стреляют (проверено живым тестом). Критерий эфемерности — транскрипт:
-# у настоящей рабочей сессии сотни строк, у one-shot — единицы/нет файла.
-# По reason НЕ гейтим: one-shot даёт "other", но "other" может приходить и у
-# настоящих закрытий → риск отключить sync совсем.
-# Fail-open: нет stdin/поля/ошибка чтения → ведём себя как раньше (пуш идёт).
-$EphemeralMaxLines = 10
-if ($hookInput -and $hookInput.transcript_path) {
-    $tp = [string]$hookInput.transcript_path
-    $isSubagent = ($tp -match '[\\/]subagents[\\/]')
-    $lineCount = $null
-    if (Test-Path $tp) {
-        try { $lineCount = ([IO.File]::ReadAllLines($tp)).Count } catch { $lineCount = $null }
-    }
-    $isEphemeral = $isSubagent -or (-not (Test-Path $tp)) -or
-                   (($null -ne $lineCount) -and ($lineCount -lt $EphemeralMaxLines))
-    if ($isEphemeral) {
-        Write-SyncLog "skip: ephemeral/subagent SessionEnd (session=$($hookInput.session_id), reason=$($hookInput.reason), transcript_lines=$lineCount) -- пуш пропущен, изменения уедут на настоящем конце сессии"
-        exit 0
-    }
-}
-
 # Retry wrapper для git push. Retryable: SSL handshake, schannel/TLS,
 # transient network, DNS, connection reset, timeout. 3 попытки с 5-сек паузой.
 # НЕ retryable: 403 denied, non-fast-forward (нужен pull + rebase).
@@ -177,6 +152,57 @@ try {
     }
 
     Write-SyncLog "start"
+
+    # === Гейт эфемерных сессий (2026-07-02, «правильное» по разбору Блока 3;
+    #     усилен после NOT PASSED аудита — двухфакторный критерий) ===
+    # ФАКТ (зонд hook-probe.jsonl): one-shot/headless-инвокации (claude -p,
+    # служебные хелперы) дают полный цикл SessionStart→SessionEnd за секунды,
+    # и их SessionEnd свипал в commit+push ЧУЖУЮ незавершённую работу (кейс
+    # 12:18–12:25 02.07). Субагенты SessionEnd НЕ стреляют (живой тест).
+    # Критерий эфемерности ДВУХФАКТОРНЫЙ: мало строк И короткая длительность
+    # (по timestamp первой/последней записи транскрипта). Однофакторный «строк
+    # < 10» ловил настоящие короткие сессии (аудит нашёл реальный 9-строчный
+    # транскрипт) — но у него длительность 0.118 с = стаб; настоящая сессия
+    # живёт минуты. По reason НЕ гейтим («other» может приходить и у настоящих
+    # закрытий → риск отключить sync). Гейт стоит ПОСЛЕ consumer-ветки
+    # НАМЕРЕННО: feedback-collector на consumer-ПК работает как раньше
+    # (идемпотентен, глушить его нет причины).
+    # Fail-open: нет stdin/поля/строк/распарсенной длительности → пуш идёт.
+    $EphemeralMaxLines = 10
+    $EphemeralMaxSeconds = 60
+    if ($hookInput -and $hookInput.transcript_path) {
+        $tp = [string]$hookInput.transcript_path
+        $isSubagent = ($tp -match '[\\/]subagents[\\/]')
+        $lineCount = $null; $durationSec = $null
+        if (Test-Path $tp) {
+            try {
+                $tLines = [IO.File]::ReadAllLines($tp)
+                $lineCount = $tLines.Count
+                $reTs = '"timestamp"\s*:\s*"([^"]+)"'
+                $tsFirst = $null; $tsLast = $null
+                foreach ($l in $tLines) {
+                    $m = [regex]::Match($l, $reTs)
+                    if ($m.Success) { $tsFirst = $m.Groups[1].Value; break }
+                }
+                for ($j = $tLines.Count - 1; $j -ge 0; $j--) {
+                    $m = [regex]::Match($tLines[$j], $reTs)
+                    if ($m.Success) { $tsLast = $m.Groups[1].Value; break }
+                }
+                if ($tsFirst -and $tsLast) {
+                    $durationSec = ([datetime]::Parse($tsLast) - [datetime]::Parse($tsFirst)).TotalSeconds
+                }
+            } catch { $lineCount = $null; $durationSec = $null }
+        }
+        $isTiny = ($null -ne $lineCount) -and ($lineCount -lt $EphemeralMaxLines) -and
+                  ($null -ne $durationSec) -and ($durationSec -lt $EphemeralMaxSeconds)
+        $isEphemeral = $isSubagent -or (-not (Test-Path $tp)) -or $isTiny
+        if ($isEphemeral) {
+            Write-SyncLog "skip: ephemeral/subagent SessionEnd (session=$($hookInput.session_id), reason=$($hookInput.reason), lines=$lineCount, duration_sec=$durationSec) -- пуш пропущен, изменения уедут на настоящем конце сессии"
+            exit 0
+        }
+        # телеметрия для аудита непропущенных (дёшево, 1 строка на настоящий конец сессии)
+        Write-SyncLog "real SessionEnd (session=$($hookInput.session_id), reason=$($hookInput.reason), lines=$lineCount, duration_sec=$durationSec)"
+    }
 
     # Defense-in-depth: disable interactive credential prompt and clear
     # proxy env-vars at the top of the hook -- applies to BOTH fetch
