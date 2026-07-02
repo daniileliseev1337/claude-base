@@ -394,13 +394,43 @@
       "name": "mineru",
       "purpose": "MinerU cloud — парсер сканов/структуры PDF->markdown (pipeline+ru). Для сканов ИД/сертификатов/спек без текст-слоя. Скилл doc-extract + хелпер skills/doc-extract/tools/mineru_extract.py (авто-сплит больших томов на батчи).",
       "method": "npx",
-      "install_args": ["mineru-mcp"],
-      "register_args": ["-s","user","-e","MINERU_DEFAULT_MODEL=pipeline","--","npx","-y","mineru-mcp"],
+      "install_args": [
+        "mineru-mcp"
+      ],
+      "register_args": [
+        "-s",
+        "user",
+        "-e",
+        "MINERU_DEFAULT_MODEL=pipeline",
+        "--",
+        "npx",
+        "-y",
+        "mineru-mcp"
+      ],
       "size_mb": 20,
       "requires_internet": true,
       "needs_key": true,
       "post_install_note": "needs_key: каждый пользователь регистрирует СВОЙ бесплатный токен на mineru.net/apiManage/token (JWT ~90 дней) и добавляет через -e MINERU_API_KEY=<token>. Без токена — Flash-режим (<=20стр/10МБ). ДЕФОЛТ pipeline (НЕ vlm — vlm калечит кириллицу). ПРИВАТНОСТЬ: облако mineru.net (КНР) — данные уходят на их серверы, НЕ для конфиденциального ИД без разрешения владельца. Неавторизованным и приватному — локальный слой (pymupdf+easyocr/docling), облако не трогать. Community MCP linxule/mineru-mcp (тонкий API-клиент). Restart Claude Code для tools. Детали — skills/doc-extract/SKILL.md.",
       "tier": "optional"
+    },
+    {
+      "name": "firecrawl",
+      "tier": "optional",
+      "needs_key": true,
+      "purpose": "Облачный веб-провайдер (search/scrape/extract/crawl) — ступень веб-лестницы для антибот/RU-коммерческих сайтов; используется main и 12+ агентами (лестница exa→fetch→playwright→firecrawl).",
+      "method": "npx",
+      "register_args": [
+        "-s",
+        "user",
+        "-e",
+        "FIRECRAWL_API_KEY={key}",
+        "--",
+        "npx",
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "post_install_note": "Нужен свой бесплатный API-ключ с firecrawl.dev (fc-...). Регистрация: claude mcp add firecrawl -s user -e FIRECRAWL_API_KEY=<ключ> -- npx -y firecrawl-mcp. Без ключа сервер не стартует — ставить только зарегистрировавшимся."
     }
-  ]
+  ],
+  "last_updated": "2026-07-02"
 }
