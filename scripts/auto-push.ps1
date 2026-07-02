@@ -147,7 +147,8 @@ try {
             Write-SyncLog "feedback-collector.ps1 not found — skip"
         }
         Write-SyncLog "DONE (consumer)"
-        Pop-Location
+        # Pop-Location здесь НЕ нужен: exit внутри try гарантированно вызывает
+        # finally (Pop-Location там) — явный вызов давал двойной Pop (MINOR аудита)
         exit 0
     }
 
