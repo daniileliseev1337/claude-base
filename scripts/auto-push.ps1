@@ -70,6 +70,21 @@ function Write-SyncLog { param($msg)
     "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] auto-push: $msg" | Add-Content -Path $logFile
 }
 
+# === Зонд hook-input (Фаза 0, 2026-07-02): что реально приходит на stdin ===
+# Claude Code передаёт хуку JSON через stdin. Читаем только при redirected stdin
+# (ручной запуск без пайпа не виснет). Сырой payload — в hook-probe.jsonl.
+$hookInput = $null
+try {
+    if ([Console]::IsInputRedirected) {
+        $rawInput = [Console]::In.ReadToEnd()
+        if ($rawInput -and $rawInput.Trim()) {
+            $probeFile = Join-Path $claudeDir '.local-state\hook-probe.jsonl'
+            Add-Content -Path $probeFile -Value ("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')][auto-push] " + $rawInput.Trim())
+            $hookInput = $rawInput | ConvertFrom-Json
+        }
+    }
+} catch {}
+
 # Retry wrapper для git push. Retryable: SSL handshake, schannel/TLS,
 # transient network, DNS, connection reset, timeout. 3 попытки с 5-сек паузой.
 # НЕ retryable: 403 denied, non-fast-forward (нужен pull + rebase).
