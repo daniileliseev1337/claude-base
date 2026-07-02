@@ -85,6 +85,31 @@ try {
     }
 } catch {}
 
+# === Гейт эфемерных сессий (2026-07-02, «правильное» по разбору Блока 3) ===
+# ФАКТ (зонд): one-shot/headless-инвокации (claude -p, служебные хелперы) дают
+# полный цикл SessionStart→SessionEnd за секунды и их SessionEnd свипал в коммит
+# ЧУЖУЮ незавершённую работу (кейс 12:18–12:25 02.07). Субагенты SessionEnd
+# НЕ стреляют (проверено живым тестом). Критерий эфемерности — транскрипт:
+# у настоящей рабочей сессии сотни строк, у one-shot — единицы/нет файла.
+# По reason НЕ гейтим: one-shot даёт "other", но "other" может приходить и у
+# настоящих закрытий → риск отключить sync совсем.
+# Fail-open: нет stdin/поля/ошибка чтения → ведём себя как раньше (пуш идёт).
+$EphemeralMaxLines = 10
+if ($hookInput -and $hookInput.transcript_path) {
+    $tp = [string]$hookInput.transcript_path
+    $isSubagent = ($tp -match '[\\/]subagents[\\/]')
+    $lineCount = $null
+    if (Test-Path $tp) {
+        try { $lineCount = ([IO.File]::ReadAllLines($tp)).Count } catch { $lineCount = $null }
+    }
+    $isEphemeral = $isSubagent -or (-not (Test-Path $tp)) -or
+                   (($null -ne $lineCount) -and ($lineCount -lt $EphemeralMaxLines))
+    if ($isEphemeral) {
+        Write-SyncLog "skip: ephemeral/subagent SessionEnd (session=$($hookInput.session_id), reason=$($hookInput.reason), transcript_lines=$lineCount) -- пуш пропущен, изменения уедут на настоящем конце сессии"
+        exit 0
+    }
+}
+
 # Retry wrapper для git push. Retryable: SSL handshake, schannel/TLS,
 # transient network, DNS, connection reset, timeout. 3 попытки с 5-сек паузой.
 # НЕ retryable: 403 denied, non-fast-forward (нужен pull + rebase).
