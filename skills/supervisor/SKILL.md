@@ -33,6 +33,18 @@ cd tools
 python arbiter.py "<задача воркеру>"
 ```
 Зависимость: `claude-agent-sdk` (optional в `mcp-manifest.json` → ставит `/sync-base`, или `pip install claude-agent-sdk`).
+
+**ПРЕДУСЛОВИЕ авторизации (иначе воркер падает `Not logged in`).** Слой 1 спавнит
+headless-подсессию, а она НЕ наследует OAuth интерактивного Claude Code. Нужен
+long-lived токен по подписке (официально, бесплатно):
+```
+claude setup-token          # интерактивный браузер-флоу, делается один раз
+```
+→ полученный токен положить в окружение арбитра как `CLAUDE_CODE_OAUTH_TOKEN`
+(идёт мимо `setting_sources=[]`, изоляцию гейта не ломает). **Токен = секрет:**
+personal env / gitignored `.local-state`, НЕ в git-трекаемый скилл или
+`settings.shared.json`. Симптом отсутствия: `AssistantMessage(error='authentication_failed')`
+→ `Exception: Claude Code returned an error result: success`.
 Env (опц.): `SUPERVISOR_TG_TOKEN`+`SUPERVISOR_TG_CHAT` — Telegram-алерт; `SUPERVISOR_LOG` — путь аудит-лога. Без Telegram эскалации идут в stdout (`[ESCALATE] …`) И в durable-лог (пишется ПЕРВЫМ, до сети).
 
 Тесты (29): `cd tools && python -m pytest tests\ -v` → 29 passed (24 rules + 5 arbiter; arbiter-тесты требуют установленного `claude-agent-sdk`). До 2026-07-02 правила были POSIX-only — ревизия Fable 5 доказала 4 Windows-обхода запуском (`powershell -Command`, `cmd /c`, `| python`, `-EncodedCommand` = ALLOW), все закрыты через TDD.

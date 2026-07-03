@@ -32,28 +32,31 @@ WRAPPER_FLAGS = {"-c", "-e", "-ce", "-command", "-encodedcommand", "-enc", "-ec"
 PIPE_TARGETS = {"sh", "bash", "zsh", "python", "python3", "perl", "ruby", "node",
                 "pwsh", "powershell", "cmd", "iex"}
 
-def _analyze_bash(cmd: str) -> str:
+def _analyze_bash(cmd: str) -> tuple[str, str]:
+    """→ (action, detail). detail называет КОНКРЕТНЫЙ сработавший паттерн для
+    человекочитаемого алерта; при allow detail пустой."""
     low = cmd.lower()
     for s in DENY_SUBSTR:
         if s in low:
-            return "escalate"
+            return "escalate", f"dangerous substring «{s}»"
     try:
         toks = [t.lower() for t in shlex.split(cmd)]
     except ValueError:
-        return "escalate"  # неразбираемое — не рисковать
+        return "escalate", "unparseable command"  # неразбираемое — не рисковать
     # обёртки с флагом-строкой (bash -c / powershell -Command / cmd /c …) — не видим внутрь
     if toks and toks[0] in WRAPPERS and any(t in WRAPPER_FLAGS for t in toks[1:]):
-        return "escalate"
+        flag = next(t for t in toks[1:] if t in WRAPPER_FLAGS)
+        return "escalate", f"wrapper hides command ({toks[0]} {flag})"
     # пайп-в-интерпретатор: первое слово каждого сегмента после «|»
     if "|" in cmd:
         for seg in cmd.split("|")[1:]:
             first = seg.strip().split()
             if first and first[0].lower().strip("\"'") in PIPE_TARGETS:
-                return "escalate"
+                return "escalate", f"pipe into interpreter ({first[0].strip(chr(34)+chr(39)).lower()})"
     for combo in DENY_TOKENS:
         if all(t in toks for t in combo):
-            return "escalate"
-    return "allow"
+            return "escalate", "dangerous tokens «" + " ".join(combo) + "»"
+    return "allow", ""
 
 def decide(tool_name: str, tool_input: dict) -> dict:
     if tool_name in SAFE_TOOLS:
@@ -65,6 +68,7 @@ def decide(tool_name: str, tool_input: dict) -> dict:
             return {"action": "escalate", "reason": f"write to sensitive path: {path[:120]}"}
         return {"action": "allow", "reason": "file write (low risk)"}
     if tool_name == "Bash":
-        a = _analyze_bash(str(tool_input.get("command", "")))
-        return {"action": a, "reason": f"bash: {a}"}
+        a, detail = _analyze_bash(str(tool_input.get("command", "")))
+        reason = f"bash: {detail}" if detail else "bash: allow"
+        return {"action": a, "reason": reason}
     return {"action": "escalate", "reason": "unknown tool — no rule"}
