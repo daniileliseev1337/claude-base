@@ -111,6 +111,15 @@ def test_report_written_and_relative(project):
     assert not re.search(r"[A-Za-z]:[\\/]", blob), "абсолютные пути запрещены"
 
 
+def test_propose_clean_on_fresh_bootstrap(tmp_path):
+    """Свежеразвёрнутое ядро само по себе протуханий не содержит —
+    плейсхолдеры шаблонов (`_backup_<дата>/` и т.п.) не считаются путями."""
+    import bootstrap
+    bootstrap.bootstrap("Чистый проект", tmp_path)
+    _, data = run_propose(tmp_path)
+    assert data["proposals"] == [], data["proposals"]
+
+
 # ---------- apply ----------
 
 def make_proposals(root, items, stamp="2026-07-06T12-00-00"):

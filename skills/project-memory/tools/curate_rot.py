@@ -80,6 +80,8 @@ def _path_candidates(line: str) -> list[str]:
             continue
         if " " in c:
             continue
+        if "<" in c or ">" in c:      # плейсхолдер вида _backup_<дата>/ — не путь
+            continue
         if "/" in c or "\\" in c or re.search(r"\.\w{1,6}$", c):
             out.append(c.replace("\\", "/"))
     return out
