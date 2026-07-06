@@ -63,7 +63,9 @@ try {
   $lines = @(Get-Content -LiteralPath $journal -Encoding UTF8)
   $starts = @()
   for ($i = 0; $i -lt $lines.Count; $i++) {
-    if ($lines[$i] -like '## *') { $starts += $i }
+    # entries start with a dated header (## YYYY-...); a bare '## *' would also
+    # match the entry template inside the fenced code block of the header
+    if ($lines[$i] -match '^## \d{4}-') { $starts += $i }
   }
   $rel = $journal.Substring($root.Length).TrimStart('\','/')
   Write-Output ("[project-memory] Memory project detected (root: " + (Split-Path $root -Leaf) + ").")
