@@ -136,7 +136,7 @@ def _try_launch_autocad() -> int | None:
 def detect_backend() -> str:
     """Return the backend name to use: 'file_ipc' or 'ezdxf'.
 
-    Policy (K7 patch): in 'auto' mode ALWAYS prefer the live AutoCAD (file_ipc).
+    Policy (ORG patch): in 'auto' mode ALWAYS prefer the live AutoCAD (file_ipc).
     The headless ezdxf backend is reachable ONLY via an explicit
     AUTOCAD_MCP_BACKEND=ezdxf — it never silently substitutes the live AutoCAD.
     When AutoCAD is closed in auto/file_ipc mode we try to launch it

@@ -7,7 +7,7 @@
 ## Контекст
 
 После handoff infra-сессии — реальная production задача: добавить «20%»
-к строке «Итоговая сумма (вкл. НДС)» в КП К7 АХП от 07.05.26
+к строке «Итоговая сумма (вкл. НДС)» в КП <организация> АХП от 07.05.26
 (финансовый scan-PDF, 4 страницы). Нужен production инструмент чтобы
 команда могла делать такое regularly.
 
@@ -83,7 +83,7 @@ pdfplumber, Pillow, opencv-python, numpy.
 | `9c6f668` | Contact-info для HF token |
 | `f9b6137` | Email fix + profanity toggle |
 
-**Final result:** `Desktop\КП К7 АХП от 07.05.26 (+20%) v30-SD.pdf`
+**Final result:** `Desktop\КП <организация> АХП от 07.05.26 (+20%) v30-SD.pdf`
 — production-ready, принят user'ом.
 
 ## Установлено в системе (DANIILPC)
@@ -143,14 +143,14 @@ Font calibration sheet (render same string в 12 шрифтах рядом со
    запустить setup-extras для скачивания SD.
 3. **Test profanity toggle** на чистом старте сессии (без
    .profanity-marker) — AskUserQuestion должен сработать автоматически.
-4. **Test scan-detection routing** на реальном scan-PDF (не КП К7) для
+4. **Test scan-detection routing** на реальном scan-PDF (не КП <организация>) для
    проверки generic применимости.
 5. **Phase 2 CNN style transfer** — backlog до накопления dataset.
 
 ## Обезличивание
 
 Public репо, обезличивание смягчено. **Есть:** hostnames, email
-команды, GitHub аккаунты, имя файла КП К7. **Нет:** паролей, PAT,
+команды, GitHub аккаунты, имя файла КП <организация>. **Нет:** паролей, PAT,
 ПДн, банковских реквизитов. HF token — в чат-логах (Issue для
 rotation), но в коде/коммитах НЕТ.
 

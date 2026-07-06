@@ -1,6 +1,6 @@
 ---
 created: 2026-05-18
-updated: 2026-06-09
+updated: 2026-07-06
 status: active
 owner: Даниил
 tags: [мета, индекс, memory]
@@ -27,6 +27,7 @@ tags: [мета, индекс, memory]
 - [[2026-05-15_extras-distribution-mechanism]] — manifest + setup-extras + Install.ps1 Stage 8 архитектура распространения Python/MCP стека.
 - [[2026-05-18_lesson-15-proxy-helpers-persistence]] — Урок 15: proxy-хелперы persistence в claude-lite-instaler (CLOSED 2026-05-18 коммитом `3562631`).
 - [[2026-05-26_anthropic_geoblock_ru]] — Anthropic геоблокирует RU IP на уровне backend API → `app-unavailable-in-region` HTML вместо JSON → Claude Desktop defensive-блок → `accountId=null` → белый экран. Не корп-прокси, не TLS MITM.
+- [[feedback_claude_desktop_msix]] — Claude Desktop на Windows = **MSIX в `WindowsApps`** (НЕ «урезанная Store-версия»); где данные/`claude_desktop_config.json`; «застрявший» лечится чистой переустановкой той же версии; установщик гео-блок RU/AE. Анти-паттерн: не гнать необратимое (удаление рабочего приложения) на непроверенном допущении о дистрибуции — сначала `Get-AppxPackage`/`VersionInfo` (verifiable-first, Karpathy #5).
 - [[reference_revit_mcp]] — справочник Revit-Connector (pyRevit MCP). С 2026-06-18 — раздел «диагностика отказа подключения»: команды виснут/`503` пустой/`Server disconnected` при исправном Revit = (1) корп-прокси гонит localhost через `HTTP_PROXY` (фикс `trust_env=False` + `NO_PROXY`), (2) localhost→IPv6 (фикс `REVIT_HOST=127.0.0.1`), (3) Home-экран Revit = нет active doc; +грабли «две копии main.py». Прокси-аспект — [[proxy_github]].
 
 ### Архитектурные backlog'и (из аудитов чужих баз)
@@ -95,6 +96,7 @@ tags: [мета, индекс, memory]
 - [[feedback_web_direct_access]] — добыча документов качества с B2B-сайтов: скрин-first, `--noproxy`, cookies, антибот. Главный веб-док.
 - [[feedback_id_doc_search_method]] — КАК искать документы качества ИД: запросы, порядок, инструменты, watermark=источник.
 - [[feedback_user_rules_docs_cascade]] — правила пользователя по DOCS-каскаду ИД: порядок работы, даты документ↔акт, поиск, складирование.
+- [[feedback_is_lengths_from_dwg]] — длины исп. схем: только по DWG-плану (1:1 = факт); аксонометрия — только высотные длины + фасонка. Восстановлен 2026-07-06 (ссылки из трекеров томов вели в никуда); полный свод — `blocks/pto/ЗНАНИЯ ПТО….md`.
 - [[feedback_manual_procedure_verbatim]] — процедуры из мануалов переносить ДОСЛОВНО по шагам, не пересказом по памяти.
 - [[playwright_mcp_pin_version]] — playwright MCP about:blank = @latest авто-апдейт через прокси виснет; пин @0.0.76.
 - [[web_access_r_jina_fallback]] — fallback веб-доступа: префикс `https://r.jina.ai/` при непробитии exa/WebFetch.

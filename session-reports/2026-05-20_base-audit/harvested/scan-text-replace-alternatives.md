@@ -32,4 +32,4 @@ Drop-in замена только OCR-стадии. Pipeline остаётся т
 
 1. Стоит ли тестировать **AnyText** в sandbox? Потенциально снимает всю нашу боль сразу, но conda-only и тяжёлый. Сначала проверить — поддерживает ли он cyrillic в editing-mode.
 2. **Tesseract 5** font-attribute output — реально ли возвращает bold/serif hints для русского traineddata, или только для eng? Это критично для font calibration #3.
-3. Сравнительный benchmark на нашем эталонном скане (КП К7 АХП): EasyOCR baseline vs DocTR vs PaddleOCR — метрика bbox-stability по cap_height variance внутри одного cell.
+3. Сравнительный benchmark на нашем эталонном скане (КП <организация> АХП): EasyOCR baseline vs DocTR vs PaddleOCR — метрика bbox-stability по cap_height variance внутри одного cell.

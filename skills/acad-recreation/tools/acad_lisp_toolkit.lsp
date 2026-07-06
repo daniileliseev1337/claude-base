@@ -3,9 +3,9 @@
 ;;; Загрузка: APPLOAD этого файла, либо (load "C:/.../acad_lisp_toolkit.lsp")
 ;;; Состав:
 ;;;   1) Динамические блоки — функции Lee Mac (lee-mac.com, свободно с атрибуцией)
-;;;   2) K7:* обёртки — безопасный блок, слои, вставка воздуховода
-;;;   3) K7:blocklist — стоп-слова для проверки опасного кода ПЕРЕД execute_lisp
-;;; Тест: APPLOAD без ошибок + (K7:dump-dynprops <ename блока эталона>)
+;;;   2) ORG:* обёртки — безопасный блок, слои, вставка воздуховода
+;;;   3) ORG:blocklist — стоп-слова для проверки опасного кода ПЕРЕД execute_lisp
+;;; Тест: APPLOAD без ошибок + (ORG:dump-dynprops <ename блока эталона>)
 ;;; ============================================================================
 
 ;;; ----------------------------------------------------------------------------
@@ -75,12 +75,12 @@
     result)
 
 ;;; ----------------------------------------------------------------------------
-;;; 2. K7:* ОБЁРТКИ
+;;; 2. ORG:* ОБЁРТКИ
 ;;; ----------------------------------------------------------------------------
 
 ;; Безопасный блок: весь шаг в одной UNDO-группе + финальный ZOOM E.
-;; expr — список выражений (квотированный): (K7:safe-run '((expr1)(expr2)...))
-(defun K7:safe-run ( exprs / )
+;; expr — список выражений (квотированный): (ORG:safe-run '((expr1)(expr2)...))
+(defun ORG:safe-run ( exprs / )
     (vl-catch-all-apply
         '(lambda ()
             (command "_.UNDO" "_GROUP")
@@ -90,7 +90,7 @@
     (princ))
 
 ;; Создать/настроить слои: ((name color-aci) ...). Continuous, по умолчанию печатается.
-(defun K7:ensure-layers ( specs / lyrs nm col )
+(defun ORG:ensure-layers ( specs / lyrs nm col )
     (setq lyrs (vla-get-layers
                  (vla-get-activedocument (vlax-get-acad-object))))
     (foreach s specs
@@ -103,7 +103,7 @@
 ;; Вставить динблок воздуховода: точка ins '(x y), диаметр D (мм), длина L (мм),
 ;; угол A (РАДИАНЫ), слой LYR. Параметры через dyn-props НАПРЯМУЮ (не lookup).
 ;; Возвращает vla-объект вставки.
-(defun K7:place-duct ( ins D L A lyr / doc ms blkref )
+(defun ORG:place-duct ( ins D L A lyr / doc ms blkref )
     (setq doc (vla-get-activedocument (vlax-get-acad-object))
           ms  (vla-get-modelspace doc))
     (setvar "CLAYER" lyr)                       ; слой ДО вставки
@@ -116,7 +116,7 @@
     blkref)
 
 ;; Дамп dyn-свойств блока по ename — для разведки эталона (пишет в файл cp1251-safe)
-(defun K7:dump-dynprops ( ename path / blk f )
+(defun ORG:dump-dynprops ( ename path / blk f )
     (setq blk (vlax-ename->vla-object ename))
     (setq f (open path "w"))
     (foreach pr (LM:getdynprops blk)
@@ -129,11 +129,11 @@
 ;;; ----------------------------------------------------------------------------
 ;; Стоп-слова: если присутствуют в генерируемом LISP — НЕ исполнять, спросить человека.
 ;; (Проверку делает оркестратор/скилл ДО отправки кода в execute_lisp.)
-(setq K7:blocklist
+(setq ORG:blocklist
     '("wblock" "shell" "startapp" "vl-registry-write" "vl-registry-delete"
       "vl-file-delete" "vl-mkdir" "quit" "exit" "command \"_.erase\" \"_all\""))
 ;; Эвристика на стороне Python/оркестратора: lower(code) не должен содержать ни одного.
 
-(princ "\nK7 acad_lisp_toolkit загружен: LM:* (dynblocks) + K7:* (safe-run/ensure-layers/place-duct/dump-dynprops).")
+(princ "\nORG acad_lisp_toolkit загружен: LM:* (dynblocks) + ORG:* (safe-run/ensure-layers/place-duct/dump-dynprops).")
 (princ)
 ;;; EOF

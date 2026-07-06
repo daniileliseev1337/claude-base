@@ -1,9 +1,10 @@
 <#
 .SYNOPSIS
-    K7 acad-recreation installer (idempotent). Усиливает autocad-mcp на этом ПК.
+    ORG acad-recreation installer (idempotent). Усиливает autocad-mcp на этом ПК.
 .DESCRIPTION
-    1) Копирует LISP-toolkit в ASCII-путь (C:\ProgramData\K7-acad) — путь профиля
+    1) Копирует LISP-toolkit в ASCII-путь (C:\ProgramData\ORG-acad) — путь профиля
        может содержать кириллицу, LISP (load) её не любит.
+       (namespace/пути под префиксом ORG)
     2) Применяет cp1251-патч к file_ipc.py установленного сервера (если ещё не применён) + бэкап.
     3) Печатает строку автозагрузки для acad.lsp (правку acad.lsp оставляем пользователю —
        не трогаем чужой autoload вслепую).
@@ -13,7 +14,7 @@
 $ErrorActionPreference = 'Stop'
 
 # --- 1. toolkit -> ASCII dir ---
-$asciiDir = 'C:\ProgramData\K7-acad'
+$asciiDir = 'C:\ProgramData\ORG-acad'
 New-Item -ItemType Directory -Force $asciiDir | Out-Null
 $toolkitSrc = Join-Path $PSScriptRoot 'acad_lisp_toolkit.lsp'
 $toolkitDst = Join-Path $asciiDir 'acad_lisp_toolkit.lsp'
@@ -59,27 +60,27 @@ if (Test-Path $fip) {
 # Forces live AutoCAD (file_ipc) in auto mode + autostart; ezdxf only via explicit flag.
 # Upstream zip restores the vanilla config.py, so this re-applies our reference copy.
 $cfg = Join-Path $env:USERPROFILE '.claude\mcp-servers\autocad-mcp\src\autocad_mcp\config.py'
-$cfgRef = Join-Path $PSScriptRoot 'autocad_config_k7.py'
+$cfgRef = Join-Path $PSScriptRoot 'autocad_config_org.py'
 if (Test-Path $cfg) {
     $cfgContent = [IO.File]::ReadAllText($cfg)
-    if ($cfgContent -match 'K7 patch') {
+    if ($cfgContent -match 'ORG patch') {
         Write-Host "[2b/3] backend-priority already present - skip"
     } elseif (-not (Test-Path $cfgRef)) {
-        Write-Host "[2b/3] WARN: reference autocad_config_k7.py missing - cannot patch"
+        Write-Host "[2b/3] WARN: reference autocad_config_org.py missing - cannot patch"
     } elseif ($cfgContent -match 'backend_env in \("auto", "file_ipc"\)') {
         # Known upstream baseline detected -> safe to overwrite with our reference.
         Copy-Item $cfg "$cfg.bak" -Force
         Copy-Item $cfgRef $cfg -Force
         Write-Host "[2b/3] backend-priority patch applied (RESTART Claude Code to activate). Backup: $cfg.bak"
     } else {
-        Write-Host "[2b/3] WARN: config.py differs from known upstream (server version changed?). Patch manually from autocad_config_k7.py"
+        Write-Host "[2b/3] WARN: config.py differs from known upstream (server version changed?). Patch manually from autocad_config_org.py"
     }
 } else {
     Write-Host "[2b/3] server config.py not found - skip (install autocad-mcp first)"
 }
 
 # --- 3. autoload line for acad.lsp ---
-$loadLine = '(load "C:/ProgramData/K7-acad/acad_lisp_toolkit.lsp")'
+$loadLine = '(load "C:/ProgramData/ORG-acad/acad_lisp_toolkit.lsp")'
 Write-Host "[3/3] Add toolkit autoload to AutoCAD:"
 Write-Host "      - quick (this session): APPLOAD -> $toolkitDst"
 Write-Host "      - permanent: add this line to your acad.lsp (AutoCAD Support path):"

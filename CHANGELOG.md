@@ -309,7 +309,7 @@ Code) — один раз запустить шифрование PAT:
 - GH-600 study guide на русском — `~/Desktop/GH-600_study_guide_ru.docx`
 - chains/ создан как first-class сущность оркестратора
 - karpathy-guidelines §4 расширен — verify-criteria для делегаций
-- image-text-replace v3.0 — production-ready после 16 итераций (КП К7 АХП case)
+- image-text-replace v3.0 — production-ready после 16 итераций (КП <организация> АХП case)
 - formatting-templates починены (portrait A4, ГОСТ-поля)
 
 ---

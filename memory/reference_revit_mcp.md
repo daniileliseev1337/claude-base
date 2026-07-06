@@ -18,6 +18,27 @@ Revit Python» → Install+Enable; Settings → Routes → on; `%APPDATA%\pyRevi
 секция `[routes]`: `server_host="127.0.0.1"`, `server_port=48884` (по умолчанию 0.0.0.0 — небезопасно);
 pyRevit Reload; проверка `http://127.0.0.1:48884/revit_mcp/status/`; restart Claude Code.
 
+## Инструменты не видит Claude — СНАЧАЛА ToolSearch (deferred), НЕ чинить мост
+
+Инструменты Revit-Connector приходят DEFERRED: висят в списке по имени, схемы НЕ загружены,
+вызвать нельзя. «Коннектор не появился» ≠ мост мёртв — это норма. ПЕРВЫМ делом оживить одной строкой:
+`ToolSearch query "select:mcp__Revit-Connector__execute_revit_code,mcp__Revit-Connector__get_revit_status"`
+После КАЖДОГО реконнекта — это первым, затем `get_revit_status`. Строить HTTP-обход на Routes
+(POST `/execute_code/`) НЕ надо — костыль вокруг несуществующей проблемы.
+
+## "Failed to connect" у uv-серверов — команда `uv run --with` рвёт connect-таймаут
+
+Симптом: `claude mcp list` → Revit-Connector (и все uvx/uv-run серверы) `× Failed to connect`,
+а прямой HTTP на Routes `:48884` даёт 200 (Revit жив). Причина: `uv run --with mcp[cli] mcp run main.py`
+при каждом старте резолвит окружение (~6с, докачивает `--with`-оверлей) → дольше connect-таймаута.
+Фикс — прямой запуск из venv (mcp[cli] уже в `.venv`, `main.py` имеет `__main__`→`mcp.run(stdio)`):
+```
+claude mcp remove Revit-Connector -s user
+claude mcp add Revit-Connector -s user -- <install_dir>\.venv\Scripts\python.exe <install_dir>\main.py
+```
+Старт <1с, handshake сразу (тест: пайп initialize-JSON в эту команду → result за ~1с). Тот же паттерн
+у рабочего autocad-mcp (прямой venv python, не uvx). После правки — реконнект/рестарт, затем ToolSearch select.
+
 ## Подключение мертво / команды виснут — диагностика отказа (прокси / IPv6 / Home / 2 копии)
 
 Симптомы (Revit при этом открыт и исправен): ВСЕ MCP-команды → `Request timed out after Ns`,

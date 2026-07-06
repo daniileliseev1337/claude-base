@@ -6,13 +6,16 @@ local-video-digest: видео (.MOV/.mp4 и т.п.) -> контактный л�
 
 Использование:
   python video_digest.py <video> [--out DIR] [--model small|medium|large-v3]
-                         [--frames N] [--lang ru] [--device auto|cuda|cpu] [--no-audio]
+                         [--frames N] [--mode scene|interval] [--scene-threshold F]
+                         [--lang ru] [--device auto|cuda|cpu] [--no-audio]
+  Кадры: по умолчанию mode=scene (PySceneDetect ContentDetector, кадр из середины
+  каждой сцены — ловит момент смены плана; при <3 сцен откат на равные интервалы).
 Выход в DIR: contact_sheet.jpg, transcript.md, digest.md (+ frames/, audio.wav)
-Зависимости: ffmpeg (C:\\ProgramData\\K7-tools\\ffmpeg\\bin или PATH), faster-whisper, Pillow.
+Зависимости: ffmpeg (C:\\ProgramData\\ORG-tools\\ffmpeg\\bin или PATH), faster-whisper, Pillow.
 """
 import os, sys, subprocess, argparse, math, shutil, json
 
-FFDIR = r"C:\ProgramData\K7-tools\ffmpeg\bin"
+FFDIR = r"C:\ProgramData\ORG-tools\ffmpeg\bin"
 def tool(name):
     p = os.path.join(FFDIR, name+".exe")
     if os.path.isfile(p): return p
@@ -41,6 +44,36 @@ def extract_frames(video, dur, n, outdir):
     files = []
     for i,t in enumerate(times):
         fp = os.path.join(fdir, f"f{i:03d}.jpg")
+        run([FFMPEG,"-y","-loglevel","error","-ss",f"{t:.2f}","-i",video,
+             "-frames:v","1","-q:v","3",fp])
+        if os.path.isfile(fp): files.append((t,fp))
+    return files
+
+def detect_scenes(video, threshold):
+    """Границы сцен через PySceneDetect ContentDetector -> [(start_s,end_s)]. [] при недоступности/ошибке."""
+    try:
+        from scenedetect import detect, ContentDetector
+    except Exception:
+        print("[warn] scenedetect не установлен -> интервал"); return []
+    try:
+        scenes = detect(video, ContentDetector(threshold=threshold))
+        return [(s.get_seconds(), e.get_seconds()) for s,e in scenes]
+    except Exception as e:
+        print(f"[warn] scenedetect не сработал ({e}) -> интервал"); return []
+
+def extract_frames_scenes(video, dur, outdir, threshold, min_len=1.5, cap=40):
+    """Кадр из СЕРЕДИНЫ каждой сцены (камера уже стабилизировалась на объекте).
+    Возвращает [] если сцен <3 (тогда main откатится на интервал)."""
+    scenes = [(s,e) for (s,e) in detect_scenes(video, threshold) if e-s >= min_len]
+    if len(scenes) < 3: return []
+    mids = [(s+e)/2 for (s,e) in scenes]
+    if len(mids) > cap:                         # слишком дробно -> проредить равномерно
+        step = len(mids)/cap
+        mids = [mids[int(i*step)] for i in range(cap)]
+    fdir = os.path.join(outdir,"frames"); os.makedirs(fdir, exist_ok=True)
+    files=[]
+    for i,t in enumerate(mids):
+        fp = os.path.join(fdir, f"s{i:03d}.jpg")
         run([FFMPEG,"-y","-loglevel","error","-ss",f"{t:.2f}","-i",video,
              "-frames:v","1","-q:v","3",fp])
         if os.path.isfile(fp): files.append((t,fp))
@@ -91,6 +124,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--model", default="small")
     ap.add_argument("--frames", type=int, default=0)
+    ap.add_argument("--mode", default="scene", choices=["scene","interval"])
+    ap.add_argument("--scene-threshold", type=float, default=27.0, dest="scene_threshold")
     ap.add_argument("--lang", default="ru")
     ap.add_argument("--device", default="auto")
     ap.add_argument("--no-audio", action="store_true")
@@ -99,9 +134,17 @@ def main():
     out = a.out or os.path.splitext(video)[0]+"_digest"
     os.makedirs(out, exist_ok=True)
     w,h,dur = probe(video)
-    n = a.frames or max(9, min(30, round(dur/5)))
-    print(f"[i] {os.path.basename(video)}  {w}x{h}  {dur:.1f}s  -> {n} кадров")
-    frames = extract_frames(video, dur, n, out)
+    frames = []
+    if a.mode == "scene":
+        frames = extract_frames_scenes(video, dur, out, a.scene_threshold)
+        if frames:
+            print(f"[i] {os.path.basename(video)}  {w}x{h}  {dur:.1f}s  -> {len(frames)} кадров (по сценам)")
+        else:
+            print("[i] сцен <3 или scenedetect недоступен -> откат на интервал")
+    if not frames:
+        n = a.frames or max(9, min(30, round(dur/5)))
+        print(f"[i] {os.path.basename(video)}  {w}x{h}  {dur:.1f}s  -> {n} кадров (интервал)")
+        frames = extract_frames(video, dur, n, out)
     sheet = contact_sheet(frames, os.path.join(out,"contact_sheet.jpg"))
     print(f"[i] контактный лист: {sheet} ({len(frames)} кадров)")
     tr_md = os.path.join(out,"transcript.md"); tr_lines=[]

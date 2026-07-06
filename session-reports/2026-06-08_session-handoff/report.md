@@ -46,8 +46,8 @@ origin: claude-base main @ 96a719e
   ClaudeCAD — код нельзя (закрытый), методология ценна. Отчёт: session-reports/2026-06-04_autocad-mcp-harvest/.
 
 ### AutoCAD-усиление (скилл acad-recreation)
-- tools/: LISP-toolkit (Lee Mac dynblock + K7-обёртки + блоклист) — **ПРОВЕРЕН на живом AutoCAD**
-  (LM:getdynprops/K7:place-duct=SUBR); pdf_multiview.py (9-tile); file_ipc_cp1251.patch; install.ps1; cherry_pick_batch.md.
+- tools/: LISP-toolkit (Lee Mac dynblock + ORG-обёртки + блоклист) — **ПРОВЕРЕН на живом AutoCAD**
+  (LM:getdynprops/ORG:place-duct=SUBR); pdf_multiview.py (9-tile); file_ipc_cp1251.patch; install.ps1; cherry_pick_batch.md.
 - **cp1251-патч ПРИМЕНЁН** к реальному file_ipc.py (+бэкап, py_compile ok) — активируется после рестарта Claude Code.
 - Секция порегионной трассировки PDF + оверлей-сверка + no-scale динблоков (этап 3 recreation).
 - Скелет reference_acad_ov_dwg_recreation: 8-этапный трекер (Э0-Э1 ✅, Э3 🔄) + Phase-3 архитектура агентов.

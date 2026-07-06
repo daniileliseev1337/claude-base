@@ -26,7 +26,7 @@
 
 ### Прочее
 - **Codex удалён** (npm uninstall + из sync-base).
-- **Памятка команде → PDF**: `Памятка-K7-Claude.pdf` (cwd ПаПочка) — 7 разделов (агенты/скиллы/команды + системные + новые инструменты + установка). Конвертер `_md2docx.py` (нет pandoc) — кандидат в word-helper/tools.
+- **Памятка команде → PDF**: `Памятка-<организация>-Claude.pdf` (cwd ПаПочка) — 7 разделов (агенты/скиллы/команды + системные + новые инструменты + установка). Конвертер `_md2docx.py` (нет pandoc) — кандидат в word-helper/tools.
 - **Инсталлер** (claude-lite-instaler) починен по фидбэку с рабочего ПК (Skudriavtsev): PATH-fix (`Install-ClaudeCode` — официальный installer не добавлял `.local/bin` в PATH → Stage 6/8 падали), убран `2>&1` (`Install-VSCodeExt` — node DeprecationWarning → NativeCommandError), число серверов 9-10→11-12. Запушен.
 - **Плагины почищены**: удалён кэш 5 нерелевантных (marketing/finance/c-level/business-growth/product), реестр `installed_plugins.json` синхронизирован (backup). Осталось: superpowers, claude-md-management (enabled) + engineering-skills, engineering-advanced (disabled, оставлены).
 - **sync-base** = единая точка: проверяет playwright(extras)/graphify/Ollama/Exa/Inkscape + git pull. Коллеге достаточно `/sync-base`.
@@ -37,7 +37,7 @@
 - **claude-lite-instaler**: `5d5682c` (PATH + 2>&1 fixes).
 
 ## Файлы
-- Памятка: `cwd ПаПочка/Памятка-K7-Claude.{pdf,docx,md}` + `_md2docx.py`.
+- Памятка: `cwd ПаПочка/Памятка-<организация>-Claude.{pdf,docx,md}` + `_md2docx.py`.
 - ИД-исходники: `~/.claude/work/2026-06-08_id-session/sources/feedback/` — **18 файлов** + `INDEX.md` (work/ заигнорена, **необезличено**).
 
 ## Открытые хвосты
