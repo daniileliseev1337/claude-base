@@ -109,3 +109,129 @@ def test_report_written_and_relative(project):
     blob = ((out_dir / "REPORT.md").read_text(encoding="utf-8")
             + (out_dir / "proposals.json").read_text(encoding="utf-8"))
     assert not re.search(r"[A-Za-z]:[\\/]", blob), "абсолютные пути запрещены"
+
+
+# ---------- apply ----------
+
+def make_proposals(root, items, stamp="2026-07-06T12-00-00"):
+    d = root / "Claude" / ".curate" / stamp
+    d.mkdir(parents=True)
+    (d / "proposals.json").write_text(
+        json.dumps({"created": stamp, "project": root.name,
+                    "dropped_no_evidence": 0, "proposals": items},
+                   ensure_ascii=False, indent=2),
+        encoding="utf-8")
+    return stamp
+
+
+def proposal(pid="c1", action="modify",
+             excerpt="- ждём ответ поставщика до 2026-06-01",
+             proposed="- ответ поставщика получен (см. журнал 2026-07-01)",
+             evidence=("дата 2026-06-01 прошла",), target="Claude/STATUS.md"):
+    return {"id": pid, "target": target, "current_excerpt": excerpt,
+            "proposed_excerpt": proposed, "evidence": list(evidence),
+            "confidence": "high", "action": action,
+            "source": "claude", "signal": "manual"}
+
+
+def test_apply_creates_backup_and_applies(project):
+    status = project / "Claude" / "STATUS.md"
+    orig = status.read_text(encoding="utf-8")
+    stamp = make_proposals(project, [proposal()])
+    res = curate_rot.apply(project, stamp, ["c1"])
+    assert res["applied"] == ["c1"] and not res["errors"]
+    assert "ответ поставщика получен" in status.read_text(encoding="utf-8")
+    backups = list((project / "Claude").glob("_backup_*/STATUS.md"))
+    assert len(backups) == 1
+    assert backups[0].read_text(encoding="utf-8") == orig
+
+
+def test_restore_from_backup_roundtrip(project):
+    status = project / "Claude" / "STATUS.md"
+    orig = status.read_text(encoding="utf-8")
+    stamp = make_proposals(project, [proposal()])
+    curate_rot.apply(project, stamp, ["c1"])
+    backup = next((project / "Claude").glob("_backup_*/STATUS.md"))
+    status.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    assert status.read_text(encoding="utf-8") == orig      # откат работает
+
+
+def test_apply_only_accepted(project):
+    status = project / "Claude" / "STATUS.md"
+    stamp = make_proposals(project, [
+        proposal("c1"),
+        proposal("c2", excerpt="- ведомость: см. `docs/план.md`",
+                 proposed="- ведомость: перенесена в архив"),
+    ])
+    res = curate_rot.apply(project, stamp, ["c2"])
+    text = status.read_text(encoding="utf-8")
+    assert res["applied"] == ["c2"]
+    assert "ждём ответ поставщика" in text          # c1 не тронут
+    assert "перенесена в архив" in text
+
+
+def test_apply_rejects_empty_evidence(project):
+    status = project / "Claude" / "STATUS.md"
+    before = status.read_text(encoding="utf-8")
+    stamp = make_proposals(project, [proposal(evidence=())])
+    res = curate_rot.apply(project, stamp, ["c1"])
+    assert res["applied"] == []
+    assert res["errors"]
+    assert status.read_text(encoding="utf-8") == before
+
+
+def test_apply_rejects_target_outside_claude(project):
+    stamp = make_proposals(project, [proposal(target="CLAUDE.md")])
+    res = curate_rot.apply(project, stamp, ["c1"])
+    assert res["applied"] == [] and res["errors"]
+
+
+def test_apply_unknown_id_fails(project):
+    stamp = make_proposals(project, [proposal()])
+    with pytest.raises(SystemExit):
+        curate_rot.apply(project, stamp, ["nope"])
+
+
+def test_apply_empty_accept_fails(project):
+    stamp = make_proposals(project, [proposal()])
+    with pytest.raises(SystemExit):
+        curate_rot.apply(project, stamp, [])
+
+
+def test_apply_excerpt_not_found_is_item_error(project):
+    stamp = make_proposals(project, [proposal(excerpt="ТАКОЙ СТРОКИ НЕТ")])
+    before = (project / "Claude" / "STATUS.md").read_text(encoding="utf-8")
+    res = curate_rot.apply(project, stamp, ["c1"])
+    assert res["applied"] == [] and res["errors"]
+    assert (project / "Claude" / "STATUS.md").read_text(
+        encoding="utf-8") == before
+
+
+def test_apply_flag_is_skipped_not_applied(project):
+    stamp = make_proposals(project, [proposal(action="flag", proposed="")])
+    res = curate_rot.apply(project, stamp, ["c1"])
+    assert res["applied"] == [] and res["skipped"] == ["c1"]
+    assert not res["errors"]
+
+
+def test_apply_archive_moves_line(project):
+    status = project / "Claude" / "STATUS.md"
+    stamp = make_proposals(project, [proposal(
+        action="archive", proposed="",
+        excerpt="- отчёт собран: `docs/отчёт.md`",
+        evidence=("блок завершён",))])
+    res = curate_rot.apply(project, stamp, ["c1"])
+    assert res["applied"] == ["c1"]
+    assert "отчёт собран" not in status.read_text(encoding="utf-8")
+    arch = project / "Claude" / "_АРХИВ" / "из-курирования.md"
+    assert arch.exists()
+    assert "отчёт собран" in arch.read_text(encoding="utf-8")
+
+
+def test_apply_writes_applied_log(project):
+    stamp = make_proposals(project, [proposal()])
+    curate_rot.apply(project, stamp, ["c1"])
+    log = json.loads((project / "Claude" / ".curate" / stamp / "applied.json")
+                     .read_text(encoding="utf-8"))
+    assert log["applied"] == ["c1"]
+    assert log["backup"].startswith("Claude/_backup_")

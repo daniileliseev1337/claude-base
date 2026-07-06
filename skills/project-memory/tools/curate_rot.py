@@ -241,6 +241,114 @@ def _render_report(payload: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def apply(start: Path, stamp: str, accept: list[str]) -> dict:
+    """Применяет ТОЛЬКО принятые предложения. Бэкап затрагиваемых файлов —
+    до первой записи. Никакого авто-apply: список accept формирует человек
+    (через Claude/AskUserQuestion) на review-шаге."""
+    root = find_project_root(Path(start))
+    if root is None:
+        raise SystemExit("память проекта не найдена")
+    cur_dir = root / "Claude" / ".curate" / stamp
+    pfile = cur_dir / "proposals.json"
+    if not pfile.exists():
+        raise SystemExit(
+            f"нет прогона propose: Claude/.curate/{stamp}/proposals.json")
+    payload = json.loads(pfile.read_text(encoding="utf-8"))
+    by_id = {p["id"]: p for p in payload.get("proposals", [])}
+    unknown = [a for a in accept if a not in by_id]
+    if unknown:
+        raise SystemExit(f"неизвестные id: {', '.join(unknown)} "
+                         f"(есть: {', '.join(by_id) or 'ни одного'})")
+    if not accept:
+        raise SystemExit("пустой --accept: применять нечего (сначала review)")
+
+    res = {"applied": [], "skipped": [], "errors": [], "backup": None,
+           "log": []}
+
+    # какие файлы затрагиваются принятыми modify/archive — бэкапим их ДО записи
+    touched = []
+    for a in accept:
+        p = by_id[a]
+        if p["action"] in ("modify", "archive") and p["target"] not in touched:
+            touched.append(p["target"])
+
+    if touched:
+        ts = datetime.now().strftime("%Y-%m-%d_%H%M")
+        backup_dir = root / "Claude" / f"_backup_{ts}"
+        n = 2
+        while backup_dir.exists():
+            backup_dir = root / "Claude" / f"_backup_{ts}-{n}"
+            n += 1
+        backup_dir.mkdir(parents=True)
+        for t in touched:
+            src = root / t
+            if src.exists():
+                shutil.copy2(src, backup_dir / src.name)
+        res["backup"] = "Claude/" + backup_dir.name
+        res["log"].append(f"бэкап: {res['backup']}/ (откат — копированием назад)")
+
+    for a in accept:
+        p = by_id[a]
+        pid = p["id"]
+        if not p.get("evidence"):
+            res["errors"].append(f"{pid}: пустой evidence — предложение невалидно")
+            continue
+        target = p["target"].replace("\\", "/")
+        if not target.startswith("Claude/"):
+            res["errors"].append(f"{pid}: target вне Claude/ запрещён ({target})")
+            continue
+        if p["action"] == "flag":
+            res["skipped"].append(pid)
+            res["log"].append(f"{pid}: flag — правится вручную, скриптом пропущено")
+            continue
+        fpath = root / target
+        if not fpath.exists():
+            res["errors"].append(f"{pid}: файл не найден: {target}")
+            continue
+        text = fpath.read_text(encoding="utf-8")
+        excerpt = p["current_excerpt"]
+        if excerpt not in text:
+            res["errors"].append(
+                f"{pid}: current_excerpt не найден в {target} "
+                f"(файл изменился после propose — повтори propose)")
+            continue
+        if p["action"] == "modify":
+            if not p["proposed_excerpt"]:
+                res["errors"].append(f"{pid}: modify без proposed_excerpt")
+                continue
+            text = text.replace(excerpt, p["proposed_excerpt"], 1)
+        elif p["action"] == "archive":
+            arch = root / ARCHIVE_REL
+            arch.parent.mkdir(parents=True, exist_ok=True)
+            entry = (f"\n## из {target} · {date.today().isoformat()} · {pid}\n"
+                     f"{excerpt}\n")
+            head = "# Архив курирования\n" if not arch.exists() else ""
+            with arch.open("a", encoding="utf-8", newline="\n") as fh:
+                fh.write(head + entry)
+            lines = text.splitlines(keepends=True)
+            joined = "".join(ln for ln in lines
+                             if ln.rstrip("\r\n") != excerpt)
+            text = joined if joined != text else text.replace(excerpt, "", 1)
+        else:
+            res["errors"].append(f"{pid}: неизвестный action «{p['action']}»")
+            continue
+        fpath.write_text(text, encoding="utf-8", newline="\n")
+        res["applied"].append(pid)
+        res["log"].append(f"{pid}: применено ({p['action']}) → {target}")
+
+    (cur_dir / "applied.json").write_text(
+        json.dumps({"when": datetime.now().strftime("%Y-%m-%dT%H-%M-%S"),
+                    "accepted": accept, "applied": res["applied"],
+                    "skipped": res["skipped"], "errors": res["errors"],
+                    "backup": res["backup"]},
+                   ensure_ascii=False, indent=2),
+        encoding="utf-8")
+    res["log"].append(
+        f"итог: применено {len(res['applied'])}, "
+        f"пропущено {len(res['skipped'])}, ошибок {len(res['errors'])}")
+    return res
+
+
 def main(argv=None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
