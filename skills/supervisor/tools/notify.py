@@ -23,6 +23,6 @@ def escalate(text: str) -> None:
     req = urllib.request.Request(f"https://api.telegram.org/bot{tok}/sendMessage",
                                  data=data, headers={"Content-Type": "application/json"})
     try:
-        urllib.request.urlopen(req, timeout=10)
+        urllib.request.urlopen(req, timeout=int(os.environ.get("SUPERVISOR_TG_TIMEOUT", "30")))
     except Exception as e:
         print("[ESCALATE-FALLBACK]", text, "| tg-error:", e)  # recorded above regardless

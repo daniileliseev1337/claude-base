@@ -199,3 +199,7 @@ skills/ui-styling/
 skills/brand/
 skills/slides/
 skills/banner-design/
+
+# durable-лог эскалаций прораба (локальный, команды воркеров — не в git)
+skills/supervisor/tools/supervisor-escalations.log
+supervisor-escalations.log

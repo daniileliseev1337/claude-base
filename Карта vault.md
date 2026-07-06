@@ -26,8 +26,9 @@ auto-sync на все ПК команды. Этот файл уйдёт в git (
 `word-checker`, `pdf-reviewer`. Triggers и tools — внутри каждого `.md`.
 
 **`skills/`** — методологические скиллы с триггерами: `karpathy-guidelines`
-(5 принципов), `excel-helper`/`word-helper`/`pdf-helper` (универсальные
-методологии работы с файлами), `stroy-formatting` (применение ГОСТ-стилей).
+(5 принципов), `excel-helper`/`word-helper` (универсальные методологии работы
+с файлами), `doc-extract` (извлечение из PDF) / `pdf-edit` (редактирование PDF),
+`stroy-formatting` (применение ГОСТ-стилей).
 
 **`commands/`** — slash-команды: `/format`, `/harvest`.
 
