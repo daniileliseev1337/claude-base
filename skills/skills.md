@@ -20,6 +20,8 @@ tags: [мета, индекс, skills]
 - [[stroy-formatting]] — применение ГОСТ-стилей к итоговым DOCX/PDF. 4 шаблона в `formatting-templates/`.
 - [[image-text-replace]] — замена текста на сканах/JPEG/PNG через PaddleOCR + LaMa inpaint + Pillow render. Pipeline в `pipeline.py`, lazy install зависимостей. Primary mode — LaMa, opt-in fast-fill для batch'а из белых сканов.
 - [[chains-pattern]] — методология именованных цепочек (когда и как создавать chains в `~/.claude/chains/`). Триггеры: «составь pipeline», «многошаговая задача», «несколько последовательных шагов». Импорт из <организация> аудита 2026-05-20.
+- [[revit-family-generator]] — AI-генерация family-JSON Revit из описания/изображения (as-is из FamFab, MIT; схема + валидатор в комплекте; ловушки — README-provenance.md рядом).
+- [[revit-testbed]] — протокол приёмки сторонних Revit-инструментов на живом стенде (5 пунктов + чек-лист; исполняет pyrevit-engineer в режиме приёмки).
 
 ### Доменные (строительные)
 
@@ -37,6 +39,7 @@ tags: [мета, индекс, skills]
 - [[skill-development]] — 4 правила skill-first (промть скиллы, 3 слоя, композиция, обновляй) + код в `tools/`.
 - [[structured-artifacts]] — выносить контекст крупной задачи в md-артефакты (cascade loading).
 - [[handoff-to-new-chat]] — mid-session handoff при перегрузе контекста (адаптация под подписку).
+- [[project-memory]] — память проекта в папке объекта: bootstrap ядра `<Проект>/Claude/` (журнал сессий, STATUS), rot-курирование propose→review→apply с `_backup_`, хуки дисциплины журнала. Мультидевайс без git (Я.Диск, относительные пути).
 - [[yandex-disk-uploader]] — загрузка артефактов в архив на Я.Диске по типу файла.
 
 ## Как подключаются

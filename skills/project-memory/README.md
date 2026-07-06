@@ -1,0 +1,86 @@
+# project-memory — память проекта (для человека)
+
+Кодификация ручной схемы «папка Claude/ в объекте»: bootstrap одной
+командой + rot-курирование статуса + хуки дисциплины журнала.
+Мультидевайс — Я.Диск: относительные пути, свежесть по mtime, без git;
+откат — из `_backup_<дата>/`.
+
+## Быстрый старт
+
+```powershell
+python "$HOME\.claude\skills\project-memory\tools\bootstrap.py" "Мой объект" --target "<корень проекта>"
+```
+
+Получите:
+
+```
+<проект>/CLAUDE.md            # указатель-страховка
+<проект>/Claude/CLAUDE.md     # правила папки, порядок сессии
+<проект>/Claude/README.md     # навигатор
+<проект>/Claude/ЖУРНАЛ СЕССИЙ.md
+<проект>/Claude/STATUS.md
+```
+
+Повторный запуск ничего не затирает (`=` в отчёте); перезапись одного
+файла — `--force STATUS.md` (для CLAUDE.md указывать путь: `./CLAUDE.md`
+или `Claude/CLAUDE.md`).
+
+## Курирование протухшего статуса
+
+```powershell
+python "$HOME\.claude\skills\project-memory\tools\curate_rot.py" propose --project "<корень>"
+# → Claude/.curate/<stamp>/REPORT.md — читать глазами
+python "$HOME\.claude\skills\project-memory\tools\curate_rot.py" apply <stamp> --accept p1,p3 --project "<корень>"
+# бэкап в Claude/_backup_<дата>/ делается сам; откат — скопировать назад
+```
+
+Скрипт только ПРЕДЛАГАЕТ (все правки — после вашего/Claude review);
+пустой evidence отбрасывается; авто-apply нет; вне `Claude/` не пишет.
+
+## Установка хуков (один раз, settings.json)
+
+Добавить в `~/.claude/settings.json` (через скилл update-config или
+руками). Блоки `SessionStart` в конфиге обычно уже есть — ДОБАВИТЬ hooks
+внутрь существующих матчеров, не дублировать:
+
+```json
+"SessionStart": [
+  { "matcher": "startup", "hooks": [
+    { "type": "command",
+      "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_start.ps1\"",
+      "shell": "powershell", "timeout": 10 } ] },
+  { "matcher": "resume", "hooks": [
+    { "type": "command",
+      "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_start.ps1\"",
+      "shell": "powershell", "timeout": 10 } ] }
+],
+"Stop": [
+  { "matcher": "*", "hooks": [
+    { "type": "command",
+      "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_end.ps1\"",
+      "shell": "powershell", "timeout": 20 } ] }
+]
+```
+
+Поведение:
+- вне папок с `Claude/ЖУРНАЛ СЕССИЙ.md` оба хука — молчаливый no-op;
+- SessionStart печатает верхние 2 записи журнала в контекст сессии;
+- Stop напоминает «допиши журнал» максимум ОДИН раз за сессию и только
+  если файлы проекта менялись, а журнал — нет;
+- состояние сессий — `~/.claude/.local-state/project-memory/` (локально,
+  НЕ в Я.Диске; маркеры старше 7 дней чистятся сами).
+
+## Тесты
+
+```powershell
+python -m pytest "$HOME\.claude\skills\project-memory\tests" -v
+```
+
+Переносимые (tmp, синтетика, без привязки к машине); `test_hooks.py` —
+Windows-only smoke (PowerShell 5.1).
+
+## Точка расширения
+
+`templates/profiles/` — пусто в v1. Профиль (напр. `id-tom`) = свой набор
+шаблонов поверх ядра; первым добавит блок ПТО. `--profile` в bootstrap
+уже зарезервирован.
