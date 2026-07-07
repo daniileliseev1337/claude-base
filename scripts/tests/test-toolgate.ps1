@@ -132,6 +132,41 @@ try {
     Write-Host "== T9: exit code 0 =="
     Assert ($script:LastExit -eq 0) 'T9 exit 0'
 
+    Write-Host "== T10: PRIMARY gate = real context fill from transcript usage =="
+    # contract v2.5: hook reads the LAST usage record from transcript_path and
+    # fires on real token fill (env CLAUDE_TOOLGATE_CTX_TOKENS, default 700000).
+    # Byte-proxy stays as FALLBACK only when transcript is absent/unparseable
+    # (all earlier tests use fake paths -> they prove the fallback).
+    $s6 = 'test-sess-ctx'
+    $env:CLAUDE_TOOLGATE_BYTES = '999999999'      # neutralize byte fallback
+    $env:CLAUDE_TOOLGATE_CTX_TOKENS = '500000'
+    $tj = Join-Path $TmpRoot 'ctx-transcript.jsonl'
+    function Write-CtxTranscript([long]$Ctx) {
+        # two usage lines: stale low one + fresh target one (last must win)
+        $mkLine = {
+            param($c)
+            (@{ timestamp = '2026-07-07T00:00:00'
+                message = @{ usage = @{ input_tokens = 2
+                                        cache_creation_input_tokens = 1000
+                                        cache_read_input_tokens = ($c - 1002)
+                                        output_tokens = 50 } } } |
+                ConvertTo-Json -Compress -Depth 8)
+        }
+        Set-Content -Path $tj -Value (& $mkLine 250000) -Encoding UTF8
+        Add-Content -Path $tj -Value (& $mkLine $Ctx) -Encoding UTF8
+    }
+    Write-CtxTranscript 300000
+    $oc1 = Invoke-Hook (New-Payload -Session $s6 -RespChars 100 -Transcript $tj)
+    Assert ($oc1 -notmatch 'additionalContext') 'T10 no fire below ctx threshold'
+    Write-CtxTranscript 600000
+    $oc2 = Invoke-Hook (New-Payload -Session $s6 -RespChars 100 -Transcript $tj)
+    Assert ($oc2 -match 'additionalContext') 'T10 fires at real-fill crossing'
+    Assert ($oc2 -match '600' -and $oc2 -match '500') 'T10 message reports real tokens + threshold'
+    Assert ($oc2.Contains($CyrGate)) 'T10 Cyrillic readable in ctx message'
+    $oc3 = Invoke-Hook (New-Payload -Session $s6 -RespChars 100 -Transcript $tj)
+    Assert ($oc3 -notmatch 'additionalContext') 'T10 once per session on ctx path'
+    Remove-Item Env:\CLAUDE_TOOLGATE_CTX_TOKENS -ErrorAction SilentlyContinue
+
     Write-Host "== T5: RACE - 8 parallel invocations, exactly one fire =="
     # Start-Job needs the REAL profile for its persistence path; children get
     # the sandbox profile via arguments inside the scriptblock.
