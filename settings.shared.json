@@ -63,6 +63,12 @@
             "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_start.ps1\"",
             "shell": "powershell",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\regen-tom-widgets.ps1\"",
+            "shell": "powershell",
+            "timeout": 30
           }
         ]
       },
@@ -86,6 +92,12 @@
             "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_start.ps1\"",
             "shell": "powershell",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\regen-tom-widgets.ps1\"",
+            "shell": "powershell",
+            "timeout": 30
           }
         ]
       }
