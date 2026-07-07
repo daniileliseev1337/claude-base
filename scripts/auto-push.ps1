@@ -76,7 +76,16 @@ function Write-SyncLog { param($msg)
 $hookInput = $null
 try {
     if ([Console]::IsInputRedirected) {
+        # UTF-8 stdin ОБЯЗАТЕЛЕН (тот же класс, что чинил Блок 2 в log-tool-usage.ps1):
+        # без этого PS 5.1 читает OEM, кириллица в transcript_path ("Даниил") превращается
+        # в мусор, Test-Path не находит транскрипт — и гейт эфемерных сессий резал
+        # НАСТОЯЩИЕ SessionEnd (инцидент 02–07.07: 5 коммитов копились локально).
+        try {
+            [Console]::InputEncoding  = New-Object System.Text.UTF8Encoding($false)
+            [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+        } catch { }
         $rawInput = [Console]::In.ReadToEnd()
+        if ($rawInput) { $rawInput = $rawInput.Trim([char]0xFEFF) }
         if ($rawInput -and $rawInput.Trim()) {
             $probeFile = Join-Path $claudeDir '.local-state\hook-probe.jsonl'
             Add-Content -Path $probeFile -Value ("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')][auto-push] " + $rawInput.Trim())
@@ -196,7 +205,13 @@ try {
         }
         $isTiny = ($null -ne $lineCount) -and ($lineCount -lt $EphemeralMaxLines) -and
                   ($null -ne $durationSec) -and ($durationSec -lt $EphemeralMaxSeconds)
-        $isEphemeral = $isSubagent -or (-not (Test-Path $tp)) -or $isTiny
+        # 2026-07-07: отсутствующий транскрипт = FAIL-OPEN (пуш идёт), как и задекларировано
+        # выше. Старое "-not (Test-Path $tp) => ephemeral" при сломанной кодировке stdin
+        # резало ВСЕ настоящие концы сессий. Субагентов и так ловит матч по пути.
+        if ((-not $isSubagent) -and (-not (Test-Path $tp))) {
+            Write-SyncLog "transcript not found ($tp) -- fail-open, treating as real SessionEnd"
+        }
+        $isEphemeral = $isSubagent -or $isTiny
         if ($isEphemeral) {
             Write-SyncLog "skip: ephemeral/subagent SessionEnd (session=$($hookInput.session_id), reason=$($hookInput.reason), lines=$lineCount, duration_sec=$durationSec) -- пуш пропущен, изменения уедут на настоящем конце сессии"
             exit 0

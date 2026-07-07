@@ -27,7 +27,14 @@ function Write-SyncLog { param($msg)
 $hookInput = $null
 try {
     if ([Console]::IsInputRedirected) {
+        # UTF-8 stdin — иначе PS 5.1 читает OEM и кириллица в путях payload'а
+        # превращается в мусор в hook-probe.jsonl (тот же фикс, что в auto-push).
+        try {
+            [Console]::InputEncoding  = New-Object System.Text.UTF8Encoding($false)
+            [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+        } catch { }
         $rawInput = [Console]::In.ReadToEnd()
+        if ($rawInput) { $rawInput = $rawInput.Trim([char]0xFEFF) }
         if ($rawInput -and $rawInput.Trim()) {
             $probeFile = Join-Path $claudeDir '.local-state\hook-probe.jsonl'
             Add-Content -Path $probeFile -Value ("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')][auto-pull] " + $rawInput.Trim())
