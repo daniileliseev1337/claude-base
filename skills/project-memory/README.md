@@ -37,11 +37,18 @@ python "$HOME\.claude\skills\project-memory\tools\curate_rot.py" apply <stamp> -
 Скрипт только ПРЕДЛАГАЕТ (все правки — после вашего/Claude review);
 пустой evidence отбрасывается; авто-apply нет; вне `Claude/` не пишет.
 
-## Установка хуков (один раз, settings.json)
+## Установка хуков (один раз, settings.shared.json)
 
-Добавить в `~/.claude/settings.json` (через скилл update-config или
-руками). Блоки `SessionStart` в конфиге обычно уже есть — ДОБАВИТЬ hooks
-внутрь существующих матчеров, не дублировать:
+⚠ В ЛИЧНЫЙ `~/.claude/settings.json` хуки ставить БЕСПОЛЕЗНО: ключ `hooks` —
+strictly-shared, `merge-shared-settings.ps1` перезаписывает его из
+`settings.shared.json` при каждом старте сессии (проверено 2026-07-06).
+
+Единственное рабочее место — `~/.claude/settings.shared.json` (уезжает всем
+ПК команды через auto-pull; вне папок с `Claude/ЖУРНАЛ СЕССИЙ.md` хуки —
+молчаливый no-op). С 2026-07-07 блок УЖЕ добавлен в shared решением владельца —
+ничего ставить не нужно. Сниппет ниже — справочно (структура записей;
+блоки `SessionStart` в конфиге обычно уже есть — ДОБАВЛЯТЬ hooks внутрь
+существующих матчеров, не дублировать):
 
 ```json
 "SessionStart": [

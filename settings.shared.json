@@ -1,23 +1,19 @@
 {
   "_comment": "Shared settings — намеренные правки команды. Этот файл синхронизируется через git. При запуске Claude Code на каждом ПК скрипт merge-shared-settings.ps1 вливает эти ключи в личный ~/.claude/settings.json БЕЗ перезаписи UI-driven полей (theme, viewMode и т.п.).",
   "_added": "2026-05-21 (Phase 1 sync-redesign)",
-
   "language": "russian",
   "effortLevel": "xhigh",
   "agentPushNotifEnabled": true,
-
   "_statusLine_comment": "Живой расход токенов в строке статуса CLI (модель / $ сессии / дня / 5ч-окна / %контекста). Требует ccusage — ставится setup-extras Step 0.5. Ключ НЕ в SharedKeys merge-скрипта: добавляется только если у пользователя нет своего statusLine.",
   "statusLine": {
     "type": "command",
     "command": "ccusage statusline"
   },
-
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true
   },
-
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
       "source": {
@@ -26,7 +22,6 @@
       }
     }
   },
-
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -67,6 +62,12 @@
             "command": "& \"$HOME\\.claude\\scripts\\graph-staleness-check.ps1\"",
             "shell": "powershell",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_start.ps1\"",
+            "shell": "powershell",
+            "timeout": 10
           }
         ]
       },
@@ -84,6 +85,12 @@
             "command": "& \"$HOME\\.claude\\scripts\\graph-staleness-check.ps1\"",
             "shell": "powershell",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_start.ps1\"",
+            "shell": "powershell",
+            "timeout": 10
           }
         ]
       }
@@ -97,6 +104,19 @@
             "command": "& \"$HOME\\.claude\\scripts\\auto-push.ps1\"",
             "shell": "powershell",
             "timeout": 60
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\skills\\project-memory\\tools\\hooks\\session_end.ps1\"",
+            "shell": "powershell",
+            "timeout": 20
           }
         ]
       }
@@ -128,7 +148,6 @@
       }
     ]
   },
-
   "autoMode": {
     "allow": [
       "$defaults",
