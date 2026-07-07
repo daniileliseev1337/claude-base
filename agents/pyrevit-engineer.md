@@ -368,7 +368,7 @@ NEEDS USER INPUT — нужна версия Revit / уточнение API / т
 ## Source / version
 - **Создан:** 2026-06-03
 - **Автор:** Daniil
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0
 - **Источник методологии:** feedback `2026-05-28_pyrevit-fixes-docs` (R-090226731A,
   16 багфиксов) + reference_pyrevit.md. Спроектирован под требование экономии токенов.
 - **История изменений:** 2026-06-08 — выравнивание тела под `_TEMPLATE.md` v1.0

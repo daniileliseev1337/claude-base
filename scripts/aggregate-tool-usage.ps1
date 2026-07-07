@@ -13,6 +13,9 @@
 #>
 param([int]$Days = 14)
 
+# UTF-8 вывод: без этого кириллица сводки — кракозябры в терминалах с OEM-кодировкой
+try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch { }
+
 $claudeDir = Join-Path $env:USERPROFILE '.claude'
 $logFile = Join-Path $claudeDir '.local-state\tool-usage.jsonl'
 if (-not (Test-Path $logFile)) { Write-Host "Лога нет ($logFile) — hook не подключён?"; exit 0 }
@@ -32,7 +35,7 @@ $usedAgents | ForEach-Object { Write-Host ("  {0,5}  {1}" -f $_.Count, $_.Name) 
 
 Write-Host "`n-- Агенты базы, НЕ вызванные ни разу за период --"
 $allAgents = Get-ChildItem (Join-Path $claudeDir 'agents\*.md') |
-    Where-Object { $_.Name -notin @('agents.md','_TEMPLATE.md') } |
+    Where-Object { $_.Name -ne 'agents.md' } |   # шаблон агента переехал в templates/ (Блок 4)
     ForEach-Object { $_.BaseName }
 $silent = $allAgents | Where-Object { $_ -notin $usedAgents.Name }
 if ($silent) { $silent | ForEach-Object { Write-Host "  ✗ $_" } } else { Write-Host "  (таких нет)" }

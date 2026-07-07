@@ -4,11 +4,6 @@
   "language": "russian",
   "effortLevel": "xhigh",
   "agentPushNotifEnabled": true,
-  "_statusLine_comment": "Живой расход токенов в строке статуса CLI (модель / $ сессии / дня / 5ч-окна / %контекста). Требует ccusage — ставится setup-extras Step 0.5. Ключ НЕ в SharedKeys merge-скрипта: добавляется только если у пользователя нет своего statusLine.",
-  "statusLine": {
-    "type": "command",
-    "command": "ccusage statusline"
-  },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,

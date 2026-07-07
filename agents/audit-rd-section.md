@@ -394,6 +394,6 @@ Orchestrator на основе verdict решает:
 - **Создан:** 2026-05-25 (по новому template).
 - **Приведён к _TEMPLATE.md v1.0:** 2026-06-08.
 - **Автор:** Daniil.
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0 (2026-05-25).
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0 (2026-05-25).
 - **Источник методологии:** GSD framework + паттерн read-only ревьюеров
   (word-checker / pdf-reviewer) + российская нормативная база СПДС.

@@ -66,6 +66,11 @@
 !formatting-templates/
 !formatting-templates/**
 
+# Шаблоны сущностей базы (agent_TEMPLATE и т.п.) — вынесены из agents/,
+# чтобы харнесс не регистрировал шаблон как живого агента (Блок 4, 2026-07-07)
+!templates/
+!templates/**
+
 # Именованные цепочки (chains) — импорт из аудита <организация> 2026-05-20
 # First-class сущность оркестратора. См. chains/README.md.
 !chains/

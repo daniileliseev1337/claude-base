@@ -295,5 +295,5 @@ merged = df_new.merge(df_ref, on=key_col, how="outer",
 
 - **Создан:** до v1.0 шаблона (pre-2026-05-25), переписан под `_TEMPLATE.md` v1.0 — 2026-06-08.
 - **Автор:** Daniil.
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0 (2026-05-25).
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0 (2026-05-25).
 - **История изменений:** 2026-06-08 — тело приведено к обязательным секциям шаблона (добавлены When to invoke / NOT, Input, Tools-rationale, Execution flow, Critical rules, When out of domain, After completion, Success criteria, Karpathy, Related, Source); сохранён исходный чек-лист, два канала инструментов, формат отчёта и failure-mode. Frontmatter не изменён.

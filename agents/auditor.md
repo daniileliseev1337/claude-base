@@ -348,6 +348,6 @@ NOT PASSED — если хотя бы одно FAIL.
   fallback при холодном кэше + правило «непрочитанный бинарник = NOT PASSED»
   (feedback-анализ: auditor физически не мог читать .docx/.xlsx/.pdf).
 - **Автор:** Daniil
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0 (2026-05-25)
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0 (2026-05-25)
 - **Источник методологии:** принцип независимого ревью 2-го уровня; counting
   invariants — из урока `memory/2026-05-08_pnr-cooling-9vs8.md`.

@@ -446,7 +446,7 @@ NOT FOUND — не удалось найти, требуется ручной п
 
 - **Создан:** 2026-05-25 (по новому template)
 - **Автор:** Daniil
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0
 - **Источник методологии:** GSD framework + наш paradigm read-only
   ревьюеров + урок сессии 2026-05-25 (3 случая выдуманных норм).
 - **Альтернатива skill:** обсуждалось сделать как skill вместо agent.

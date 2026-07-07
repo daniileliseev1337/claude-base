@@ -126,7 +126,10 @@ foreach ($branch in $branches) {
     # Скопировать всё из feedback/ в branchOutDir
     $feedbackPath = Join-Path $repoLocal 'feedback'
     if (Test-Path $feedbackPath) {
-        $files = Get-ChildItem $feedbackPath -File -Filter '*.md'
+        # smoke-заглушки инсталлера не тащим в обзор (Блок 4, 2026-07-07):
+        # это тех-файлы проверки апдейтера, разбирать в них нечего
+        $files = Get-ChildItem $feedbackPath -File -Filter '*.md' |
+            Where-Object { $_.Name -notmatch 'updater-smoke-test|smoke-test-after-pat-fix|smoke-test-deliseevpc' }
         foreach ($f in $files) {
             $dest = Join-Path $branchOutDir $f.Name
             $isNew = -not (Test-Path $dest)

@@ -89,18 +89,48 @@ def main():
         pageset = list(range(n))
     out = a.out or os.path.splitext(a.pdf)[0] + '.mineru.md'
     parts = []
+    part_files = []
     nchunks = (len(pageset) + a.chunk - 1) // a.chunk
     for ci in range(nchunks):
         chunk = pageset[ci * a.chunk:(ci + 1) * a.chunk]
-        nd = fitz.open()
-        for p in chunk:
-            nd.insert_pdf(doc, from_page=p, to_page=p)
-        buf = nd.tobytes(); nd.close()
-        print('[chunk %d/%d] стр %d-%d (%dp) -> MinerU %s/%s...' % (
-            ci + 1, nchunks, chunk[0] + 1, chunk[-1] + 1, len(chunk), a.model, a.lang), flush=True)
-        md = parse_chunk(buf, 'chunk_%d.pdf' % ci, token, a.model, a.lang)
+        # partial-save/resume: готовый чанк сохраняется сразу — падение сети на
+        # N-м чанке не сжигает облачную квоту предыдущих; перезапуск той же
+        # командой продолжает с места падения
+        part_path = '%s.part%02d.md' % (out, ci)
+        part_files.append(part_path)
+        if os.path.exists(part_path) and os.path.getsize(part_path) > 0:
+            md = open(part_path, encoding='utf-8').read()
+            print('[chunk %d/%d] уже готов — resume из %s' % (
+                ci + 1, nchunks, os.path.basename(part_path)), flush=True)
+        else:
+            nd = fitz.open()
+            for p in chunk:
+                nd.insert_pdf(doc, from_page=p, to_page=p)
+            buf = nd.tobytes(); nd.close()
+            print('[chunk %d/%d] стр %d-%d (%dp) -> MinerU %s/%s...' % (
+                ci + 1, nchunks, chunk[0] + 1, chunk[-1] + 1, len(chunk), a.model, a.lang), flush=True)
+            for attempt in (1, 2, 3):
+                try:
+                    md = parse_chunk(buf, 'chunk_%d.pdf' % ci, token, a.model, a.lang)
+                    break
+                except Exception as e:
+                    if attempt == 3:
+                        print('FAIL chunk %d после 3 попыток. Готовые чанки лежат в *.partNN.md — '
+                              'перезапусти той же командой, продолжу с этого места.' % (ci + 1),
+                              file=sys.stderr)
+                        raise
+                    wait = 30 * attempt
+                    print('[chunk %d/%d] попытка %d: %s — повтор через %d с' % (
+                        ci + 1, nchunks, attempt, e, wait), file=sys.stderr, flush=True)
+                    time.sleep(wait)
+            open(part_path, 'w', encoding='utf-8').write(md)
         parts.append('\n\n<!-- стр %d-%d -->\n\n%s' % (chunk[0] + 1, chunk[-1] + 1, md))
     open(out, 'w', encoding='utf-8').write(''.join(parts))
+    for pf in part_files:  # сборка успешна — промежуточные части не нужны
+        try:
+            os.remove(pf)
+        except OSError:
+            pass
     print('SAVED:', out, '| chars:', sum(len(p) for p in parts), '| chunks:', nchunks)
 
 if __name__ == '__main__':

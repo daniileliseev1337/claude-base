@@ -339,7 +339,7 @@ fallback на `auditor`/себя пока агент не создан).
 
 - **Создан:** 2026-05-25 (POC по новому template)
 - **Автор:** Daniil
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0
 - **Источник методологии:** GSD framework (`gsd-build/get-shit-done`)
   + наш designer.md паттерн.
 - **История изменений:** 2026-06-08 — выравнивание тела по `_TEMPLATE.md` v1.0

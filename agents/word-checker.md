@@ -334,6 +334,6 @@ for pat in patterns:
 
 - **Создан:** до 2026-05-25 (pre-template)
 - **Автор:** Daniil
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0 (2026-05-25)
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0 (2026-05-25)
 - **История изменений:** 2026-06-08 — тело приведено к _TEMPLATE.md v1.0
   (добавлены обязательные секции; frontmatter сохранён без изменений).

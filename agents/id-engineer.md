@@ -410,7 +410,7 @@ NEEDS USER INPUT — есть открытые вопросы (см. ниже).
 
 - **Создан:** 2026-05-25 (по новому template)
 - **Автор:** Daniil
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0
 - **Источник методологии:** GSD framework + наш designer.md паттерн +
   специфика ИД РФ (РД серии 11-xx Ростехнадзора).
 - **История изменений:**

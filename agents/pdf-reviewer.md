@@ -250,5 +250,5 @@ print(f"PDF version: {reader.pdf_header}")
 - **Создан:** до v1.0 шаблона (legacy-агент).
 - **Приведён к _TEMPLATE.md v1.0:** 2026-06-08.
 - **Автор:** Daniil.
-- **Шаблон:** `~/.claude/agents/_TEMPLATE.md` v1.0 (2026-05-25).
+- **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0 (2026-05-25).
 - **История изменений:** тело переписано с нуля под обязательные секции v1.0; frontmatter (name/description/tools) сохранён без изменений.

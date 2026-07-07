@@ -9,7 +9,7 @@
 | Папка / файл | Назначение |
 |---|---|
 | `CLAUDE.md` | Глобальный manifest (де-водизирован 2026-06-02 → ~10 KB чистого UTF-8): STOP-выжимка, 5 принципов Karpathy, 4 правила skill-first, MCP-роутинг, 9 универсальных правил (вкл. нейтральное оформление docx/xlsx и `FACTS.md`), Feedback (dev/consumer), ритуал отчёта. Детали-справочник вынесены в `memory/*.md` (cascade-load по триггеру). Управляется через `claude-lite-instaler` + USER EXTENSIONS внизу. |
-| `agents/` | **15 агентов** Claude Code: 7 доменных (`designer`, `pto-engineer`, `сметчик`, `снабженец`, `id-engineer`, `kp-writer`, `letter-writer`, `expertiza-responder`, `norm-lookup`), общий ревьюер (`auditor`), 4 узких ревьюера (`pdf-reviewer`, `excel-validator`, `word-checker`, `audit-rd-section`), межразделный координатор (`rd-coordinator`). См. `agents/_TEMPLATE.md` для новых агентов. |
+| `agents/` | **15 агентов** Claude Code: 7 доменных (`designer`, `pto-engineer`, `сметчик`, `снабженец`, `id-engineer`, `kp-writer`, `letter-writer`, `expertiza-responder`, `norm-lookup`), общий ревьюер (`auditor`), 4 узких ревьюера (`pdf-reviewer`, `excel-validator`, `word-checker`, `audit-rd-section`), межразделный координатор (`rd-coordinator`). См. `templates/agent_TEMPLATE.md` для новых агентов. |
 | `skills/` | **16+ скиллов** методологические: `karpathy-guidelines` (5 принципов), `skill-development` (4 правила skill-first), `domain-grilling` (допрос перед строй-задачей), `facts-layer` (единый источник правды — `FACTS.md` ключ→значение→источник, агенты читают первым), `doc-extract` (единственный вход извлечения из PDF) / `pdf-edit` (редактирование PDF, + вшит ВЕРИФИЦИРОВАННЫЙ метод правки вектор-PDF через Inkscape), `excel-helper`, `word-helper` (+ метод правки существующих docx без слома структуры/underline), `chains-pattern`, `structured-artifacts` (cascade loading), `handoff-to-new-chat`, `image-text-replace`, `cad-reader`, `upd-parser`, `spec-writer`, `stroy-formatting`, `yandex-disk-uploader`. |
 | `chains/` | **Именованные цепочки** многошаговых сценариев: `docx-from-template`, `pdf-scan-extract`, `project-doc-pack` (stub). Триггерятся по фразам пользователя, выполняются последовательно с verify-критерием на каждом шаге. |
 | `memory/` | Эмпирические наблюдения по реальным задачам — feedback, project, reference, user типы. Кейсы провалов и успехов, обезличенные. Также секции CLAUDE.md вынесенные сюда для экономии overhead (`auto_sync.md`, `role_detection.md`, `reference_mcp.md`, `reference_agents.md` и др). |
@@ -69,7 +69,7 @@ cd claude-lite-instaler
 - **Новый агент** создаётся **только** после ≥3 успешных применений main-агента в этом домене без него.
 - **Новых правил наперёд не пишем.** Эмпирические наблюдения → `memory/`, не в инструкции агентов.
 - **Внешние инструменты** — через harvest-workflow (см. `CLAUDE.md`): заметки да, копирование кода без явного согласия пользователя — нет.
-- **Шаблон агента** `agents/_TEMPLATE.md` v1.0 (2026-05-25, адаптация из gsd-redux). Новые агенты по нему. Старые 5 (auditor, designer, excel-validator, pdf-reviewer, word-checker) pre-date шаблон — не выровнены, см. backlog.
+- **Шаблон агента** `templates/agent_TEMPLATE.md` v1.0 (2026-05-25, адаптация из gsd-redux). Новые агенты по нему. Старые 5 (auditor, designer, excel-validator, pdf-reviewer, word-checker) pre-date шаблон — не выровнены, см. backlog.
 
 ## Безопасность
 
