@@ -131,8 +131,9 @@
 
 Жёсткое форсится детерминированно, не «вспомнит модель» — поэтому в тексте выше эти гейты лишь кратко:
 - **UserPromptSubmit:** `grilling-detector` (грилинг на строй-фразах) · `routing-detector` (роутинг-гейт) · `understanding-map-detector` (проактив карты понимания).
-- **SessionStart:** `auto-pull` (синк базы) · `graph-staleness-check` (скелет графа свежий).
+- **SessionStart:** `auto-pull` (синк базы) · `graph-staleness-check` (скелет графа свежий) · `project-memory/session_start` (память проекта).
 - **PostToolUse:** `log-tool-usage` (телеметрия + сессионный гейт по реальному заполнению окна ~70%).
+- **Stop:** `project-memory/session_end` (журнал сессий проекта).
 - **SessionEnd:** `auto-push` (отчёт/правки в base).
 
 ## Справочник (cascade-load по триггеру, `~/.claude/memory/`)
