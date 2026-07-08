@@ -273,7 +273,41 @@ def fetch(url, kind="auto", out=None, timeout=20, egress=None):
             "next": next_hint(kind, ru_host, tried)}
 
 
+def force_utf8_stdio():
+    """
+    БОЕВОЙ ФИКС 2026-07-08: web_get печатает preview/reason с юникодом (китайские
+    бренды оборудования, спецтире, emoji). Windows-консоль без PYTHONIOENCODING = cp1251,
+    и print() ловит UnicodeEncodeError → «упал на выводе» (репорт владельца на palerom/
+    tincraft). Инструмент обязан быть устойчив САМ, не полагаться на env пользователя.
+    reconfigure есть у TextIOWrapper (Py 3.7+); при перенаправлении/отсутствии — тихо мимо.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def render_human(res):
+    """Человекочитаемый отчёт как СТРОКА (тестируемо отдельно от печати)."""
+    lines = [f"[egress] {res['egress']}  [kind] {res['kind']}  [ru_host] {res['ru_host']}"]
+    for t in res["tried"]:
+        mark = "OK " if t.get("ok") else "-- "
+        size = f"({t['bytes']}b)" if t.get("bytes") else ""
+        lines.append(f"  {mark}{t['stage']:8} http={t.get('http')} {t.get('reason','')} {size}")
+    if res["ok"]:
+        where = res.get("out") or f"{res.get('bytes')}b (preview ниже)"
+        lines.append(f"[OK] via '{res['stage']}' -> {where}")
+        if res.get("preview") and not res.get("out"):
+            lines.append("---8<--- preview ---")
+            lines.append(res["preview"])
+    else:
+        lines.append(f"[FAIL] все кодовые ступени пали.\n[next] {res['next']}")
+    return "\n".join(lines)
+
+
 def main():
+    force_utf8_stdio()
     ap = argparse.ArgumentParser(description="Единый вход веб-доступа (лестница в коде).")
     ap.add_argument("url")
     ap.add_argument("--kind", choices=["page", "file", "auto"], default="auto")
@@ -287,19 +321,7 @@ def main():
     if a.json:
         print(json.dumps(res, ensure_ascii=False))
     else:
-        print(f"[egress] {res['egress']}  [kind] {res['kind']}  [ru_host] {res['ru_host']}")
-        for t in res["tried"]:
-            mark = "OK " if t.get("ok") else "-- "
-            print(f"  {mark}{t['stage']:8} http={t.get('http')} {t.get('reason','')}"
-                  f" {t.get('bytes','') and ('('+str(t['bytes'])+'b)')}")
-        if res["ok"]:
-            where = res.get("out") or f"{res.get('bytes')}b in stdout-preview"
-            print(f"[OK] via '{res['stage']}' -> {where}")
-            if res.get("preview") and not res.get("out"):
-                print("---8<--- preview ---")
-                print(res["preview"])
-        else:
-            print(f"[FAIL] все кодовые ступени пали.\n[next] {res['next']}")
+        print(render_human(res))
     return 0 if res["ok"] else 2
 
 

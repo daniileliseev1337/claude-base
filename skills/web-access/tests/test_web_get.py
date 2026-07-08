@@ -5,6 +5,14 @@ import os
 import sys
 import tempfile
 
+# Сам тест-раннер печатает юникод-имена — под cp1251-консолью (Windows без
+# PYTHONIOENCODING) это упало бы так же, как боевой баг web_get. Устойчивость первой строкой.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 import web_get as w  # noqa: E402
 
@@ -80,6 +88,33 @@ check("file zip без ожидания pdf → ok", ok is True and sig == "zip/
 # --- next_hint непустой и упоминает MCP-ступени ---
 check("hint page-foreign упоминает exa", "exa" in w.next_hint("page", False, []))
 check("hint file упоминает playwright", "playwright" in w.next_hint("file", True, []))
+
+# --- render_human: собирает отчёт со ступенями и preview ---
+sample = {"ok": True, "url": "http://x", "kind": "page", "ru_host": False, "egress": "NL",
+          "stage": "jina", "http": "200", "bytes": 999, "out": None,
+          "preview": "Жироулавливающий зонт 中文 — спецтире",
+          "tried": [{"stage": "direct", "ok": False, "http": None, "reason": "timeout"},
+                    {"stage": "jina", "ok": True, "http": "200", "reason": "ok", "bytes": 999}]}
+rh = w.render_human(sample)
+check("render_human показывает победившую ступень", "via 'jina'" in rh)
+check("render_human показывает провал ступени", "-- direct" in rh)
+check("render_human несёт preview-юникод", "中文" in rh)
+
+# --- РЕГРЕСС боевого бага 08.07: печать юникода в cp1251-консоли НЕ валит процесс ---
+import subprocess  # noqa: E402
+_tool = os.path.join(os.path.dirname(__file__), "..", "tools", "web_get.py")
+_probe = (
+    "import sys,io,os;"
+    "sys.stdout=io.TextIOWrapper(sys.stdout.buffer,encoding='cp1251');"  # эмулируем Windows-консоль
+    "sys.path.insert(0,os.path.dirname(r'" + _tool + "'));"
+    "import web_get as w; w.force_utf8_stdio();"
+    "print(w.render_human({'ok':True,'kind':'page','ru_host':False,'egress':'NL','stage':'jina',"
+    "'http':'200','bytes':9,'out':None,'preview':'зонт 中文 emoji😀 —тире','tried':[]}))"
+)
+_env = dict(os.environ); _env.pop("PYTHONIOENCODING", None)  # как у пользователя — без него
+_r = subprocess.run([sys.executable, "-c", _probe], capture_output=True, env=_env)
+check("cp1251-консоль + юникод-preview → НЕ падает (exit 0)", _r.returncode == 0)
+check("cp1251: нет UnicodeEncodeError в stderr", b"UnicodeEncodeError" not in _r.stderr)
 
 print()
 if FAILS:
