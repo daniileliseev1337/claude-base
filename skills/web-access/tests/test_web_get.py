@@ -41,9 +41,13 @@ check("?query после .pdf всё равно file", w.classify_kind("http://x
 
 # --- build_ladder ---
 check("egress RU → noproxy первым", w.build_ladder("page", True, "RU")[0] == "noproxy")
-check("RU-цель заграница page → jina первым (быстрее прокси)", w.build_ladder("page", True, "NL")[0] == "jina")
-check("RU-цель заграница page → ru как fallback", "ru" in w.build_ladder("page", True, "NL"))
-check("RU-цель заграница FILE → ru первым (jina бинарь не отдаёт)", w.build_ladder("file", True, "NL")[0] == "ru")
+# Боевой урок 08.07: RU-host с иностр. egress — СНАЧАЛА быстрый прямой (palerom взялся
+# curl'ом с NL), медленный ru_fetch — последним fallback, не первым.
+check("RU-цель заграница page → прямой первым (не медленный ru)", w.build_ladder("page", True, "NL")[0] in ("noproxy", "direct"))
+check("RU-цель заграница page → ru ПОСЛЕДНИМ fallback", w.build_ladder("page", True, "NL")[-1] == "ru")
+check("RU-цель заграница FILE → прямой первым", w.build_ladder("file", True, "NL")[0] in ("noproxy", "direct"))
+check("RU-цель заграница FILE → ru последним", w.build_ladder("file", True, "NL")[-1] == "ru")
+check("RU-цель заграница page → jina есть (гео-блок fallback)", "jina" in w.build_ladder("page", True, "NL"))
 check("заграница-цель заграница → direct первым", w.build_ladder("page", False, "NL")[0] == "direct")
 check("page включает jina", "jina" in w.build_ladder("page", False, "NL"))
 check("file исключает jina везде", "jina" not in w.build_ladder("file", True, "NL")

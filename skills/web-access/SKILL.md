@@ -84,13 +84,15 @@ python ~/.claude/skills/web-access/tools/web_get.py <URL> [--kind page|file|auto
 | egress | цель | page | file |
 |---|---|---|---|
 | RU | любая | noproxy → direct → jina | noproxy → direct |
-| ≠RU | RU-хост | **jina** → ru → noproxy | ru → noproxy |
+| ≠RU | RU-хост | noproxy → direct → jina → ru | noproxy → direct → ru |
 | ≠RU | зарубеж | direct → noproxy → jina | direct → noproxy |
 
-Для ЧТЕНИЯ RU-страниц с иностранного egress облачная jina раньше эфемерного
-бесплатного RU-прокси — быстрее и стабильнее (эмпирика 2026-07-08: `ru` отвалилась
-по таймауту, `jina` взяла ridan.ru за 142 КБ). Для ФАЙЛА jina бесполезна (только текст) —
-сырой файл берёт curl/ru_fetch.
+**Быстрый прямой ВСЕГДА первым, медленный ru_fetch — последним fallback** (боевой урок
+2026-07-08: `palerom.ru/...png` взялся прямым curl с NL-egress за секунды — НЕ все RU-сайты
+гео-блокированы, RU-коммерч B2B часто отдаёт напрямую). Ставить медленный ru_fetch (ищет
+бесплатный RU-прокси десятки секунд) первым для RU-host — ошибка: он нужен лишь реально
+гео-блокированным (госсайты → и то отдельный слой ru-gov-access). jina — на гео-блок
+страниц (consultant-класс); для ФАЙЛА jina бесполезна (только текст) → сырой файл берёт curl/ru_fetch.
 
 ## Как встроено в правило CLAUDE.md
 CLAUDE.md §«Веб-доступ» теперь указывает СНАЧАЛА на эту команду (детерминированный

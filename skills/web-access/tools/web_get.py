@@ -186,8 +186,12 @@ def build_ladder(kind, ru_host, egress):
         # RU-egress выходит и в РФ, и в мир напрямую.
         return ["noproxy", "direct", "jina"] if kind == "page" else ["noproxy", "direct"]
     if ru_host:
-        # RU-цель, egress не-RU: прямой упрётся в гео.
-        return ["jina", "ru", "noproxy"] if kind == "page" else ["ru", "noproxy"]
+        # RU-цель, egress не-RU. ВАЖНО (боевой урок 2026-07-08, palerom.png взялся
+        # прямым curl с NL-egress): НЕ все RU-сайты гео-блокированы — RU-коммерч B2B
+        # часто отдаёт напрямую. Поэтому СНАЧАЛА быстрый прямой (noproxy/direct, 1-2с),
+        # облако jina — на гео-блок (consultant-класс), медленный ru_fetch — последним
+        # fallback (бесплатный RU-прокси ищется долго, нужен лишь реально блокированным).
+        return ["noproxy", "direct", "jina", "ru"] if kind == "page" else ["noproxy", "direct", "ru"]
     # Зарубежная цель, egress не-RU: прямой работает.
     return ["direct", "noproxy", "jina"] if kind == "page" else ["direct", "noproxy"]
 
