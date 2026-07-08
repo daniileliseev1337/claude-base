@@ -177,26 +177,19 @@ def ru_fetch_page(url, out_path, timeout):
 def build_ladder(kind, ru_host, egress):
     """
     Порядок ступеней = f(тип, RU-цель, egress). Возвращает список имён ступеней.
-    Принцип: дешёвое-и-точное раньше; RU-цель с иностранного egress → RU-канал/облако.
+    Принципы: дешёвое-и-стабильное раньше; RU-цель с иностранного egress не берётся
+    прямым curl (гео) → облако/RU-канал; для ЧТЕНИЯ облачная jina быстрее и надёжнее
+    эфемерного бесплатного RU-прокси (эмпирика 2026-07-08) → jina перед ru; jina умеет
+    только ТЕКСТ, поэтому для FILE её нет — сырой файл берёт только curl/ru_fetch.
     """
     if egress == "RU":
-        # На RU-egress прямой/noproxy берёт и RU, и часть заграницы.
-        base = ["noproxy", "direct"]
-    elif ru_host:
-        # RU-цель, egress не-RU: прямой не пройдёт (гео) → сразу RU-канал и облако.
-        base = ["ru", "jina", "noproxy"]
-    else:
-        # Зарубежная цель, egress не-RU: прямой работает.
-        base = ["direct", "noproxy"]
-    if kind == "page":
-        # jina умеет отдавать только ТЕКСТ страницы — для file бесполезна.
-        if "jina" not in base:
-            base.append("jina")
-    else:  # file
-        base = [s for s in base if s != "jina"]
-        if ru_host and "ru" not in base:
-            base.append("ru")
-    return base
+        # RU-egress выходит и в РФ, и в мир напрямую.
+        return ["noproxy", "direct", "jina"] if kind == "page" else ["noproxy", "direct"]
+    if ru_host:
+        # RU-цель, egress не-RU: прямой упрётся в гео.
+        return ["jina", "ru", "noproxy"] if kind == "page" else ["ru", "noproxy"]
+    # Зарубежная цель, egress не-RU: прямой работает.
+    return ["direct", "noproxy", "jina"] if kind == "page" else ["direct", "noproxy"]
 
 
 def next_hint(kind, ru_host, tried):

@@ -33,11 +33,13 @@ check("?query после .pdf всё равно file", w.classify_kind("http://x
 
 # --- build_ladder ---
 check("egress RU → noproxy первым", w.build_ladder("page", True, "RU")[0] == "noproxy")
-check("RU-цель заграница → ru первым", w.build_ladder("page", True, "NL")[0] == "ru")
+check("RU-цель заграница page → jina первым (быстрее прокси)", w.build_ladder("page", True, "NL")[0] == "jina")
+check("RU-цель заграница page → ru как fallback", "ru" in w.build_ladder("page", True, "NL"))
+check("RU-цель заграница FILE → ru первым (jina бинарь не отдаёт)", w.build_ladder("file", True, "NL")[0] == "ru")
 check("заграница-цель заграница → direct первым", w.build_ladder("page", False, "NL")[0] == "direct")
 check("page включает jina", "jina" in w.build_ladder("page", False, "NL"))
-check("file исключает jina", "jina" not in w.build_ladder("file", True, "NL"))
-check("file RU-цель содержит ru", "ru" in w.build_ladder("file", True, "NL"))
+check("file исключает jina везде", "jina" not in w.build_ladder("file", True, "NL")
+      and "jina" not in w.build_ladder("file", False, "NL"))
 
 # --- verify_page ---
 ok, _ = w.verify_page(b"<html><body>" + b"x" * 200 + b"</body></html>", "200")
