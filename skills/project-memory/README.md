@@ -86,6 +86,18 @@ python -m pytest "$HOME\.claude\skills\project-memory\tests" -v
 Переносимые (tmp, синтетика, без привязки к машине); `test_hooks.py` —
 Windows-only smoke (PowerShell 5.1).
 
+## v2 — установка хуков доставки/гейта (по решению владельца)
+
+Хуки Этапа 1 (доставка ядра + блокирующий гейт, см. SKILL.md §v2) реализованы
+и протестированы, но включаются ОСОЗНАННО (гейт даёт `exit 2`). Через скилл
+`update-config`, в СУЩЕСТВУЮЩИЕ блоки (не дублируя матчеры):
+
+- **UserPromptSubmit** += `& "$HOME\.claude\skills\project-memory\tools\hooks\project_context.ps1"`
+- **PreToolUse** (ОТДЕЛЬНЫЙ матчер, НЕ в блок `screenshot|zoom`) += `& "$HOME\.claude\skills\project-memory\tools\hooks\project_gate.ps1"`
+- **PostToolUse** — регистрация чтения уже в `scripts/log-tool-usage.ps1` (подключён).
+
+Без этой правки доставка ① и гейт ② инертны (эффекта в живой сессии нет).
+
 ## Точка расширения
 
 `templates/profiles/` — пусто в v1. Профиль (напр. `id-tom`) = свой набор
