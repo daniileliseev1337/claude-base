@@ -195,5 +195,50 @@ try {
                 ConvertTo-Json -Compress -Depth 4 | Write-Output
         }
     }
+
+    # ===== project-memory: регистрация чтения Claude\КОНТЕКСТ.md (для project_gate.ps1) =====
+    # PostToolUse видит Read этого файла -> проект "прочитал" контекст детерминированно;
+    # маркер здесь проверяет PreToolUse-гейт project_gate.ps1 перед мутациями (Write/Edit/
+    # MultiEdit/NotebookEdit/Task) в том же проекте. Полностью независимо от гейта сессии
+    # выше: свой try/catch (fail-open, НЕ меняет exit-поведение хука), stdin второй раз не
+    # читаем - переиспользуем уже распарсенный $j.
+    try {
+        if ($j.tool_name -eq 'Read' -and $j.tool_input -and $j.tool_input.file_path -and $j.session_id) {
+            $ctxFilePath = [string]$j.tool_input.file_path
+            $ctxName = (-join ([char]0x041A,[char]0x041E,[char]0x041D,[char]0x0422,[char]0x0415,[char]0x041A,[char]0x0421,[char]0x0422)) + '.md'
+            $ctxSuf1 = 'Claude\' + $ctxName
+            $ctxSuf2 = 'Claude/' + $ctxName
+            if ($ctxFilePath.EndsWith($ctxSuf1, [StringComparison]::OrdinalIgnoreCase) -or
+                $ctxFilePath.EndsWith($ctxSuf2, [StringComparison]::OrdinalIgnoreCase)) {
+
+                $findProjectScript = Join-Path (Split-Path -Path $PSScriptRoot -Parent) 'skills\project-memory\tools\hooks\find_project.ps1'
+                if (Test-Path -LiteralPath $findProjectScript) {
+                    $ctxProjOut = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $findProjectScript -StartPath $ctxFilePath 2>$null
+                    $ctxProjOut = (@($ctxProjOut) -join "`n").Trim()
+                    if ($ctxProjOut) {
+                        $ctxProj = $ctxProjOut | ConvertFrom-Json
+                        if ($ctxProj -and $ctxProj.root) {
+                            # hash(root) СОГЛАСОВАН с project_gate.ps1: SHA1 от lower-case
+                            # root с обрезанным хвостовым слешем, первые 12 hex-символов.
+                            $ctxNormRoot = ([string]$ctxProj.root).TrimEnd('\','/').ToLowerInvariant()
+                            $ctxSha1 = [System.Security.Cryptography.SHA1]::Create()
+                            try {
+                                $ctxHashBytes = $ctxSha1.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($ctxNormRoot))
+                                $ctxRootHash = (($ctxHashBytes | ForEach-Object { $_.ToString('x2') }) -join '').Substring(0, 12)
+                            } finally { $ctxSha1.Dispose() }
+
+                            $pmStateDir = $env:PROJECT_MEMORY_STATE_DIR
+                            if (-not $pmStateDir) { $pmStateDir = Join-Path $HOME '.claude\.local-state\project-memory' }
+                            if (-not (Test-Path $pmStateDir)) { New-Item -ItemType Directory -Path $pmStateDir -Force | Out-Null }
+
+                            $ctxMarker = Join-Path $pmStateDir ("ctxread_" + $j.session_id + "_" + $ctxRootHash + ".json")
+                            (@{ root = $ctxProj.root; ts = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') } | ConvertTo-Json -Compress) |
+                                Set-Content -LiteralPath $ctxMarker -Encoding UTF8
+                        }
+                    }
+                }
+            }
+        }
+    } catch { }
 } catch { }
 exit 0
