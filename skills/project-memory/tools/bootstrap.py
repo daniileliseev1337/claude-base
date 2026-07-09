@@ -25,15 +25,47 @@ CORE_FILES = [
     ("README.md.tmpl", Path("Claude") / "README.md"),
     ("ЖУРНАЛ СЕССИЙ.md.tmpl", Path("Claude") / JOURNAL_NAME),
     ("STATUS.md.tmpl", Path("Claude") / "STATUS.md"),
+    ("КОНТЕКСТ.md.tmpl", Path("Claude") / "КОНТЕКСТ.md"),
     ("root-CLAUDE.md.tmpl", Path("CLAUDE.md")),
 ]
 
+# Мостик роли к 16 доменным агентам: домен проекта → ведущий агент (по подстроке,
+# регистр-независимо, первый матч). Неизвестный домен → "" (НЕ выдумывать агента).
+# Специфичные домены проверяются РАНЬШЕ общего designer (ВОР≠проектирование).
+_DOMAIN_AGENT = [
+    (("вор", "объём", "объем", "спецификац", "ведомост", "пто", "подсчёт", "подсчет"), "pto-engineer"),
+    (("ид", "аоср", "аомр", "исполнит", "освидетельств", "журнал работ"), "id-engineer"),
+    (("смет", "гэсн", "фер", "кс-2", "кс-3", "расценк", "нр/сп"), "сметчик"),
+    (("снабж", "упд", "накладн", "поставщик", "закупк", "тторг-12"), "снабженец"),
+    (("замечан", "экспертиз"), "expertiza-responder"),
+    (("коммерческ", " кп", "кп ", "тендер"), "kp-writer"),
+    (("письм", "исходящ", "претензи", "сопроводит"), "letter-writer"),
+    (("revit", "ревит", "pyrevit", "семейств"), "pyrevit-engineer"),
+    (("норм", "гост", "снип", "пуэ", "цитат"), "norm-lookup"),
+    (("ов", "вент", "кондиц", "отопл", "вк", "водоснаб", "канализ", "эо",
+      "электр", "сс", "слаботоч", "скс", "скуд", "видеонабл", "иос", "проект"), "designer"),
+]
 
-def render(template_path: Path, project: str, today: str, host: str) -> str:
+
+def domain_to_agent(domain: str) -> str:
+    """Домен проекта → имя ведущего доменного агента (или '' если неизвестен)."""
+    d = (domain or "").lower()
+    for subs, agent in _DOMAIN_AGENT:
+        if any(s in d for s in subs):
+            return agent
+    return ""
+
+
+def render(template_path: Path, project: str, today: str, host: str,
+           role: str = "", domain: str = "") -> str:
     text = template_path.read_text(encoding="utf-8")
+    agent = domain_to_agent(domain)
     return (text.replace("[ПРОЕКТ]", project)
                 .replace("[ДАТА]", today)
-                .replace("[УСТРОЙСТВО]", host))
+                .replace("[УСТРОЙСТВО]", host)
+                .replace("[РОЛЬ]", role or "_заполнить роль_")
+                .replace("[ДОМЕН]", domain or "_заполнить домен_")
+                .replace("[АГЕНТ]", agent or "_выбрать из 16 агентов_"))
 
 
 def _forced(rel_out: Path, force: list[str]) -> bool:
@@ -55,7 +87,8 @@ def _forced(rel_out: Path, force: list[str]) -> bool:
 
 
 def bootstrap(project: str, target: Path, profile: str = "core",
-              force: list[str] | None = None) -> list[tuple[str, str]]:
+              force: list[str] | None = None,
+              role: str = "", domain: str = "") -> list[tuple[str, str]]:
     """Разворачивает ядро. Возвращает [("+"|"=", относительный_путь_posix)]."""
     if profile != "core":
         raise SystemExit(
@@ -71,7 +104,7 @@ def bootstrap(project: str, target: Path, profile: str = "core",
             report.append(("=", rel_out.as_posix()))
             continue
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(render(TEMPLATES / tmpl_name, project, today, host),
+        out.write_text(render(TEMPLATES / tmpl_name, project, today, host, role, domain),
                        encoding="utf-8", newline="\n")
         report.append(("+", rel_out.as_posix()))
     return report
@@ -90,12 +123,16 @@ def main(argv=None) -> int:
                    help="перезаписать существующий файл (можно повторять); "
                         "для CLAUDE.md указывать путь: ./CLAUDE.md (корневой) "
                         "или Claude/CLAUDE.md")
+    p.add_argument("--role", default="", help="роль в КОНТЕКСТ.md (напр. 'инженер ОВ')")
+    p.add_argument("--domain", default="",
+                   help="домен проекта → ведущий агент (ОВ/ВК/ЭО/СС/ИД/ВОР/смета/снабжение/Revit...)")
     args = p.parse_args(argv)
     target = Path(args.target).resolve()
     if not target.is_dir():
         print(f"целевая папка не существует: {target}", file=sys.stderr)
         return 1
-    report = bootstrap(args.project, target, args.profile, args.force)
+    report = bootstrap(args.project, target, args.profile, args.force,
+                       args.role, args.domain)
     for mark, rel in report:
         label = "создан" if mark == "+" else "уже есть, не тронут"
         print(f"{mark} {rel}  ({label})")

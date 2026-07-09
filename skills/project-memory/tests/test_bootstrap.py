@@ -11,7 +11,28 @@ import bootstrap  # noqa: E402
 
 JOURNAL = "ЖУРНАЛ СЕССИЙ.md"
 CORE = ["Claude/CLAUDE.md", "Claude/README.md", f"Claude/{JOURNAL}",
-        "Claude/STATUS.md", "CLAUDE.md"]
+        "Claude/STATUS.md", "Claude/КОНТЕКСТ.md", "CLAUDE.md"]
+
+
+def test_domain_to_agent_maps_known_domains():
+    from bootstrap import domain_to_agent
+    assert domain_to_agent("ОВ") == "designer"
+    assert domain_to_agent("вентиляция") == "designer"
+    assert domain_to_agent("ВОР") == "pto-engineer"
+    assert domain_to_agent("ИД") == "id-engineer"
+    assert domain_to_agent("смета") == "сметчик"
+    assert domain_to_agent("снабжение") == "снабженец"
+    assert domain_to_agent("Revit") == "pyrevit-engineer"
+    assert domain_to_agent("непонятно") == ""   # неизвестный → пусто, НЕ выдумывать
+
+
+def test_kontekst_role_and_agent_filled(tmp_path):
+    bootstrap.bootstrap("Объект", tmp_path, role="инженер ОВ", domain="ОВ")
+    k = (tmp_path / "Claude" / "КОНТЕКСТ.md").read_text(encoding="utf-8")
+    assert "инженер ОВ" in k
+    assert "designer" in k          # агент выведен из домена ОВ
+    for ph in ("[РОЛЬ]", "[ДОМЕН]", "[АГЕНТ]"):
+        assert ph not in k, ph
 
 
 def test_creates_all_files(tmp_path):
