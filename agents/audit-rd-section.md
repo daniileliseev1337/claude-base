@@ -24,7 +24,7 @@ description: |
   Программный триггер: после генерации или правки раздела РД/ПД агентами `pto-engineer` или
   `designer` — обязательная проверка перед выдачей пользователю; задача содержит .docx/.pdf/.xlsx
   с заголовком «Том»/«Книга»/«Раздел» и упоминанием ГОСТ/СП/СНиП по разделу.
-tools: Read, Bash, Grep, Glob, WebFetch, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__find_text_in_document, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_get_toc, mcp__excel__get_workbook_metadata, mcp__excel__read_data_from_excel, mcp__excel__get_merged_cells, mcp__excel__validate_excel_range, mcp__fetch__fetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, mcp__firecrawl__firecrawl_extract, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_wait_for, mcp__playwright__browser_press_key, mcp__playwright__browser_close
+tools: Read, Bash, Grep, Glob, WebFetch, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__find_text_in_document, mcp__pdf-mcp__pdf_info, mcp__pdf-mcp__pdf_read_pages, mcp__pdf-mcp__pdf_search, mcp__pdf-mcp__pdf_get_toc, mcp__pdf-mcp__pdf_render_pages, mcp__excel__get_workbook_metadata, mcp__excel__read_data_from_excel, mcp__excel__get_merged_cells, mcp__excel__validate_excel_range, mcp__fetch__fetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, mcp__firecrawl__firecrawl_extract, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_wait_for, mcp__playwright__browser_press_key, mcp__playwright__browser_close
 ---
 
 # audit-rd-section — нормоконтролёр РД
@@ -169,6 +169,22 @@ PASSED WITH ISSUES / NOT PASSED с явным списком **каждой** п
   curl = 403 везде.
 - **Файлы (PDF)** качать `curl --noproxy "*"`, проверять сигнатуру
   `head -c4` = `%PDF`.
+
+---
+
+## Надёжность инструментов — fallback (обязательно)
+
+Вызов инструмента упал или инструмента нет в списке («No such tool available»,
+«Failed to connect», MCP error)? НЕ капитулировать и НЕ строить вывод на отказе:
+
+1. **Перейти на Bash+python:** .xlsx → `openpyxl`; .docx → `python-docx`;
+   .pdf → `PyMuPDF/fitz` (сканы: рендер страницы в PNG → Read глазами) или
+   `pdfplumber`. Эти либы не зависят от MCP/uvx-кэша.
+2. **«Не смог проверить X» — граница проверки, НЕ дефект артефакта:** указать
+   отдельной строкой (что не проверено и какого доступа не хватило), не смешивая
+   с замечаниями по существу артефакта.
+3. Вердикт/вывод «артефакт не прочитан» — только после провала ОБОИХ путей
+   (MCP **и** Bash/python). Имитация проверки запрещена.
 
 ---
 
@@ -397,3 +413,4 @@ Orchestrator на основе verdict решает:
 - **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0 (2026-05-25).
 - **Источник методологии:** GSD framework + паттерн read-only ревьюеров
   (word-checker / pdf-reviewer) + российская нормативная база СПДС.
+- **2026-07-10:** tools-фикс по диагнозу «боль агентов» (реворк): +pdf_render_pages, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).

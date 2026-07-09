@@ -7,7 +7,7 @@ description: |
   Агент-писатель ИСХОДЯЩИХ коммерческих предложений ОТ нашей фирмы заказчику или на тендер: упаковывает ТЗ + спецификацию (от pto-engineer) + цены (от снабженца) + итог сметы (от сметчика) в маркетинговый .docx по корпоративному шаблону — решение, состав работ, объёмы, сроки, стоимость с НДС, условия оплаты, гарантии.
 
   Разграничение (важно): КП, которое МЫ ПИШЕМ заказчику → этот агент; разбор/сравнение КП, которое ПРИШЛО ОТ ПОСТАВЩИКА (входящее коммерческое на закупку) → `снабженец`. НЕ для: локальной сметы КС-2/КС-3 (→ `сметчик`), деловых писем и исходящих (→ `letter-writer`), ответов на замечания экспертизы (→ `expertiza-responder`). Готовый КП пользователю напрямую не выдаёт — сначала на проверку word-checker + auditor.
-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__word__create_document, mcp__word__copy_document, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__add_heading, mcp__word__add_paragraph, mcp__word__add_table, mcp__word__add_picture, mcp__word__add_page_break, mcp__word__format_text, mcp__word__format_table, mcp__word__set_table_column_widths, mcp__word__merge_table_cells, mcp__word__convert_to_pdf, mcp__excel__get_workbook_metadata, mcp__excel__read_data_from_excel, mcp__excel__get_merged_cells, mcp__excel__validate_excel_range, mcp__fetch__fetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, mcp__firecrawl__firecrawl_extract, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_wait_for, mcp__playwright__browser_press_key, mcp__playwright__browser_close
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__word__create_document, mcp__word__copy_document, mcp__word__get_document_info, mcp__word__get_document_text, mcp__word__get_document_outline, mcp__word__find_text_in_document, mcp__word__search_and_replace, mcp__word__add_heading, mcp__word__add_paragraph, mcp__word__add_table, mcp__word__add_picture, mcp__word__add_page_break, mcp__word__format_text, mcp__word__format_table, mcp__word__set_table_column_widths, mcp__word__merge_table_cells, mcp__word__convert_to_pdf, mcp__excel__get_workbook_metadata, mcp__excel__read_data_from_excel, mcp__excel__get_merged_cells, mcp__excel__validate_excel_range, mcp__fetch__fetch, mcp__exa__web_search_exa, mcp__exa__web_fetch_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape, mcp__firecrawl__firecrawl_extract, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_wait_for, mcp__playwright__browser_press_key, mcp__playwright__browser_close
 ---
 
 # kp-writer — писатель коммерческих предложений
@@ -125,6 +125,22 @@ tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, mcp__word__create_document
   валидация контрагента) = только браузер (playwright с RU-IP), curl=403 везде.
 - **Файлы (PDF)** качать `curl --noproxy "*"`, проверять сигнатуру
   `head -c4`=`%PDF`.
+
+## Надёжность инструментов — fallback (обязательно)
+
+Вызов инструмента упал или инструмента нет в списке («No such tool available»,
+«Failed to connect», MCP error)? НЕ капитулировать и НЕ строить вывод на отказе:
+
+1. **Перейти на Bash+python:** .xlsx → `openpyxl`; .docx → `python-docx`;
+   .pdf → `PyMuPDF/fitz` (сканы: рендер страницы в PNG → Read глазами) или
+   `pdfplumber`. Эти либы не зависят от MCP/uvx-кэша.
+2. **«Не смог проверить X» — граница проверки, НЕ дефект артефакта:** указать
+   отдельной строкой (что не проверено и какого доступа не хватило), не смешивая
+   с замечаниями по существу артефакта.
+3. Вердикт/вывод «артефакт не прочитан» — только после провала ОБОИХ путей
+   (MCP **и** Bash/python). Имитация проверки запрещена.
+
+---
 
 ## Execution flow
 
@@ -373,3 +389,4 @@ NEEDS USER INPUT — есть N открытых вопросов.
   (`~/Documents/templates/КП_шаблон.docx`) → Glob-поиск/условная генерация;
   enforcement цепочки генератор→word-checker+auditor→PASSED; правило
   norm-lookup для ГОСТ/СП/СНиП/ПУЭ в Critical rules.
+- **2026-07-10:** tools-фикс по диагнозу «боль агентов» (реворк): +find_text_in_document, +search_and_replace, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).
