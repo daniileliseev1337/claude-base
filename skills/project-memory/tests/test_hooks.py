@@ -24,6 +24,21 @@ def run_hook(script, payload, state_dir):
         capture_output=True, env=env, timeout=90)
 
 
+def run_find_project(start_path):
+    """find_project.ps1 берёт вход через параметр -StartPath, не через
+    JSON-stdin (это переиспользуемый скрипт для будущих хуков, не сам хук)."""
+    return subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+         "-File", str(HOOKS / "find_project.ps1"),
+         "-StartPath", str(start_path)],
+        capture_output=True, timeout=90)
+
+
+def _norm(p):
+    """Нормализация пути для сравнения (регистр диска/кейс/трейлинг-слеш)."""
+    return str(Path(p).resolve()).rstrip("\\/").lower()
+
+
 def make_project(base):
     """Проект — в подпапке proj; state-папка тестов живёт РЯДОМ (вне корня
     проекта, как и в проде ~/.claude/.local-state), иначе маркер сам
@@ -139,3 +154,72 @@ def test_end_respects_stop_hook_active(tmp_path):
     r = run_hook("session_end.ps1",
                  {"session_id": "s8", "stop_hook_active": True}, state)
     assert r.returncode == 0              # анти-луп guard
+
+
+# --- find_project.ps1: общий walk-up (путь ИЛИ cwd -> проект памяти) ---
+
+def test_find_project_from_nested_nonexistent_file_path(tmp_path):
+    """StartPath - файл ВНУТРИ несуществующих подпапок (sub/deep не создаются);
+    walk-up должен идти строковыми операциями, не требовать существования
+    промежуточных уровней."""
+    proj, j = make_project(tmp_path)
+    deep_file = proj / "sub" / "deep" / "file.txt"
+    r = run_find_project(deep_file)
+    assert r.returncode == 0
+    out = r.stdout.decode("utf-8", "replace").strip()
+    assert out, f"expected JSON on stdout, got empty; stderr={r.stderr!r}"
+    data = json.loads(out)
+    assert _norm(data["root"]) == _norm(proj)
+    assert _norm(data["journal"]) == _norm(j)
+
+
+def test_find_project_kontekst_field_present_and_absent(tmp_path):
+    proj, _ = make_project(tmp_path)
+    deep_file = proj / "sub" / "deep" / "file.txt"
+
+    r_no = run_find_project(deep_file)
+    data_no = json.loads(r_no.stdout.decode("utf-8", "replace").strip())
+    assert data_no["kontekst"] == ""
+
+    kontekst = proj / "Claude" / "КОНТЕКСТ.md"
+    kontekst.write_text("# Контекст\n", encoding="utf-8")
+    r_yes = run_find_project(deep_file)
+    data_yes = json.loads(r_yes.stdout.decode("utf-8", "replace").strip())
+    assert data_yes["kontekst"] != ""
+    assert _norm(data_yes["kontekst"]) == _norm(kontekst)
+
+
+def test_find_project_directory_start_path(tmp_path):
+    """StartPath указывает прямо на существующую директорию проекта (не файл)."""
+    proj, j = make_project(tmp_path)
+    r = run_find_project(proj)
+    assert r.returncode == 0
+    data = json.loads(r.stdout.decode("utf-8", "replace").strip())
+    assert _norm(data["root"]) == _norm(proj)
+    assert _norm(data["journal"]) == _norm(j)
+
+
+def test_find_project_no_project_found(tmp_path):
+    outside = tmp_path / "empty_no_project"
+    outside.mkdir()
+    r = run_find_project(outside)
+    assert r.returncode == 0
+    assert r.stdout.decode("utf-8", "replace").strip() == ""
+
+
+def test_find_project_cyrillic_path(tmp_path):
+    """Кириллица и в имени папки проекта, и в промежуточных подпапках -
+    проверка UTF-8 обвязки скрипта."""
+    proj = tmp_path / "Проект Тест"
+    (proj / "Claude").mkdir(parents=True)
+    j = proj / "Claude" / JOURNAL
+    j.write_text("## 2026-07-01 · TEST · тема\n**Сделано:** x\n",
+                 encoding="utf-8")
+    start = proj / "подпапка" / "файл.txt"
+    r = run_find_project(start)
+    assert r.returncode == 0
+    out = r.stdout.decode("utf-8", "replace").strip()
+    assert out, f"expected JSON on stdout, got empty; stderr={r.stderr!r}"
+    data = json.loads(out)
+    assert _norm(data["root"]) == _norm(proj)
+    assert _norm(data["journal"]) == _norm(j)
