@@ -25,6 +25,7 @@ try { [Console]::InputEncoding  = [Text.Encoding]::UTF8 } catch {}
 
 $MaxCandidates    = 8
 $MaxKontekstLines = 140
+$MaxJournalLines  = 40
 $MaxStatusLines   = 40
 $MaxTotalLines    = 200
 
@@ -49,6 +50,23 @@ function Get-TopLines {
   } catch { return @() }
   if ($lines.Count -gt $Max) { return $lines[0..($Max - 1)] }
   return $lines
+}
+
+function Get-JournalTop {
+  # Top N dated entries of the journal (same '^## YYYY-' anchor as session_start.ps1).
+  # BLOCKER-1 fix (audit 2026-07-09): the path-channel must also deliver the journal, not
+  # only KONTEKST+STATUS - session_start covers ONLY the cwd-channel.
+  param([string]$Path, [int]$MaxEntries = 2, [int]$MaxLines = 40)
+  if (-not $Path -or -not (Test-Path -LiteralPath $Path -PathType Leaf)) { return @() }
+  try { $lines = @(Get-Content -LiteralPath $Path -Encoding UTF8) } catch { return @() }
+  $starts = @()
+  for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^## \d{4}-') { $starts += $i } }
+  if ($starts.Count -eq 0) { return @() }
+  $end = $lines.Count - 1
+  if ($starts.Count -gt $MaxEntries) { $end = $starts[$MaxEntries] - 1 }
+  $cap = $starts[0] + $MaxLines - 1
+  if ($end -gt $cap) { $end = $cap }
+  return $lines[$starts[0]..$end]
 }
 
 try {
@@ -83,10 +101,10 @@ try {
       if ($val) { $candidates.Add($val) }
     }
   }
-  if ($cwd) { $candidates.Add($cwd) }   # cwd is the last-resort fallback candidate
-
-  if ($candidates.Count -eq 0) { exit 0 }   # nothing to resolve - instant no-op
-
+  # NB: cwd is deliberately NOT a spawn candidate. The cwd-project is resolved once by
+  # session_start.ps1 (marker session_<sid>.json) - re-spawning find_project for cwd on
+  # EVERY prompt cost ~600ms/prompt globally (audit 2026-07-09, BLOCKER-2). We read that
+  # marker instead (no spawn); find_project is spawned ONLY for paths named in the prompt.
   $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
   $unique = New-Object System.Collections.Generic.List[string]
   foreach ($c in $candidates) {
@@ -94,20 +112,41 @@ try {
     if ($unique.Count -ge $MaxCandidates) { break }
   }
 
-  # --- 2) resolve the first candidate that is (inside) a memory project ---
-  $findProjectScript = Join-Path $PSScriptRoot 'find_project.ps1'
-  if (-not (Test-Path -LiteralPath $findProjectScript -PathType Leaf)) { exit 0 }
+  $stateDir = $env:PROJECT_MEMORY_STATE_DIR
+  if (-not $stateDir) { $stateDir = Join-Path $HOME '.claude\.local-state\project-memory' }
 
+  # cwd-project from the session marker (written by session_start.ps1) - NO spawn
+  $cwdRoot = $null; $cwdJournal = $null
+  $sessMarker = Join-Path $stateDir ('session_' + $sid + '.json')
+  if (Test-Path -LiteralPath $sessMarker) {
+    try {
+      $sm = (Get-Content -LiteralPath $sessMarker -Raw -Encoding UTF8) | ConvertFrom-Json
+      if ($sm.project_root) { $cwdRoot = [string]$sm.project_root; $cwdJournal = [string]$sm.journal }
+    } catch {}
+  }
+
+  # instant no-op (~5ms, no spawn): no path in the prompt AND cwd is not a known project
+  if ($unique.Count -eq 0 -and -not $cwdRoot) { exit 0 }
+
+  # --- 2) resolve project: prompt paths first (spawn only when a path is present),
+  #        else the cwd-project from the session marker (no spawn) ---
+  $KontekstName = (-join ([char]0x041A,[char]0x041E,[char]0x041D,[char]0x0422,[char]0x0415,[char]0x041A,[char]0x0421,[char]0x0422)) + '.md'
+  $findProjectScript = Join-Path $PSScriptRoot 'find_project.ps1'
   $projectInfo = $null
-  foreach ($cand in $unique) {
-    $info = Invoke-FindProject -StartPath $cand -ScriptPath $findProjectScript
-    if ($info -and $info.root) { $projectInfo = $info; break }
+  if ($unique.Count -gt 0 -and (Test-Path -LiteralPath $findProjectScript -PathType Leaf)) {
+    foreach ($cand in $unique) {
+      $info = Invoke-FindProject -StartPath $cand -ScriptPath $findProjectScript
+      if ($info -and $info.root) { $projectInfo = $info; break }
+    }
+  }
+  if (-not $projectInfo -and $cwdRoot) {
+    $kpath = Join-Path (Join-Path $cwdRoot 'Claude') $KontekstName
+    if (-not (Test-Path -LiteralPath $kpath -PathType Leaf)) { $kpath = '' }
+    $projectInfo = [pscustomobject]@{ root = $cwdRoot; journal = $cwdJournal; kontekst = $kpath }
   }
   if (-not $projectInfo) { exit 0 }   # not a memory project - stay silent
 
-  # --- 3) once-per-session+project marker ---
-  $stateDir = $env:PROJECT_MEMORY_STATE_DIR
-  if (-not $stateDir) { $stateDir = Join-Path $HOME '.claude\.local-state\project-memory' }
+  # --- 3) once-per-session+project marker ($stateDir already resolved above) ---
   New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
 
   $rootNorm = ([string]$projectInfo.root).TrimEnd('\', '/').ToLowerInvariant()
@@ -131,6 +170,7 @@ try {
   }
 
   $kontekstLines = Get-TopLines -Path ([string]$projectInfo.kontekst) -Max $MaxKontekstLines
+  $journalLines = Get-JournalTop -Path ([string]$projectInfo.journal) -MaxEntries 2 -MaxLines $MaxJournalLines
   $statusPath = Join-Path $projectInfo.root 'Claude\STATUS.md'
   $statusLines = Get-TopLines -Path $statusPath -Max $MaxStatusLines
 
@@ -140,6 +180,11 @@ try {
     $outLines.Add('')
     $outLines.Add('--- KONTEKST.md ---')
     foreach ($l in $kontekstLines) { $outLines.Add($l) }
+  }
+  if ($journalLines.Count -gt 0) {
+    $outLines.Add('')
+    $outLines.Add('--- journal (top) ---')
+    foreach ($l in $journalLines) { $outLines.Add($l) }
   }
   if ($statusLines.Count -gt 0) {
     $outLines.Add('')

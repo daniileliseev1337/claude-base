@@ -83,10 +83,19 @@ def test_context_second_call_same_session_is_silent(tmp_path):
 
 
 def test_context_cwd_fallback_when_prompt_has_no_path(tmp_path):
+    # Поведение изменено (BLOCKER-2, аудит 2026-07-09): cwd-проект берётся из
+    # session-маркера (session_start.ps1), а НЕ пере-резолвится спавном на каждый
+    # промпт. Реалистичный сценарий: session_start уже создал маркер при старте.
     proj = make_project(tmp_path, "proj2")
+    state = tmp_path / "st"
+    state.mkdir()
+    (state / "session_c4.json").write_text(
+        json.dumps({"project_root": str(proj),
+                    "journal": str(proj / "Claude" / JOURNAL)}),
+        encoding="utf-8")
     r = run_hook("project_context.ps1",
                  {"session_id": "c4", "cwd": str(proj), "prompt": "продолжи работу, пожалуйста"},
-                 tmp_path / "st")
+                 state)
     assert r.returncode == 0
     out = r.stdout.decode("utf-8", "replace")
     assert "СТОП" in out
@@ -127,3 +136,38 @@ def test_context_exit_code_zero_with_no_stdin(tmp_path):
         env=dict(os.environ, PROJECT_MEMORY_STATE_DIR=str(tmp_path / "st")),
         timeout=90)
     assert r.returncode == 0
+
+def test_journal_delivered_via_path_channel(tmp_path):
+    """BLOCKER-1 (аудит 2026-07-09): path-канал ОБЯЗАН доставлять верх журнала,
+    не только КОНТЕКСТ+STATUS (session_start покрывает лишь cwd-канал)."""
+    proj = make_project(tmp_path)
+    r = run_hook("project_context.ps1",
+                 {"session_id": "j1", "cwd": "C:\elsewhere",
+                  "prompt": f'работаем "{proj / "file.py"}"'},
+                 tmp_path / "st")
+    assert r.returncode == 0
+    out = r.stdout.decode("utf-8", "replace")
+    assert "2026-07-01" in out, "заголовок записи журнала не доставлен"
+    assert "kontekst-marker-xyz123" in out
+    assert "status-marker-abc789" in out
+
+
+def test_cwd_project_via_session_marker_no_spawn(tmp_path):
+    """BLOCKER-2 (аудит 2026-07-09): cwd-проект берётся из session-маркера
+    (session_start), без спавна find_project на каждый промпт. Инжекция ядра
+    (журнал+КОНТЕКСТ) работает и для cwd-канала через маркер."""
+    proj = make_project(tmp_path)
+    state = tmp_path / "st"
+    state.mkdir()
+    (state / "session_m1.json").write_text(
+        json.dumps({"project_root": str(proj),
+                    "journal": str(proj / "Claude" / JOURNAL)}),
+        encoding="utf-8")
+    r = run_hook("project_context.ps1",
+                 {"session_id": "m1", "cwd": str(proj),
+                  "prompt": "вопрос без путей"},
+                 state)
+    assert r.returncode == 0
+    out = r.stdout.decode("utf-8", "replace")
+    assert "kontekst-marker-xyz123" in out
+    assert "2026-07-01" in out   # журнал тоже

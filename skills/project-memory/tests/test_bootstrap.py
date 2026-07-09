@@ -22,8 +22,18 @@ def test_domain_to_agent_maps_known_domains():
     assert domain_to_agent("ИД") == "id-engineer"
     assert domain_to_agent("смета") == "сметчик"
     assert domain_to_agent("снабжение") == "снабженец"
+    assert domain_to_agent("КП") == "kp-writer"      # короткий код симметричен другим
     assert domain_to_agent("Revit") == "pyrevit-engineer"
     assert domain_to_agent("непонятно") == ""   # неизвестный → пусто, НЕ выдумывать
+
+
+def test_domain_to_agent_no_substring_collisions():
+    """Аудит 2026-07-09: подстрочный матч слал 'видео'→id ('ид'), 'водоснаб'→снабженец."""
+    from bootstrap import domain_to_agent
+    assert domain_to_agent("видеонаблюдение") == "designer"      # НЕ id-engineer
+    assert domain_to_agent("СС видеонаблюдение и СКУД") == "designer"
+    assert domain_to_agent("водоснабжение") == "designer"        # НЕ снабженец
+    assert domain_to_agent("ВК водоснабжение и канализация") == "designer"
 
 
 def test_kontekst_role_and_agent_filled(tmp_path):
