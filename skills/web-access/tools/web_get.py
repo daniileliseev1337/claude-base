@@ -32,13 +32,12 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
+import time
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 IPINFO = "https://ipinfo.io/json"
-RU_FETCH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "..", "..", "ru-gov-access", "tools", "ru_fetch.py")
-
 # Маркеры HTML-заглушки/челленджа: тело с ними = НЕ настоящий контент, ступень провалена.
 CHALLENGE_MARKERS = (
     "ddos-guard", "cf-browser-verification", "cf_chl_", "just a moment",
@@ -66,13 +65,57 @@ def run(args, timeout):
         return 1, b"", str(e).encode()
 
 
-def egress_country():
-    """РЕАЛЬНОЕ гео egress (мимо прокси окна). None если не пробилось."""
-    rc, out, _ = run(["curl", "--noproxy", "*", "-s", "--max-time", "12", IPINFO], 15)
-    if rc != 0 or not out:
-        return None
-    m = re.search(rb'"country"\s*:\s*"([^"]+)"', out)
+EGRESS_CACHE = os.path.join(tempfile.gettempdir(), "web_get_egress.txt")
+EGRESS_TTL = 1200  # сек (20 мин): egress стабилен в сессии, меняется лишь при вкл/выкл VPN
+
+
+def _country(out):
+    m = re.search(rb'"country"\s*:\s*"([^"]+)"', out or b"")
     return m.group(1).decode() if m else None
+
+
+def _detect_egress():
+    """
+    Детект гео + живости --noproxy одним заходом. Возвращает (country, noproxy_ok).
+    Боевой урок 2026-07-08: на WARP-машине `--noproxy` к ipinfo не пробивается (egress
+    вечно None + ступени с --noproxy висят 15с по таймауту, http=000). Поэтому:
+    сначала --noproxy (если ответил → обход прокси жив, noproxy_ok=True), иначе обычный
+    curl через окно (WARP отвечает, но noproxy_ok=False → в лестнице --noproxy пропускаем).
+    max-time=6 — fail-fast.
+    """
+    rc, out, _ = run(["curl", "--noproxy", "*", "-s", "--max-time", "6", IPINFO], 9)
+    c = _country(out) if rc == 0 else None
+    if c:
+        return c, True
+    rc, out, _ = run(["curl", "-s", "--max-time", "6", IPINFO], 9)
+    return (_country(out) if rc == 0 else None), False
+
+
+def egress_probe(no_cache=False):
+    """
+    (country, noproxy_ok) с кешем на сессию (temp + mtime-TTL 20 мин) — устраняет
+    12-40с задержки на каждый запуск (жалоба владельца «топорно/долго»). Формат
+    кеша: 'COUNTRY|0|1'. '??' = детект не удался.
+    """
+    if not no_cache and os.path.exists(EGRESS_CACHE):
+        try:
+            if (time.time() - os.path.getmtime(EGRESS_CACHE)) < EGRESS_TTL:
+                raw = open(EGRESS_CACHE, encoding="utf-8").read().strip()
+                cc, _, nk = raw.partition("|")
+                return (None if cc in ("", "??") else cc), (nk == "1")
+        except Exception:  # noqa: BLE001
+            pass
+    country, noproxy_ok = _detect_egress()
+    try:
+        open(EGRESS_CACHE, "w", encoding="utf-8").write(f"{country or '??'}|{1 if noproxy_ok else 0}")
+    except Exception:  # noqa: BLE001
+        pass
+    return country, noproxy_ok
+
+
+def egress_country(no_cache=False):
+    """Только страна (совместимость/тесты)."""
+    return egress_probe(no_cache)[0]
 
 
 def is_ru_host(url):
@@ -162,51 +205,40 @@ def jina_page(url, timeout):
     return http, body
 
 
-def ru_fetch_page(url, out_path, timeout):
-    """Делегируем RU exit-IP соседнему скиллу ru-gov-access (один дом на RU-SOCKS5)."""
-    if not os.path.exists(RU_FETCH):
-        return None, b"", "ru_fetch.py not found"
-    args = [sys.executable, RU_FETCH, url, "--timeout", str(timeout)]
-    if out_path:
-        args += ["-o", out_path]
-    rc, out, err = run(args, timeout + 40)
-    # ru_fetch печатает лог в stdout + тело (если без -o). Код успеха: rc==0.
-    return (0 if rc == 0 else 1), out, err.decode("utf-8", "replace")[-200:]
-
-
-def build_ladder(kind, ru_host, egress):
+def build_ladder(kind, ru_host, egress, noproxy_ok=True):
     """
-    Порядок ступеней = f(тип, RU-цель, egress). Возвращает список имён ступеней.
-    Принципы: дешёвое-и-стабильное раньше; RU-цель с иностранного egress не берётся
-    прямым curl (гео) → облако/RU-канал; для ЧТЕНИЯ облачная jina быстрее и надёжнее
-    эфемерного бесплатного RU-прокси (эмпирика 2026-07-08) → jina перед ru; jina умеет
-    только ТЕКСТ, поэтому для FILE её нет — сырой файл берёт только curl/ru_fetch.
+    Порядок ступеней = f(тип, RU-цель, egress, живость --noproxy). Только БЫСТРЫЕ
+    ступени (curl-семейство + облачный jina). Медленный RU exit-IP (ru-gov-access)
+    в авто-переборе НЕ участвует — он отдельный осознанный шаг из next_hint.
     """
-    if egress == "RU":
-        # RU-egress выходит и в РФ, и в мир напрямую.
-        return ["noproxy", "direct", "jina"] if kind == "page" else ["noproxy", "direct"]
-    if ru_host:
-        # RU-цель, egress не-RU. ВАЖНО (боевой урок 2026-07-08, palerom.png взялся
-        # прямым curl с NL-egress): НЕ все RU-сайты гео-блокированы — RU-коммерч B2B
-        # часто отдаёт напрямую. Поэтому СНАЧАЛА быстрый прямой (noproxy/direct, 1-2с),
-        # облако jina — на гео-блок (consultant-класс), медленный ru_fetch — последним
-        # fallback (бесплатный RU-прокси ищется долго, нужен лишь реально блокированным).
-        return ["noproxy", "direct", "jina", "ru"] if kind == "page" else ["noproxy", "direct", "ru"]
-    # Зарубежная цель, egress не-RU: прямой работает.
-    return ["direct", "noproxy", "jina"] if kind == "page" else ["direct", "noproxy"]
+    # noproxy включаем в лестницу ТОЛЬКО если обход прокси жив (боевой урок 08.07:
+    # на WARP --noproxy мёртв → ступень висит 15с по таймауту зря).
+    if egress == "RU" or ru_host:
+        # RU-контекст: обход прокси (--noproxy, локальный RU-IP) приоритетен, если жив.
+        direct_stages = ["noproxy", "direct"] if noproxy_ok else ["direct"]
+    else:
+        # Зарубеж: обычный прямой первым, --noproxy лишь как запасной (если жив).
+        direct_stages = ["direct", "noproxy"] if noproxy_ok else ["direct"]
+    # jina (облачный reader) — только для СТРАНИЦ: берёт гео-блок/антибот, отдаёт текст.
+    # Медленный RU-прокси (ru_fetch) в АВТО-лестницу НЕ ставим (30с вис на эфемерном
+    # прокси) — реально гео-блокированные RU-цели уходят в next_hint → ru-gov-access.
+    return direct_stages + (["jina"] if kind == "page" else [])
 
 
 def next_hint(kind, ru_host, tried):
     """Что взять Claude, когда кодовые ступени исчерпаны. MCP — не из питона."""
+    ru_extra = ("; RU-цель и не взялась прямым → возможно ГЕО-блок: запусти "
+                "ru-gov-access (skills/ru-gov-access/tools/ru_fetch.py, RU exit-IP) "
+                "или playwright с RU-proxy") if ru_host else ""
     if kind == "file":
         return ("Кодовые ступени пали. Для файла: (1) playwright browser_navigate на "
-                "КАРТОЧКУ товара → снять cookies → curl -b (Метод 2 feedback_web_direct_access); "
-                "(2) если RU-госсайт по прямому URL — уже пробовал ru_fetch. "
-                "Скриншот карточки глазами ДО вывода «документа нет».")
+                "КАРТОЧКУ товара → снять cookies → curl -b (Метод 2 feedback_web_direct_access)"
+                + ru_extra + ". Скриншот карточки глазами ДО вывода «документа нет».")
     if ru_host:
         return ("Кодовые ступени пали для RU-страницы. Claude: (1) exa/firecrawl "
-                "(облачный канал, читают RU-коммерч сайты); (2) SPA-данные реестра → "
-                "playwright с RU-proxy (ru-gov-access, data-слой). Скриншот перед выводом «нет».")
+                "(облачный канал, читают RU-коммерч); (2) гео-блок → ru-gov-access "
+                "(ru_fetch.py, RU exit-IP); (3) SPA-данные реестра → playwright с RU-proxy. "
+                "Скриншот перед выводом «нет».")
     return ("Кодовые ступени пали для зарубежной страницы. Claude: (1) exa web_search/"
             "web_fetch (semantic, антибот); (2) firecrawl_scrape; (3) playwright для JS/SPA. "
             "Сделай browser_take_screenshot ДО вывода «сайта/данных нет».")
@@ -222,12 +254,6 @@ def attempt(stage, url, kind, out_path, timeout, expect_pdf):
             http, body = curl_page(url, direct=True, timeout=timeout)
         elif stage == "jina":
             http, body = jina_page(url, timeout=timeout)
-        elif stage == "ru":
-            rc, body, err = ru_fetch_page(url, None, timeout)
-            http = "200" if rc == 0 else None
-            if rc != 0:
-                r.update(ok=False, http=http, reason=err or "ru_fetch fail")
-                return r
         else:
             r.update(ok=False, reason="unknown stage")
             return r
@@ -237,10 +263,7 @@ def attempt(stage, url, kind, out_path, timeout, expect_pdf):
             r["preview"] = body[:600].decode("utf-8", "replace")
         return r
     # file
-    if stage == "ru":
-        rc, _out, err = ru_fetch_page(url, out_path, timeout)
-        http = "200" if rc == 0 else None
-    elif stage in ("direct", "noproxy"):
+    if stage in ("direct", "noproxy"):
         http = curl_file(url, out_path, direct=(stage == "noproxy"), timeout=timeout)
     else:
         r.update(ok=False, reason="unknown stage")
@@ -257,10 +280,11 @@ def fetch(url, kind="auto", out=None, timeout=20, egress=None):
     """Главная лестница. Возвращает единый dict-результат (для --json и как API)."""
     kind = classify_kind(url, kind, out)
     ru_host = is_ru_host(url)
+    noproxy_ok = True
     if egress is None:
-        egress = egress_country()
+        egress, noproxy_ok = egress_probe()
     expect_pdf = bool(out and out.lower().endswith(".pdf")) or url.lower().split("?")[0].endswith(".pdf")
-    ladder = build_ladder(kind, ru_host, egress)
+    ladder = build_ladder(kind, ru_host, egress, noproxy_ok)
 
     tried = []
     for stage in ladder:

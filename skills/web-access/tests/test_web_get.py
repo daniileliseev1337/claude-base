@@ -40,18 +40,20 @@ check("явный page переопределяет .pdf", w.classify_kind("http
 check("?query после .pdf всё равно file", w.classify_kind("http://x/y.pdf?v=2", "auto", None) == "file")
 
 # --- build_ladder ---
-check("egress RU → noproxy первым", w.build_ladder("page", True, "RU")[0] == "noproxy")
-# Боевой урок 08.07: RU-host с иностр. egress — СНАЧАЛА быстрый прямой (palerom взялся
-# curl'ом с NL), медленный ru_fetch — последним fallback, не первым.
-check("RU-цель заграница page → прямой первым (не медленный ru)", w.build_ladder("page", True, "NL")[0] in ("noproxy", "direct"))
-check("RU-цель заграница page → ru ПОСЛЕДНИМ fallback", w.build_ladder("page", True, "NL")[-1] == "ru")
-check("RU-цель заграница FILE → прямой первым", w.build_ladder("file", True, "NL")[0] in ("noproxy", "direct"))
-check("RU-цель заграница FILE → ru последним", w.build_ladder("file", True, "NL")[-1] == "ru")
-check("RU-цель заграница page → jina есть (гео-блок fallback)", "jina" in w.build_ladder("page", True, "NL"))
-check("заграница-цель заграница → direct первым", w.build_ladder("page", False, "NL")[0] == "direct")
-check("page включает jina", "jina" in w.build_ladder("page", False, "NL"))
-check("file исключает jina везде", "jina" not in w.build_ladder("file", True, "NL")
-      and "jina" not in w.build_ladder("file", False, "NL"))
+check("egress RU → noproxy первым (обход жив)", w.build_ladder("page", True, "RU", True)[0] == "noproxy")
+# Боевой урок 08.07: медленный ru_fetch УБРАН из авто-лестницы (30с вис) — только быстрые.
+check("ru НЕ в авто-лестнице page", "ru" not in w.build_ladder("page", True, "NL", True))
+check("ru НЕ в авто-лестнице file", "ru" not in w.build_ladder("file", True, "NL", True))
+check("RU-цель заграница page → прямой первым", w.build_ladder("page", True, "NL", True)[0] in ("noproxy", "direct"))
+check("RU-цель заграница page → jina есть (гео-блок облаком)", "jina" in w.build_ladder("page", True, "NL", True))
+check("заграница-цель → direct первым", w.build_ladder("page", False, "NL", True)[0] == "direct")
+# noproxy_ok=False (WARP: --noproxy мёртв) → noproxy ИСКЛЮЧЁН из лестницы (не висит 15с).
+check("noproxy мёртв → нет noproxy в лестнице (RU-контекст)", "noproxy" not in w.build_ladder("file", True, "NL", False))
+check("noproxy мёртв → нет noproxy в лестнице (зарубеж)", "noproxy" not in w.build_ladder("page", False, "NL", False))
+check("noproxy мёртв → direct всё равно есть", "direct" in w.build_ladder("file", True, "NL", False))
+check("page включает jina", "jina" in w.build_ladder("page", False, "NL", True))
+check("file исключает jina везде", "jina" not in w.build_ladder("file", True, "NL", True)
+      and "jina" not in w.build_ladder("file", False, "NL", True))
 
 # --- verify_page ---
 ok, _ = w.verify_page(b"<html><body>" + b"x" * 200 + b"</body></html>", "200")
@@ -92,6 +94,17 @@ check("file zip без ожидания pdf → ok", ok is True and sig == "zip/
 # --- next_hint непустой и упоминает MCP-ступени ---
 check("hint page-foreign упоминает exa", "exa" in w.next_hint("page", False, []))
 check("hint file упоминает playwright", "playwright" in w.next_hint("file", True, []))
+
+# --- egress-кеш: свежий кеш возвращается без сети; '??' → None ---
+w.EGRESS_CACHE = os.path.join(tempfile.mkdtemp(), "egress.txt")
+open(w.EGRESS_CACHE, "w", encoding="utf-8").write("RU|1")
+check("egress-кеш: свежий 'RU|1' → страна RU", w.egress_probe()[0] == "RU")
+check("egress-кеш: 'RU|1' → noproxy_ok True", w.egress_probe()[1] is True)
+open(w.EGRESS_CACHE, "w", encoding="utf-8").write("NL|0")
+check("egress-кеш: 'NL|0' → noproxy_ok False (WARP)", w.egress_probe()[1] is False)
+open(w.EGRESS_CACHE, "w", encoding="utf-8").write("??|0")
+check("egress-кеш: '??' → страна None", w.egress_probe()[0] is None)
+check("egress_country обёртка возвращает страну", w.egress_country() is None)
 
 # --- render_human: собирает отчёт со ступенями и preview ---
 sample = {"ok": True, "url": "http://x", "kind": "page", "ru_host": False, "egress": "NL",
