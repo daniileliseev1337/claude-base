@@ -389,4 +389,4 @@ NEEDS USER INPUT — есть N открытых вопросов.
   (`~/Documents/templates/КП_шаблон.docx`) → Glob-поиск/условная генерация;
   enforcement цепочки генератор→word-checker+auditor→PASSED; правило
   norm-lookup для ГОСТ/СП/СНиП/ПУЭ в Critical rules.
-- **2026-07-10:** tools-фикс по диагнозу «боль агентов» (реворк): +find_text_in_document, +search_and_replace, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).
+- **2026-07-09:** tools-фикс по диагнозу «боль агентов» (реворк): +find_text_in_document, +search_and_replace, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).

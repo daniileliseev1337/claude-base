@@ -413,4 +413,4 @@ Orchestrator на основе verdict решает:
 - **Шаблон:** `~/.claude/templates/agent_TEMPLATE.md` v1.0 (2026-05-25).
 - **Источник методологии:** GSD framework + паттерн read-only ревьюеров
   (word-checker / pdf-reviewer) + российская нормативная база СПДС.
-- **2026-07-10:** tools-фикс по диагнозу «боль агентов» (реворк): +pdf_render_pages, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).
+- **2026-07-09:** tools-фикс по диагнозу «боль агентов» (реворк): +pdf_render_pages, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).

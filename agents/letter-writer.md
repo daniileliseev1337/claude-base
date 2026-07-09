@@ -99,7 +99,8 @@ tools: Read, Write, Edit, Glob, Grep, Bash, mcp__word__create_document, mcp__wor
 
 ## Tools — что разрешено и зачем
 
-Frontmatter разрешает ровно: `Read, Write, Edit, Glob, Grep`.
+Frontmatter разрешает: `Read, Write, Edit, Glob, Grep, Bash` + `mcp__word__*`
+(полный список — строка tools выше).
 
 - **Read** — корпоративный бланк, регистр исходящих, прошлые письма,
   реквизиты адресата, FACTS.md.
@@ -398,4 +399,4 @@ NEEDS USER INPUT — есть открытые вопросы (см. ниже).
   блокирует), уточнены Tools под фактический frontmatter, добавлено
   правило норм-ссылок только через `norm-lookup`, усилен enforcement
   ревью (word-checker по формату + auditor по содержанию).
-- **2026-07-10:** tools-фикс по диагнозу «боль агентов» (реворк): +find_text_in_document, +search_and_replace, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).
+- **2026-07-09:** tools-фикс по диагнозу «боль агентов» (реворк): +find_text_in_document, +search_and_replace, +блок Fallback-надёжности. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).

@@ -345,4 +345,4 @@ fallback на `auditor`/себя пока агент не создан).
 - **История изменений:** 2026-06-08 — выравнивание тела по `_TEMPLATE.md` v1.0
   (FACTS.md первым в Required reading, правило norm-lookup в Critical rules,
   усилен enforcement ревью в After completion).
-- **2026-07-10:** tools-фикс по диагнозу «боль агентов» (реворк): +find_text_in_document, +search_and_replace. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).
+- **2026-07-09:** tools-фикс по диагнозу «боль агентов» (реворк): +find_text_in_document, +search_and_replace. Улики: транскрипты 21.06 (ВК-1), 03.07 (auditor render).
