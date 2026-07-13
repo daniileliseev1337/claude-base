@@ -36,6 +36,10 @@
 !scripts/
 !scripts/**
 
+# Codex layer (новые файлы сборки базы)
+!codex-layer/
+!codex-layer/**
+
 # Структура агентов / скиллов / команд (рекурсивно)
 !agents/
 !agents/**
