@@ -46,3 +46,13 @@ def test_render_mcp_toml_whitelist_and_env():
     assert "mcp_servers.time" not in out            # вне белого списка
     assert "args = ['excel-mcp-server']" in out
     assert "[mcp_servers.excel.env]" in out and "X = 'a\\b'" in out
+
+def test_t_values_parse_as_real_toml():
+    import tomllib
+    from codex_sync import render_mcp_toml
+    servers = {
+        "s1": {"command": "run", "args": ["it's arg", "line1\nline2", "C:\\x\\y"]},
+    }
+    out = render_mcp_toml(servers, allow=["s1"])
+    parsed = tomllib.loads(out)
+    assert parsed["mcp_servers"]["s1"]["args"] == ["it's arg", "line1\nline2", "C:\\x\\y"]

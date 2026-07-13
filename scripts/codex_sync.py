@@ -14,8 +14,14 @@ def apply_managed_block(existing: str, payload: str) -> str:
     sep = "" if stripped.endswith("\n\n") else ("\n" if stripped.endswith("\n") else "\n\n")
     return stripped + sep + block
 
-def _t(v: str) -> str:                    # TOML literal string (без экранирования)
-    return "'" + str(v).replace("'", "''") + "'"
+def _t(v: str) -> str:
+    # TOML literal string для простых значений (Windows-пути без экранирования);
+    # апостроф/перевод строки в literal невозможны — таким значениям basic string
+    s = str(v)
+    if "'" not in s and "\n" not in s:
+        return "'" + s + "'"
+    esc = s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+    return '"' + esc + '"'
 
 def render_mcp_toml(mcp_servers: dict, allow: list) -> str:
     out = []
