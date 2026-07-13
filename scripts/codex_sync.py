@@ -76,3 +76,54 @@ def render_hooks_json(home: Path) -> dict:
         ]}],
         "PostToolUse": [{"matcher": ".*", "hooks": [entry(s / "log-tool-usage.ps1", 10)]}],
     }}
+
+MODEL_MAP = {
+    "opus": "gpt-5.6-sol",
+    "fable": "gpt-5.6-sol",
+    "sonnet": "gpt-5.6-terra",
+    "haiku": "gpt-5.6-luna"
+}
+
+# TOOL_MAP переводит MCP-инструменты в описания плагинов.
+# Примечание: multi-line description с `>` в frontmatter встречается у реальных агентов —
+# fm() берёт только первую строку; это осознанное упрощение для задачи, которого достаточно.
+TOOL_MAP = [
+    (r"mcp__excel__\w+", "инструменты плагина spreadsheets"),
+    (r"mcp__word__\w+", "инструменты плагина documents"),
+    (r"mcp__pdf-mcp__\w+", "инструменты плагина pdf"),
+    (r"mcp__playwright__\w+", "инструменты плагина browser"),
+    (r"\bTask\b(?= tool| тул| \()", "spawn_agents"),
+]
+
+def convert_agent_md(text: str) -> tuple[str, str]:
+    """Конвертирует md-агента в TOML для Codex.
+
+    Возвращает (имя файла, TOML-текст).
+    """
+    m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+    if not m:
+        raise ValueError("Неверный формат: не найдена граница ---")
+    front, body = m.group(1), m.group(2)
+
+    def fm(key):
+        """Извлечь значение ключа из frontmatter."""
+        mm = re.search(rf"^{key}:\s*(.+)$", front, re.M)
+        return mm.group(1).strip() if mm else ""
+
+    name = fm("name")
+    model = MODEL_MAP.get(fm("model"), "gpt-5.6-terra")
+
+    # Заменить инструменты на описания плагинов
+    for pat, repl in TOOL_MAP:
+        body = re.sub(pat, repl, body)
+
+    desc = fm("description").replace('"', "'")
+
+    toml_text = (
+        f'name = "{name}"\n'
+        f'description = "{desc}"\n'
+        f'model = "{model}"\n'
+        f'developer_instructions = """\n{body.strip()}\n"""\n'
+    )
+
+    return f"{name}.toml", toml_text

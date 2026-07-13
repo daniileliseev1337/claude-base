@@ -95,3 +95,13 @@ def test_render_hooks_json_structure(tmp_path):
 
     import json
     json.loads(json.dumps(hooks, ensure_ascii=False))             # сериализуемость round-trip
+
+def test_convert_agent_md():
+    from codex_sync import convert_agent_md
+    text = (pathlib.Path(__file__).parent / "fixtures" / "agent_sample.md").read_text(encoding="utf-8")
+    fname, toml_text = convert_agent_md(text)
+    assert fname == "sample-auditor.toml"
+    assert 'model = "gpt-5.6-terra"' in toml_text            # sonnet → terra
+    assert "mcp__excel__" not in toml_text                    # инструменты заменены
+    assert "spreadsheets" in toml_text
+    assert 'name = "sample-auditor"' in toml_text
