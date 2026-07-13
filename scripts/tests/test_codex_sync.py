@@ -56,3 +56,12 @@ def test_t_values_parse_as_real_toml():
     out = render_mcp_toml(servers, allow=["s1"])
     parsed = tomllib.loads(out)
     assert parsed["mcp_servers"]["s1"]["args"] == ["it's arg", "line1\nline2", "C:\\x\\y"]
+
+def test_render_skills_toml(tmp_path):
+    (tmp_path / "excel-helper").mkdir()
+    (tmp_path / "excel-helper" / "SKILL.md").write_text("---\nname: excel-helper\n---\n", encoding="utf-8")
+    from codex_sync import render_skills_toml
+    manifest = {"enable": ["excel-helper", "ghost-skill"]}
+    out = render_skills_toml(manifest, tmp_path)
+    assert out.count("[[skills.config]]") == 1      # ghost-skill пропущен
+    assert "excel-helper" in out and "enabled = true" in out

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Генератор среды Codex из канона ~/.claude. Запуск: python codex_sync.py [--dry-run]"""
 import re
+import sys
+from pathlib import Path
 
 BEGIN = "# >>> claude-base managed >>>"
 END = "# <<< claude-base managed <<<"
@@ -38,5 +40,18 @@ def render_mcp_toml(mcp_servers: dict, allow: list) -> str:
             out.append(f"[mcp_servers.{name}.env]")
             for k in sorted(env):
                 out.append(f"{k} = {_t(env[k])}")
+        out.append("")
+    return "\n".join(out)
+
+def render_skills_toml(manifest: dict, skills_dir: Path) -> str:
+    out = []
+    for name in manifest.get("enable", []):
+        d = skills_dir / name
+        if not (d / "SKILL.md").exists():
+            print(f"[codex_sync] warn: скилл {name} не найден в {skills_dir}", file=sys.stderr)
+            continue
+        out.append("[[skills.config]]")
+        out.append(f"path = {_t(str(d))}")
+        out.append("enabled = true")
         out.append("")
     return "\n".join(out)
