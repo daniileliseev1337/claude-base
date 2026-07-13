@@ -67,12 +67,31 @@ def test_render_skills_toml(tmp_path):
     assert "excel-helper" in out and "enabled = true" in out
 
 def test_render_hooks_json_structure(tmp_path):
-    import json
     from codex_sync import render_hooks_json
-    hooks = render_hooks_json(tmp_path)                     # home не существует — пути всё равно строятся
+    hooks = render_hooks_json(tmp_path)
     assert set(hooks["hooks"].keys()) == {"SessionStart", "Stop", "PostToolUse"}
-    start_cmds = [h["commandWindows"] for m in hooks["hooks"]["SessionStart"] for h in m["hooks"]]
-    assert any("auto-pull.ps1" in c for c in start_cmds)
-    stop_cmds = [h["commandWindows"] for m in hooks["hooks"]["Stop"] for h in m["hooks"]]
-    assert any("auto-push.ps1" in c for c in stop_cmds)
-    json.dumps(hooks)                                        # сериализуемо
+
+    start = hooks["hooks"]["SessionStart"][0]["hooks"]
+    assert "auto-pull.ps1" in start[0]["commandWindows"]          # pull строго первым
+    assert "graph-staleness-check.ps1" in start[1]["commandWindows"]
+    assert "session_start.ps1" in start[2]["commandWindows"]
+    assert [h["timeout"] for h in start] == [30, 15, 10]
+
+    stop = hooks["hooks"]["Stop"][0]["hooks"]
+    assert "session_end.ps1" in stop[0]["commandWindows"]         # журнал до пуша
+    assert "auto-push.ps1" in stop[1]["commandWindows"]
+    assert [h["timeout"] for h in stop] == [20, 60]
+
+    ptu = hooks["hooks"]["PostToolUse"][0]
+    assert ptu["matcher"] == ".*"
+    assert "log-tool-usage.ps1" in ptu["hooks"][0]["commandWindows"]
+    assert ptu["hooks"][0]["timeout"] == 10
+
+    for group in hooks["hooks"].values():
+        for m in group:
+            for h in m["hooks"]:
+                assert h["type"] == "command"
+                assert h["commandWindows"].count('"') == 2        # путь в кавычках
+
+    import json
+    json.loads(json.dumps(hooks, ensure_ascii=False))             # сериализуемость round-trip
