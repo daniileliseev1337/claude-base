@@ -101,7 +101,30 @@ def test_convert_agent_md():
     text = (pathlib.Path(__file__).parent / "fixtures" / "agent_sample.md").read_text(encoding="utf-8")
     fname, toml_text = convert_agent_md(text)
     assert fname == "sample-auditor.toml"
-    assert 'model = "gpt-5.6-terra"' in toml_text            # sonnet → terra
+    assert "model = 'gpt-5.6-terra'" in toml_text            # sonnet → terra
     assert "mcp__excel__" not in toml_text                    # инструменты заменены
     assert "spreadsheets" in toml_text
-    assert 'name = "sample-auditor"' in toml_text
+    assert "name = 'sample-auditor'" in toml_text
+    import tomllib
+    assert tomllib.loads(toml_text)["description"] == "Тестовый ревьюер"
+
+def test_convert_agent_md_crlf_and_block_description():
+    from codex_sync import convert_agent_md
+    import tomllib
+    md = ("---\r\nname: crlf-agent\r\ndescription: |\r\n  Первая строка.\r\n  Вторая строка (Ф\\.\\d{4}).\r\nmodel: haiku\r\n---\r\n"
+          "Тело с путём C:\\Users\\x и регекспом \\{\\{placeholder\\}\\}.\r\n")
+    fname, toml_text = convert_agent_md(md)
+    parsed = tomllib.loads(toml_text)
+    assert fname == "crlf-agent.toml"
+    assert parsed["model"] == "gpt-5.6-luna"
+    assert "Вторая строка" in parsed["description"] and parsed["description"].strip() != "|"
+    assert "C:\\Users\\x" in parsed["developer_instructions"]
+
+def test_convert_agent_md_triple_quote_fallback():
+    from codex_sync import convert_agent_md
+    import tomllib
+    md = "---\nname: tq\ndescription: d\nmodel: sonnet\n---\ncode: '''docstring''' и \\ бэкслэш\n"
+    _, toml_text = convert_agent_md(md)
+    parsed = tomllib.loads(toml_text)
+    assert "'''docstring'''" in parsed["developer_instructions"]
+    assert "\\ бэкслэш" in parsed["developer_instructions"]

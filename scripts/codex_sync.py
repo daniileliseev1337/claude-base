@@ -85,8 +85,6 @@ MODEL_MAP = {
 }
 
 # TOOL_MAP переводит MCP-инструменты в описания плагинов.
-# Примечание: multi-line description с `>` в frontmatter встречается у реальных агентов —
-# fm() берёт только первую строку; это осознанное упрощение для задачи, которого достаточно.
 TOOL_MAP = [
     (r"mcp__excel__\w+", "инструменты плагина spreadsheets"),
     (r"mcp__word__\w+", "инструменты плагина documents"),
@@ -95,35 +93,46 @@ TOOL_MAP = [
     (r"\bTask\b(?= tool| тул| \()", "spawn_agents"),
 ]
 
-def convert_agent_md(text: str) -> tuple[str, str]:
-    """Конвертирует md-агента в TOML для Codex.
+def _yaml_value(front: str, key: str) -> str:
+    """Значение ключа фронтматтера; block-scalar (| и >) собирается целиком:
+    | — с переводами строк, > — склейка пробелом."""
+    m = re.search(rf"^{key}:[ \t]*(.*)$", front, re.M)
+    if not m:
+        return ""
+    first = m.group(1).strip()
+    if first not in ("|", "|-", ">", ">-"):
+        return first
+    lines = []
+    for line in front[m.end():].split("\n"):
+        if line.strip() == "":
+            lines.append("")
+        elif line.startswith((" ", "\t")):
+            lines.append(line.strip())
+        else:
+            break
+    joiner = "\n" if first.startswith("|") else " "
+    return joiner.join(lines).strip()
 
-    Возвращает (имя файла, TOML-текст).
-    """
+def _toml_block(s: str) -> str:
+    """Многострочный TOML: literal '''...''' (бэкслэши/кавычки сырыми);
+    если внутри есть ''' — basic с экранированием."""
+    if "'''" not in s:
+        return "'''\n" + s + "\n'''"
+    esc = s.replace("\\", "\\\\").replace('"""', '""\\"')
+    return '"""\n' + esc + '\n"""'
+
+def convert_agent_md(text: str):
+    text = text.replace("\r\n", "\n")  # CRLF-агенты реальны (5/17 в базе)
     m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
     if not m:
         raise ValueError("Неверный формат: не найдена граница ---")
     front, body = m.group(1), m.group(2)
-
-    def fm(key):
-        """Извлечь значение ключа из frontmatter."""
-        mm = re.search(rf"^{key}:\s*(.+)$", front, re.M)
-        return mm.group(1).strip() if mm else ""
-
-    name = fm("name")
-    model = MODEL_MAP.get(fm("model"), "gpt-5.6-terra")
-
-    # Заменить инструменты на описания плагинов
+    name = _yaml_value(front, "name")
+    model = MODEL_MAP.get(_yaml_value(front, "model"), "gpt-5.6-terra")
+    desc = _yaml_value(front, "description")
     for pat, repl in TOOL_MAP:
         body = re.sub(pat, repl, body)
-
-    desc = fm("description").replace('"', "'")
-
-    toml_text = (
-        f'name = "{name}"\n'
-        f'description = "{desc}"\n'
-        f'model = "{model}"\n'
-        f'developer_instructions = """\n{body.strip()}\n"""\n'
-    )
-
+        desc = re.sub(pat, repl, desc)
+    toml_text = (f"name = {_t(name)}\ndescription = {_t(desc)}\nmodel = {_t(model)}\n"
+                 f"developer_instructions = {_toml_block(body.strip())}\n")
     return f"{name}.toml", toml_text
