@@ -1,0 +1,4 @@
+model = "gpt-5.6-sol"
+
+[plugins."visualize@openai-bundled"]
+enabled = true

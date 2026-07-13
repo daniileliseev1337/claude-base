@@ -1,0 +1,10 @@
+{
+  "enable": [
+    "excel-helper", "word-helper", "doc-extract", "pdf-edit",
+    "facts-layer", "project-memory", "domain-grilling", "karpathy-guidelines"
+  ],
+  "skip_reason": {
+    "handoff-to-new-chat": "текст завязан на подписки/окна Claude — адаптация в Задаче 12",
+    "web-access": "лестница ступеней называет MCP-имена Claude — адаптация в Задаче 12"
+  }
+}
