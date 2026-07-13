@@ -55,3 +55,24 @@ def render_skills_toml(manifest: dict, skills_dir: Path) -> str:
         out.append("enabled = true")
         out.append("")
     return "\n".join(out)
+
+def _pwsh(script: Path) -> str:
+    return f"powershell -NoProfile -ExecutionPolicy Bypass -File \"{script}\""
+
+def render_hooks_json(home: Path) -> dict:
+    s = home / ".claude" / "scripts"
+    pm = home / ".claude" / "skills" / "project-memory" / "tools" / "hooks"
+    def entry(script, timeout):
+        return {"type": "command", "commandWindows": _pwsh(script), "timeout": timeout}
+    return {"hooks": {
+        "SessionStart": [{"hooks": [
+            entry(s / "auto-pull.ps1", 30),
+            entry(s / "graph-staleness-check.ps1", 15),
+            entry(pm / "session_start.ps1", 10),
+        ]}],
+        "Stop": [{"hooks": [
+            entry(pm / "session_end.ps1", 20),
+            entry(s / "auto-push.ps1", 60),
+        ]}],
+        "PostToolUse": [{"matcher": ".*", "hooks": [entry(s / "log-tool-usage.ps1", 10)]}],
+    }}

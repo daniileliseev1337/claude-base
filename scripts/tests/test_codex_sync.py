@@ -65,3 +65,14 @@ def test_render_skills_toml(tmp_path):
     out = render_skills_toml(manifest, tmp_path)
     assert out.count("[[skills.config]]") == 1      # ghost-skill пропущен
     assert "excel-helper" in out and "enabled = true" in out
+
+def test_render_hooks_json_structure(tmp_path):
+    import json
+    from codex_sync import render_hooks_json
+    hooks = render_hooks_json(tmp_path)                     # home не существует — пути всё равно строятся
+    assert set(hooks["hooks"].keys()) == {"SessionStart", "Stop", "PostToolUse"}
+    start_cmds = [h["commandWindows"] for m in hooks["hooks"]["SessionStart"] for h in m["hooks"]]
+    assert any("auto-pull.ps1" in c for c in start_cmds)
+    stop_cmds = [h["commandWindows"] for m in hooks["hooks"]["Stop"] for h in m["hooks"]]
+    assert any("auto-push.ps1" in c for c in stop_cmds)
+    json.dumps(hooks)                                        # сериализуемо
