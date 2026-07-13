@@ -34,3 +34,15 @@ def test_two_blocks_consolidated_to_one():
 
 def test_empty_file():
     assert apply_managed_block("", "a = 1\n").startswith(BEGIN)
+
+def test_render_mcp_toml_whitelist_and_env():
+    from codex_sync import render_mcp_toml
+    servers = {
+        "time": {"command": "uvx", "args": ["mcp-server-time"]},
+        "excel": {"command": "uvx", "args": ["excel-mcp-server"], "env": {"X": "a\\b"}},
+    }
+    out = render_mcp_toml(servers, allow=["excel"])
+    assert "[mcp_servers.excel]" in out
+    assert "mcp_servers.time" not in out            # вне белого списка
+    assert "args = ['excel-mcp-server']" in out
+    assert "[mcp_servers.excel.env]" in out and "X = 'a\\b'" in out
