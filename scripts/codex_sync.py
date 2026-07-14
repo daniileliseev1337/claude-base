@@ -239,8 +239,8 @@ def _read_canon(home: Path):
     allow = json.loads(wl_text)["allow"]
     return core, layer, wl_text, sm_text, mcp, allow
 
-def render_all(home: Path) -> dict:
-    """Чистый рендер всех артефактов Codex: ключ → содержимое. Ничего не пишет."""
+def render_target_codex(home: Path) -> dict:
+    """Чистый рендер всех артефактов таргета codex: ключ → содержимое. Ничего не пишет."""
     claude = home / ".claude"
     core, layer, _, _, mcp, allow = _read_canon(home)
     out = {
@@ -266,6 +266,9 @@ def collect_inputs(home: Path) -> dict:
     }
     for f in sorted((claude / "agents").glob("*.md")):
         inputs[f"agents/{f.name}"] = _sha(f.read_text(encoding="utf-8"))
+    tj = claude / "codex-layer" / "targets.json"
+    if tj.exists():
+        inputs["codex-layer/targets.json"] = _sha(tj.read_text(encoding="utf-8"))
     return inputs
 
 def manifest_path(home: Path) -> Path:
@@ -286,14 +289,48 @@ def load_manifest(home: Path):
     except (OSError, ValueError):
         return None    # битый манифест = отсутствующий (безопасный режим: дрейф не перезапишем)
 
-def _output_path(home: Path, key: str) -> Path:
-    """Путь артефакта на диске по ключу рендера."""
+def _output_path_codex(home: Path, key: str) -> Path:
+    """Путь артефакта таргета codex на диске по ключу рендера."""
     codex = home / ".codex"
     if key == "config.toml#managed":
         return codex / "config.toml"
     if key.startswith("agents/"):
         return codex / "agents" / key.split("/", 1)[1]
     return codex / key          # AGENTS.md, hooks.json
+
+# Реестр таргетов: имя среды → рендер артефактов и резолвер путей.
+# Новая среда = новая пара функций + строка здесь; ядро (check/sync/manifest) не трогается.
+TARGETS = {
+    "codex": {"render": render_target_codex, "path": _output_path_codex},
+}
+
+def _enabled_targets(home: Path) -> list:
+    p = home / ".claude" / "codex-layer" / "targets.json"
+    if not p.exists():
+        return ["codex"]                       # обратная совместимость со старым каноном
+    names = json.loads(p.read_text(encoding="utf-8"))["enable"]
+    unknown = [n for n in names if n not in TARGETS]
+    if unknown:
+        raise ValueError(f"targets.json: неизвестные таргеты {unknown}; доступны {sorted(TARGETS)}")
+    return names
+
+def render_all(home: Path) -> dict:
+    """Объединённый рендер включённых таргетов. Ключи уникальны между таргетами."""
+    out = {}
+    for name in _enabled_targets(home):
+        part = TARGETS[name]["render"](home)
+        dup = sorted(set(part) & set(out))
+        if dup:
+            raise ValueError(f"коллизия ключей между таргетами: {dup}")
+        out.update(part)
+    return out
+
+def _output_path(home: Path, key: str) -> Path:
+    for name in _enabled_targets(home):
+        p = TARGETS[name]["path"](home, key)
+        if p is not None:
+            return p
+    raise KeyError(key)
 
 def read_disk_output(home: Path, key: str):
     p = _output_path(home, key)

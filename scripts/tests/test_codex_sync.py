@@ -342,6 +342,32 @@ def test_check_reports_missing_skill_junction_and_sync_heals(make_canon):
     assert sync(home) == 0                                    # sync вылечил
     assert j.exists() and check(home)["canon-newer"] == []
 
+def test_targets_unknown_name_error(make_canon):
+    import pytest as _pytest
+    from codex_sync import render_all
+    home = make_canon()
+    (home / ".claude" / "codex-layer" / "targets.json").write_text(
+        '{"enable": ["codex", "vscode"]}', encoding="utf-8")
+    with _pytest.raises(ValueError, match="неизвестн"):
+        render_all(home)
+
+def test_targets_key_collision_error(make_canon, monkeypatch):
+    import pytest as _pytest
+    import codex_sync
+    home = make_canon()
+    monkeypatch.setitem(codex_sync.TARGETS, "fake",
+                        {"render": lambda h: {"AGENTS.md": "x"}, "path": lambda h, k: None})
+    (home / ".claude" / "codex-layer" / "targets.json").write_text(
+        '{"enable": ["codex", "fake"]}', encoding="utf-8")
+    with _pytest.raises(ValueError, match="коллизия"):
+        codex_sync.render_all(home)
+
+def test_targets_default_without_file(make_canon):
+    from codex_sync import render_all
+    home = make_canon()
+    (home / ".claude" / "codex-layer" / "targets.json").unlink()
+    assert "AGENTS.md" in render_all(home)      # обратная совместимость: дефолт ["codex"]
+
 def test_diff_cmd_shows_unified_diff(make_canon, capsys):
     from codex_sync import sync, diff_cmd
     home = make_canon(); sync(home)
