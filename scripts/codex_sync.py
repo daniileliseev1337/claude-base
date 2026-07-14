@@ -69,7 +69,12 @@ def render_base_tables(home: Path) -> str:
     cfg = home / ".codex" / "config.toml"
     outside = cfg.read_text(encoding="utf-8") if cfg.exists() else ""
     outside = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", re.S).sub("", outside)
-    user_tables = {k for k, v in tomllib.loads(outside).items() if isinstance(v, dict)}
+    try:
+        user_tables = {k for k, v in tomllib.loads(outside).items() if isinstance(v, dict)}
+    except tomllib.TOMLDecodeError as e:
+        print(f"[codex_sync] warn: config.toml вне managed-блока не парсится ({e}) — фильтр коллизий пропущен",
+              file=sys.stderr)
+        user_tables = set()
     blocks, name, current = [], None, []
     for line in text.splitlines():
         m = re.match(r"\[([A-Za-z0-9_.-]+)\]", line.strip())

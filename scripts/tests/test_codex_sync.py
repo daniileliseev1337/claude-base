@@ -406,6 +406,16 @@ def test_base_toplevel_key_rejected(make_canon):
     with _pytest.raises(ValueError, match="top-level"):
         render_all(home)
 
+def test_broken_user_config_outside_block_does_not_crash(make_canon, capsys):
+    from codex_sync import check, sync
+    home = make_canon()
+    sync(home)
+    (home / ".codex" / "config.toml").write_text("[oops\nbroken = true\n", encoding="utf-8")
+    res = check(home)                                  # не падает трейсбеком
+    assert "config.toml#managed" in (res["canon-newer"] + res["manual-drift"])
+    assert "фильтр коллизий пропущен" in capsys.readouterr().err
+    assert sync(home) in (0, 3, 4)                     # штатный код, не исключение
+
 def test_sync_returns_4_and_keeps_file_on_invalid_result(make_canon, monkeypatch):
     import codex_sync
     home = make_canon()
