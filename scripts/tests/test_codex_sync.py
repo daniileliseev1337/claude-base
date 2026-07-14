@@ -201,7 +201,8 @@ def test_render_all_keys_and_purity(make_canon):
     from codex_sync import render_all
     home = make_canon()
     out = render_all(home)
-    assert set(out) == {"AGENTS.md", "config.toml#managed", "hooks.json", "agents/тест-агент.toml"}
+    assert set(out) == {"AGENTS.md", "config.toml#managed", "hooks.json", "agents/тест-агент.toml",
+                        "plus.config.toml", "pro.config.toml"}
     assert "[mcp_servers.time]" in out["config.toml#managed"]
     assert "excel" not in out["config.toml#managed"]          # whitelist работает
     assert out["config.toml#managed"] == out["config.toml#managed"].rstrip()
@@ -242,6 +243,8 @@ def _seed_manifest(home):
     for k in rendered:
         if k.startswith("agents/"):
             (codex / "agents" / k.split("/", 1)[1]).write_text(rendered[k], encoding="utf-8", newline="\n")
+        elif k not in ("AGENTS.md", "config.toml#managed", "hooks.json"):
+            (codex / k).write_text(rendered[k], encoding="utf-8", newline="\n")   # плоские выходы (профили и т.п.)
     save_manifest(home, collect_inputs(home), {k: _sha(v) for k, v in rendered.items()})
 
 def test_check_clean(make_canon):
@@ -415,6 +418,38 @@ def test_broken_user_config_outside_block_does_not_crash(make_canon, capsys):
     assert "config.toml#managed" in (res["canon-newer"] + res["manual-drift"])
     assert "фильтр коллизий пропущен" in capsys.readouterr().err
     assert sync(home) in (0, 3, 4)                     # штатный код, не исключение
+
+def test_profiles_rendered_with_marker_and_manifest_coverage(make_canon):
+    from codex_sync import sync, check
+    home = make_canon()
+    assert sync(home) == 0
+    plus = home / ".codex" / "plus.config.toml"
+    assert plus.exists()
+    assert plus.read_text(encoding="utf-8").splitlines()[0].startswith("# generated-by: codex_sync")
+    # ручная правка профиля → manual-drift
+    plus.write_text(plus.read_text(encoding="utf-8") + "manual = true\n", encoding="utf-8", newline="\n")
+    assert "plus.config.toml" in check(home)["manual-drift"]
+    # правка канона профиля → canon-newer
+    (home / ".claude" / "codex-layer" / "profiles" / "pro.toml").write_text(
+        'model = "gpt-5.6-terra"\n', encoding="utf-8")
+    assert "pro.config.toml" in check(home)["canon-newer"]
+
+def test_profile_invalid_canon_toml_raises(make_canon):
+    import pytest as _pytest, tomllib as _toml
+    from codex_sync import render_all
+    home = make_canon()
+    (home / ".claude" / "codex-layer" / "profiles" / "plus.toml").write_text(
+        'model = [broken', encoding="utf-8")
+    with _pytest.raises(_toml.TOMLDecodeError):
+        render_all(home)
+
+def test_profiles_absent_dir_tolerated(make_canon):
+    import shutil
+    from codex_sync import render_all
+    home = make_canon()
+    shutil.rmtree(home / ".claude" / "codex-layer" / "profiles")
+    out = render_all(home)
+    assert "plus.config.toml" not in out and "AGENTS.md" in out
 
 def test_sync_returns_4_and_keeps_file_on_invalid_result(make_canon, monkeypatch):
     import codex_sync

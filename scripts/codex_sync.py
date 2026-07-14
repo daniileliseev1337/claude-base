@@ -330,6 +330,10 @@ def collect_inputs(home: Path) -> dict:
     bt = claude / "codex-layer" / "base.toml"
     if bt.exists():
         inputs["codex-layer/base.toml"] = _sha(bt.read_text(encoding="utf-8"))
+    prof = claude / "codex-layer" / "profiles"
+    if prof.exists():
+        for f in sorted(prof.glob("*.toml")):
+            inputs[f"codex-layer/profiles/{f.name}"] = _sha(f.read_text(encoding="utf-8"))
     return inputs
 
 def manifest_path(home: Path) -> Path:
