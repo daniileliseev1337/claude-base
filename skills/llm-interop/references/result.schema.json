@@ -9,25 +9,24 @@
     "assumptions", "risks", "questions", "next_step"
   ],
   "properties": {
-    "schema_version": {"const": "1.0"},
-    "task_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+    "schema_version": {"type": "string", "enum": ["1.0"]},
+    "task_id": {"type": "string"},
     "status": {"enum": ["completed", "blocked", "needs_input"]},
-    "summary": {"type": "string", "minLength": 1},
+    "summary": {"type": "string"},
     "checks": {
       "type": "array",
-      "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["name", "status", "evidence"],
         "properties": {
-          "name": {"type": "string", "minLength": 1},
+          "name": {"type": "string"},
           "status": {"enum": ["pass", "fail", "not_run"]},
           "evidence": {"type": "string"}
         }
       }
     },
-    "changes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "changes": {"type": "array", "items": {"type": "string"}},
     "assumptions": {"type": "array", "items": {"type": "string"}},
     "risks": {"type": "array", "items": {"type": "string"}},
     "questions": {"type": "array", "items": {"type": "string"}},

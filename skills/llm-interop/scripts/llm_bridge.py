@@ -210,7 +210,7 @@ def build_command(partner: str, binary: Path, cwd: Path, output_file: Path,
     if partner == "codex":
         command = [
             str(binary), "exec", "-C", str(cwd), "--skip-git-repo-check", "--ephemeral",
-            "--sandbox", permissions, "--output-schema", str(RESULT_SCHEMA),
+            "--ignore-user-config", "--sandbox", permissions, "--output-schema", str(RESULT_SCHEMA),
             "--output-last-message", str(output_file), "-",
         ]
         if model:
@@ -253,6 +253,45 @@ def _write_json_atomic(path: Path, value: dict) -> None:
     tmp.replace(path)
 
 
+def _terminate_tree(proc: subprocess.Popen) -> None:
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+        )
+    else:
+        proc.kill()
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+
+
+def _run_process(command: list[str], prompt: str, cwd: Path, timeout: int,
+                 temp_dir: Path) -> subprocess.CompletedProcess:
+    """Запусти CLI без pipe-зависания: дочерние процессы не держат наши файловые handles."""
+    stdin_path = temp_dir / "stdin.txt"
+    stdout_path = temp_dir / "stdout.txt"
+    stderr_path = temp_dir / "stderr.txt"
+    stdin_path.write_text(prompt, encoding="utf-8", newline="\n")
+    creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0
+    with stdin_path.open("rb") as stdin, stdout_path.open("wb") as stdout, stderr_path.open("wb") as stderr:
+        proc = subprocess.Popen(
+            command, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd,
+            creationflags=creationflags,
+        )
+        try:
+            returncode = proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            _terminate_tree(proc)
+            raise BridgeError(f"таймаут партнёра после {timeout} с") from exc
+    return subprocess.CompletedProcess(
+        command, returncode,
+        stdout=stdout_path.read_text(encoding="utf-8", errors="replace"),
+        stderr=stderr_path.read_text(encoding="utf-8", errors="replace"),
+    )
+
+
 def run(args: argparse.Namespace) -> int:
     cwd = Path(args.cwd).resolve()
     if not cwd.is_dir():
@@ -281,14 +320,7 @@ def run(args: argparse.Namespace) -> int:
                 preview["command"][schema_index] = "<result.schema.json>"
             print(json.dumps(preview, ensure_ascii=False, indent=2))
             return 0
-        try:
-            proc = subprocess.run(
-                command, input=prompt, text=True, encoding="utf-8", errors="replace",
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd,
-                timeout=args.timeout, check=False,
-            )
-        except subprocess.TimeoutExpired as exc:
-            raise BridgeError(f"таймаут партнёра после {args.timeout} с") from exc
+        proc = _run_process(command, prompt, cwd, args.timeout, Path(temp_dir))
         if proc.returncode:
             detail = (proc.stderr or proc.stdout or "без диагностики").strip()[-2000:]
             raise BridgeError(f"партнёр завершился с кодом {proc.returncode}: {detail}")

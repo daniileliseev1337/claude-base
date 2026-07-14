@@ -97,6 +97,7 @@ def test_commands_use_stdin_and_structured_output(tmp_path):
     codex_out = tmp_path / "codex.json"
     codex = bridge.build_command("codex", Path("codex.exe"), tmp_path, codex_out, "read-only", None)
     assert codex[-1] == "-"
+    assert "--ignore-user-config" in codex
     assert codex[codex.index("--sandbox") + 1] == "read-only"
     assert codex[codex.index("--output-schema") + 1] == str(bridge.RESULT_SCHEMA)
 
@@ -113,13 +114,13 @@ def test_codex_roundtrip_preserves_utf8(monkeypatch, tmp_path):
     task_path.write_text(json.dumps(task, ensure_ascii=False), encoding="utf-8")
     monkeypatch.setattr(bridge, "find_binary", lambda *a, **k: Path(sys.executable))
 
-    def fake_run(command, **kwargs):
-        assert "Проверь кириллицу" in kwargs["input"]
+    def fake_run(command, prompt, cwd, timeout, temp_dir):
+        assert "Проверь кириллицу" in prompt
         runner_output = Path(command[command.index("--output-last-message") + 1])
         runner_output.write_text(json.dumps(make_result(task), ensure_ascii=False), encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_process", fake_run)
     args = argparse.Namespace(
         partner="codex", task=str(task_path), cwd=str(tmp_path), output=str(output),
         model=None, binary=None, allow_write=False, dry_run=False, timeout=10,
@@ -135,11 +136,11 @@ def test_claude_structured_output_roundtrip(monkeypatch, tmp_path):
     task_path.write_text(json.dumps(task, ensure_ascii=False), encoding="utf-8")
     monkeypatch.setattr(bridge, "find_binary", lambda *a, **k: Path(sys.executable))
 
-    def fake_run(command, **kwargs):
+    def fake_run(command, prompt, cwd, timeout, temp_dir):
         outer = {"structured_output": make_result(task)}
         return subprocess.CompletedProcess(command, 0, stdout=json.dumps(outer, ensure_ascii=False), stderr="")
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_process", fake_run)
     args = argparse.Namespace(
         partner="claude", task=str(task_path), cwd=str(tmp_path), output=str(output),
         model=None, binary=None, allow_write=False, dry_run=False, timeout=10,
@@ -159,15 +160,23 @@ def test_runner_failure_and_timeout_are_explicit(monkeypatch, tmp_path):
     )
 
     monkeypatch.setattr(
-        bridge.subprocess, "run",
-        lambda *a, **k: subprocess.CompletedProcess(a[0], 7, stdout="", stderr="runner failed"),
+        bridge, "_run_process",
+        lambda command, *a, **k: subprocess.CompletedProcess(command, 7, stdout="", stderr="runner failed"),
     )
     with pytest.raises(bridge.BridgeError, match="кодом 7"):
         bridge.run(args)
 
-    def timeout(*args, **kwargs):
-        raise subprocess.TimeoutExpired(args[0], 1)
-
-    monkeypatch.setattr(bridge.subprocess, "run", timeout)
+    monkeypatch.setattr(
+        bridge, "_run_process",
+        lambda *a, **k: (_ for _ in ()).throw(bridge.BridgeError("таймаут партнёра после 1 с")),
+    )
     with pytest.raises(bridge.BridgeError, match="таймаут"):
         bridge.run(args)
+
+
+def test_process_timeout_terminates_without_pipe_hang(tmp_path):
+    with pytest.raises(bridge.BridgeError, match="таймаут"):
+        bridge._run_process(
+            [sys.executable, "-c", "import time; time.sleep(5)"],
+            "", tmp_path, 0.1, tmp_path,
+        )
