@@ -164,7 +164,7 @@ def render_hooks_json(home: Path) -> dict:
     s = home / ".claude" / "scripts"
     pm = home / ".claude" / "skills" / "project-memory" / "tools" / "hooks"
     def entry(script, timeout):
-        return {"type": "command", "commandWindows": _pwsh(script), "timeout": timeout}
+        return {"type": "command", "command": _pwsh(script), "timeout": timeout}
     return {"hooks": {
         "SessionStart": [{"hooks": [
             entry(s / "auto-pull.ps1", 30),

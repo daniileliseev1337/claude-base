@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "task_id": "interop-smoke-claude",
+  "source": "codex",
+  "target": "claude",
+  "hop_count": 0,
+  "mode": "review",
+  "permissions": "read-only",
+  "goal": "Проверь, что дизайн Эпика 4 содержит Goal, Context, Constraints и проверяемый Done when.",
+  "context": {
+    "files": ["docs/superpowers/specs/2026-07-15-epic4-llm-interop-design.md"],
+    "facts": ["Это read-only smoke общего протокола."],
+    "prior_decisions": ["Внутренние транскрипты между вендорами не переносить."]
+  },
+  "constraints": ["Не меняй файлы.", "Не вызывай другую LLM."],
+  "done_when": ["Верни отдельную проверку наличия каждой из четырёх секций с evidence."],
+  "deliverables": []
+}
