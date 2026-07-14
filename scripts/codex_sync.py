@@ -86,10 +86,10 @@ MODEL_MAP = {
 
 # TOOL_MAP переводит MCP-инструменты в описания плагинов.
 TOOL_MAP = [
-    (r"mcp__excel__\w+", "инструменты плагина spreadsheets"),
-    (r"mcp__word__\w+", "инструменты плагина documents"),
-    (r"mcp__pdf-mcp__\w+", "инструменты плагина pdf"),
-    (r"mcp__playwright__\w+", "инструменты плагина browser"),
+    (r"mcp__excel__(?:\w+|\\?\*)", "инструменты плагина spreadsheets"),
+    (r"mcp__word__(?:\w+|\\?\*)", "инструменты плагина documents"),
+    (r"mcp__pdf-mcp__(?:\w+|\\?\*)", "инструменты плагина pdf"),
+    (r"mcp__playwright__(?:\w+|\\?\*)", "инструменты плагина browser"),
     (r"\bTask\b(?= tool| тул| \()", "spawn_agents"),
 ]
 

@@ -128,3 +128,11 @@ def test_convert_agent_md_triple_quote_fallback():
     parsed = tomllib.loads(toml_text)
     assert "'''docstring'''" in parsed["developer_instructions"]
     assert "\\ бэкслэш" in parsed["developer_instructions"]
+
+def test_convert_agent_md_wildcard_tools():
+    from codex_sync import convert_agent_md
+    text = ("---\nname: w\ndescription: d\nmodel: haiku\n---\n"
+            "Инструменты: mcp__excel__* и mcp__word__\\* и mcp__pdf-mcp__*.\n")
+    _, toml_text = convert_agent_md(text)
+    assert "mcp__" not in toml_text
+    assert "spreadsheets" in toml_text and "documents" in toml_text
