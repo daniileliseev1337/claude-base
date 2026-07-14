@@ -145,3 +145,19 @@ def test_render_agents_md_limit():
     import pytest
     with pytest.raises(ValueError):
         render_agents_md("x" * 33000, "y")
+
+def test_render_mcp_toml_http_server():
+    from codex_sync import render_mcp_toml
+    servers = {"exa": {"type": "http", "url": "https://mcp.exa.ai/mcp"},
+               "bad": {"type": "http"}}
+    out = render_mcp_toml(servers, allow=["exa", "bad"])
+    assert "[mcp_servers.exa]" in out and "url = 'https://mcp.exa.ai/mcp'" in out
+    assert "command" not in out.split("[mcp_servers.exa]")[1].split("[")[0]
+    assert "mcp_servers.bad" not in out
+
+def test_collect_agent_tomls_skips_nameless(tmp_path):
+    from codex_sync import collect_agent_tomls
+    (tmp_path / "good.md").write_text("---\nname: good\ndescription: d\nmodel: haiku\n---\nТело.\n", encoding="utf-8")
+    (tmp_path / "agents.md").write_text("# Индекс агентов\nпросто текст без фронтматтера\n", encoding="utf-8")
+    result = collect_agent_tomls(tmp_path)
+    assert list(result) == ["good.toml"]
