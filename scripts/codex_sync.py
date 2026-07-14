@@ -268,6 +268,60 @@ def collect_inputs(home: Path) -> dict:
         inputs[f"agents/{f.name}"] = _sha(f.read_text(encoding="utf-8"))
     return inputs
 
+def manifest_path(home: Path) -> Path:
+    return home / ".claude" / ".local-state" / "codex-sync-manifest.json"
+
+def save_manifest(home: Path, inputs: dict, outputs: dict) -> None:
+    p = manifest_path(home)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"schema": 1, "inputs": inputs, "outputs": outputs},
+                            ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
+
+def load_manifest(home: Path):
+    p = manifest_path(home)
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None    # битый манифест = отсутствующий (безопасный режим: дрейф не перезапишем)
+
+def _output_path(home: Path, key: str) -> Path:
+    """Путь артефакта на диске по ключу рендера."""
+    codex = home / ".codex"
+    if key == "config.toml#managed":
+        return codex / "config.toml"
+    if key.startswith("agents/"):
+        return codex / "agents" / key.split("/", 1)[1]
+    return codex / key          # AGENTS.md, hooks.json
+
+def read_disk_output(home: Path, key: str):
+    p = _output_path(home, key)
+    if not p.exists():
+        return None
+    if key == "config.toml#managed":
+        m = re.search(re.escape(BEGIN) + r"\n(.*?)\n?" + re.escape(END), p.read_text(encoding="utf-8"), re.S)
+        return m.group(1).rstrip() if m else None
+    return p.read_text(encoding="utf-8")
+
+def check(home: Path) -> dict:
+    """Трёхсторонняя сверка канон ↔ манифест ↔ диск. Категория на каждый ключ рендера."""
+    res = {"clean": [], "canon-newer": [], "manual-drift": []}
+    if not (home / ".codex").exists():
+        return res
+    expected = render_all(home)
+    man = load_manifest(home) or {}
+    base_outputs = man.get("outputs", {})
+    for key in sorted(expected):
+        disk = read_disk_output(home, key)
+        if disk is not None and disk == expected[key]:
+            res["clean"].append(key)          # диск совпал с ожиданием — чисто в любом случае
+        elif disk is None or base_outputs.get(key) == _sha(disk):
+            res["canon-newer"].append(key)    # диск = то, что синк писал в прошлый раз → безопасно перегенерить
+        else:
+            res["manual-drift"].append(key)   # диск отличается и от ожидания, и от последней записи синка
+    return res
+
 def _backup_once(p: Path) -> None:
     """[I3] Бэкап файла перед перезаписью — однократно (не затирает более старую копию)."""
     bak = p.with_suffix(p.suffix + ".bak-codex-sync")
@@ -302,5 +356,21 @@ def main(home: Path, dry_run: bool = False):
 
 if __name__ == "__main__":
     import argparse
-    ap = argparse.ArgumentParser(); ap.add_argument("--dry-run", action="store_true")
-    main(Path.home(), ap.parse_args().dry_run)
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")   # кириллица при захвате из PowerShell
+        sys.stderr.reconfigure(encoding="utf-8")
+    except AttributeError:
+        pass
+    ap = argparse.ArgumentParser(description="Синк канона ~/.claude в ~/.codex")
+    ap.add_argument("cmd", nargs="?", default="sync", choices=["sync", "check"])
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+    home = Path.home()
+    if args.cmd == "check":
+        res = check(home)
+        for cat in ("canon-newer", "manual-drift"):
+            for key in res[cat]:
+                print(f"{cat}\t{key}")
+        sys.exit(3 if res["manual-drift"] else (2 if res["canon-newer"] else 0))
+    else:
+        main(home, args.dry_run)

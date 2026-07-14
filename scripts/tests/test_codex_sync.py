@@ -227,3 +227,62 @@ def test_collect_inputs_tracks_canon_and_mcp_slice(make_canon):
     cj.write_text(json.dumps(data), encoding="utf-8")
     h3 = collect_inputs(home)
     assert h2[".claude.json#mcpServers"] == h3[".claude.json#mcpServers"]
+
+def _seed_manifest(home):
+    """Синк-состояние 'всё чисто': диск = ожидаемое, манифест записан."""
+    from codex_sync import render_all, collect_inputs, save_manifest, _sha, apply_managed_block
+    rendered = render_all(home)
+    codex = home / ".codex"
+    (codex / "AGENTS.md").write_text(rendered["AGENTS.md"], encoding="utf-8", newline="\n")
+    cfg = codex / "config.toml"
+    cfg.write_text(apply_managed_block(cfg.read_text(encoding="utf-8"), rendered["config.toml#managed"]),
+                   encoding="utf-8", newline="\n")
+    (codex / "hooks.json").write_text(rendered["hooks.json"], encoding="utf-8", newline="\n")
+    (codex / "agents").mkdir(exist_ok=True)
+    for k in rendered:
+        if k.startswith("agents/"):
+            (codex / "agents" / k.split("/", 1)[1]).write_text(rendered[k], encoding="utf-8", newline="\n")
+    save_manifest(home, collect_inputs(home), {k: _sha(v) for k, v in rendered.items()})
+
+def test_check_clean(make_canon):
+    from codex_sync import check
+    home = make_canon(); _seed_manifest(home)
+    res = check(home)
+    assert res["canon-newer"] == [] and res["manual-drift"] == []
+    assert "AGENTS.md" in res["clean"]
+
+def test_check_canon_newer_after_core_edit(make_canon):
+    from codex_sync import check
+    home = make_canon(); _seed_manifest(home)
+    (home / ".claude" / "core" / "AGENTS.core.md").write_text("# Ядро v2\n", encoding="utf-8")
+    res = check(home)
+    assert "AGENTS.md" in res["canon-newer"] and res["manual-drift"] == []
+
+def test_check_manual_drift_after_disk_edit(make_canon):
+    from codex_sync import check
+    home = make_canon(); _seed_manifest(home)
+    agents_md = home / ".codex" / "AGENTS.md"
+    agents_md.write_text(agents_md.read_text(encoding="utf-8") + "\nручная правка\n",
+                         encoding="utf-8", newline="\n")
+    res = check(home)
+    assert res["manual-drift"] == ["AGENTS.md"] and res["canon-newer"] == []
+
+def test_check_both_categories_and_managed_block_extraction(make_canon):
+    from codex_sync import check, read_disk_output
+    home = make_canon(); _seed_manifest(home)
+    # ручная правка ВНУТРИ managed-блока + правка канона
+    cfg = home / ".codex" / "config.toml"
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace("[mcp_servers.time]", "[mcp_servers.time2]"),
+                   encoding="utf-8", newline="\n")
+    (home / ".claude" / "core" / "AGENTS.core.md").write_text("# Ядро v3\n", encoding="utf-8")
+    res = check(home)
+    assert "config.toml#managed" in res["manual-drift"]
+    assert "AGENTS.md" in res["canon-newer"]
+    assert "time2" in read_disk_output(home, "config.toml#managed")
+
+def test_check_missing_codex_dir_is_quiet(make_canon, tmp_path):
+    from codex_sync import check
+    home = make_canon()
+    import shutil; shutil.rmtree(home / ".codex")
+    res = check(home)
+    assert res == {"clean": [], "canon-newer": [], "manual-drift": []}
