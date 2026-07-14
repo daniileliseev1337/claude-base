@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<HOME>\\.claude\\scripts\\auto-pull.ps1\"",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<HOME>\\.claude\\scripts\\graph-staleness-check.ps1\"",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<HOME>\\.claude\\skills\\project-memory\\tools\\hooks\\session_start.ps1\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<HOME>\\.claude\\skills\\project-memory\\tools\\hooks\\session_end.ps1\"",
+            "timeout": 20
+          },
+          {
+            "type": "command",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<HOME>\\.claude\\scripts\\auto-push.ps1\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<HOME>\\.claude\\scripts\\log-tool-usage.ps1\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
