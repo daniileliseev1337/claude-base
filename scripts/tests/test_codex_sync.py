@@ -286,3 +286,47 @@ def test_check_missing_codex_dir_is_quiet(make_canon, tmp_path):
     import shutil; shutil.rmtree(home / ".codex")
     res = check(home)
     assert res == {"clean": [], "canon-newer": [], "manual-drift": []}
+
+def test_sync_writes_manifest_and_regenerates_on_canon_change(make_canon):
+    from codex_sync import sync, check, manifest_path
+    home = make_canon()
+    assert sync(home) == 0                                   # первый прогон: сборка + манифест
+    assert manifest_path(home).exists()
+    assert check(home)["manual-drift"] == [] and check(home)["canon-newer"] == []
+    (home / ".claude" / "core" / "AGENTS.core.md").write_text("# Ядро v2\n", encoding="utf-8")
+    assert sync(home) == 0                                   # canon-newer → перегенерено
+    assert "Ядро v2" in (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
+
+def test_sync_skips_manual_drift_and_returns_3(make_canon):
+    from codex_sync import sync
+    home = make_canon(); sync(home)
+    agents_md = home / ".codex" / "AGENTS.md"
+    agents_md.write_text("ручная правка\n", encoding="utf-8", newline="\n")
+    (home / ".claude" / "core" / "AGENTS.core.md").write_text("# Ядро v2\n", encoding="utf-8")
+    assert sync(home) == 3                                   # дрейф скипнут
+    assert agents_md.read_text(encoding="utf-8") == "ручная правка\n"   # НЕ перезаписан
+    assert "Ядро v2" not in agents_md.read_text(encoding="utf-8")
+
+def test_sync_force_overwrite_resets_drift(make_canon):
+    from codex_sync import sync, check
+    home = make_canon(); sync(home)
+    (home / ".codex" / "AGENTS.md").write_text("ручная правка\n", encoding="utf-8", newline="\n")
+    assert sync(home, force={"all"}) == 0
+    res = check(home)
+    assert res["manual-drift"] == [] and res["canon-newer"] == []
+
+def test_sync_preserves_foreign_config_and_is_atomic_style(make_canon):
+    from codex_sync import sync
+    home = make_canon(); sync(home)
+    cfg = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    assert cfg.startswith("x = 1")                            # чужое цело
+    assert "[mcp_servers.time]" in cfg
+    assert not list((home / ".codex").glob("*.tmp-codex-sync"))   # tmp-файлы подчистились
+
+def test_diff_cmd_shows_unified_diff(make_canon, capsys):
+    from codex_sync import sync, diff_cmd
+    home = make_canon(); sync(home)
+    (home / ".codex" / "AGENTS.md").write_text("ручная правка\n", encoding="utf-8", newline="\n")
+    diff_cmd(home)
+    out = capsys.readouterr().out
+    assert "AGENTS.md" in out and "+ручная правка" in out.replace("+ ручная", "+ручная")

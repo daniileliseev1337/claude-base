@@ -328,31 +328,65 @@ def _backup_once(p: Path) -> None:
     if p.exists() and not bak.exists():
         bak.write_bytes(p.read_bytes())
 
-def main(home: Path, dry_run: bool = False):
+def _write_atomic(p: Path, text: str) -> None:
+    """Атомарная запись: tmp-файл рядом + os.replace (без «половинчатого» файла при сбое)."""
+    import os
+    tmp = p.with_name(p.name + ".tmp-codex-sync")
+    tmp.write_text(text, encoding="utf-8", newline="\n")
+    os.replace(tmp, p)
+
+def sync(home: Path, force=None, dry_run: bool = False) -> int:
+    """Drift-aware сборка ~/.codex из канона ~/.claude. Возврат: 0 ок, 3 — ручной дрейф пропущен
+    (записан не весь рендер — часть ключей с ручными правками на диске сохранена как есть)."""
+    force = set(force or ())
     claude, codex = home / ".claude", home / ".codex"
+    if not codex.exists():
+        print("[codex_sync] ~/.codex отсутствует — синк пропущен")
+        return 0
     rendered = render_all(home)
+    st = check(home)
+    forced = set(rendered) if "all" in force else force
+    to_write = [k for k in sorted(rendered)
+                if k in st["canon-newer"] or (k in st["manual-drift"] and k in forced)]
+    skipped = [k for k in st["manual-drift"] if k not in forced]
     manifest = json.loads((claude / "codex-layer" / "skills-manifest.json").read_text(encoding="utf-8"))
-    cfg_path = codex / "config.toml"
-    new_cfg = apply_managed_block(cfg_path.read_text(encoding="utf-8"), rendered["config.toml#managed"])
-    agent_keys = [k for k in rendered if k.startswith("agents/")]
     enabled_skills = [n for n in manifest.get("enable", []) if (claude / "skills" / n / "SKILL.md").exists()]
     if dry_run:
         print(f"AGENTS.md: {len(rendered['AGENTS.md'].encode('utf-8'))} байт; "
-              f"config.toml payload: {len(rendered['config.toml#managed'])}; "
-              f"agents: {len(agent_keys)}; junctions: {len(enabled_skills)}")
-        return
-    for p in (cfg_path, codex / "AGENTS.md", codex / "hooks.json"):
+              f"писать: {len(to_write)}; дрейф-скип: {len(skipped)}; junctions: {len(enabled_skills)}")
+        return 3 if skipped else 0
+    for key in to_write:
+        p = _output_path(home, key)
+        p.parent.mkdir(parents=True, exist_ok=True)
         _backup_once(p)
-    # [I4] newline="\n" — на Windows write_text() иначе разворачивает \n в \r\n
-    (codex / "AGENTS.md").write_text(rendered["AGENTS.md"], encoding="utf-8", newline="\n")
-    cfg_path.write_text(new_cfg, encoding="utf-8", newline="\n")
-    (codex / "hooks.json").write_text(rendered["hooks.json"], encoding="utf-8", newline="\n")
-    (codex / "agents").mkdir(exist_ok=True)
-    for key in agent_keys:
-        agent_path = codex / "agents" / key.split("/", 1)[1]
-        _backup_once(agent_path)
-        agent_path.write_text(rendered[key], encoding="utf-8", newline="\n")
+        if key == "config.toml#managed":
+            existing = p.read_text(encoding="utf-8") if p.exists() else ""
+            _write_atomic(p, apply_managed_block(existing, rendered[key]))
+        else:
+            _write_atomic(p, rendered[key])
     ensure_skill_junctions(manifest, claude / "skills", home / ".agents" / "skills")
+    # манифест: записанное/чистое = ожидаемый хеш; пропущенный дрейф = прежнее значение (дрейф остаётся видимым)
+    old = (load_manifest(home) or {}).get("outputs", {})
+    outputs = {k: (_sha(rendered[k]) if k not in skipped else old.get(k, ""))
+               for k in rendered}
+    save_manifest(home, collect_inputs(home), outputs)
+    for k in skipped:
+        print(f"[codex_sync] manual-drift пропущен: {k} (занеси в канон или sync --force-overwrite {k})")
+    return 3 if skipped else 0
+
+def diff_cmd(home: Path) -> int:
+    """Unified diff всех manual-drift ключей: ожидание из канона vs факт на диске. Всегда 0."""
+    import difflib
+    expected = render_all(home)
+    st = check(home)
+    for key in st["manual-drift"]:
+        disk = read_disk_output(home, key) or ""
+        for line in difflib.unified_diff(expected[key].splitlines(), disk.splitlines(),
+                                         fromfile=f"{key} (ожидаемо из канона)",
+                                         tofile=f"{key} (факт на диске)", lineterm=""):
+            print(line)
+        print()
+    return 0
 
 if __name__ == "__main__":
     import argparse
@@ -362,8 +396,10 @@ if __name__ == "__main__":
     except AttributeError:
         pass
     ap = argparse.ArgumentParser(description="Синк канона ~/.claude в ~/.codex")
-    ap.add_argument("cmd", nargs="?", default="sync", choices=["sync", "check"])
+    ap.add_argument("cmd", nargs="?", default="sync", choices=["sync", "check", "diff"])
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--force-overwrite", action="append", default=[], metavar="KEY|all",
+                     help="перезаписать ключ (или all) поверх ручного дрейфа")
     args = ap.parse_args()
     home = Path.home()
     if args.cmd == "check":
@@ -372,5 +408,7 @@ if __name__ == "__main__":
             for key in res[cat]:
                 print(f"{cat}\t{key}")
         sys.exit(3 if res["manual-drift"] else (2 if res["canon-newer"] else 0))
+    elif args.cmd == "diff":
+        sys.exit(diff_cmd(home))
     else:
-        main(home, args.dry_run)
+        sys.exit(sync(home, force=set(args.force_overwrite), dry_run=args.dry_run))
