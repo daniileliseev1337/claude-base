@@ -196,3 +196,34 @@ def test_ensure_skill_junctions(tmp_path):
     ensure_skill_junctions(manifest, src, dst)
     assert not (dst / "old-skill").exists()
     assert (src / "old-skill" / "SKILL.md").exists()          # источник цел
+
+def test_render_all_keys_and_purity(make_canon):
+    from codex_sync import render_all
+    home = make_canon()
+    out = render_all(home)
+    assert set(out) == {"AGENTS.md", "config.toml#managed", "hooks.json", "agents/тест-агент.toml"}
+    assert "[mcp_servers.time]" in out["config.toml#managed"]
+    assert "excel" not in out["config.toml#managed"]          # whitelist работает
+    assert out["config.toml#managed"] == out["config.toml#managed"].rstrip()
+    # чистота: на диск ничего не записано
+    assert (home / ".codex" / "config.toml").read_text(encoding="utf-8") == "x = 1\n"
+    assert not (home / ".codex" / "AGENTS.md").exists()
+
+def test_collect_inputs_tracks_canon_and_mcp_slice(make_canon):
+    from codex_sync import collect_inputs
+    home = make_canon()
+    h1 = collect_inputs(home)
+    assert "core/AGENTS.core.md" in h1 and "agents/тест-агент.md" in h1
+    assert ".claude.json#mcpServers" in h1
+    # правка канона меняет хеш
+    (home / ".claude" / "core" / "AGENTS.core.md").write_text("# Ядро v2\n", encoding="utf-8")
+    h2 = collect_inputs(home)
+    assert h1["core/AGENTS.core.md"] != h2["core/AGENTS.core.md"]
+    # правка НЕ-whitelisted сервера в .claude.json срез не трогает
+    import json
+    cj = home / ".claude.json"
+    data = json.loads(cj.read_text(encoding="utf-8"))
+    data["mcpServers"]["excel"]["args"] = ["other"]
+    cj.write_text(json.dumps(data), encoding="utf-8")
+    h3 = collect_inputs(home)
+    assert h2[".claude.json#mcpServers"] == h3[".claude.json#mcpServers"]

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Генератор среды Codex из канона ~/.claude. Запуск: python codex_sync.py [--dry-run]"""
+import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -223,6 +225,49 @@ def render_agents_md(core: str, layer: str) -> str:
         raise ValueError("AGENTS.md превышает 32 KiB — сокращай ядро/слой")
     return out
 
+def _sha(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+def _read_canon(home: Path):
+    """Общие входы: контенты канона + mcp-срез. Одна точка чтения для render_all и collect_inputs."""
+    claude = home / ".claude"
+    core = (claude / "core" / "AGENTS.core.md").read_text(encoding="utf-8")
+    layer = (claude / "codex-layer" / "AGENTS.codex.md").read_text(encoding="utf-8")
+    wl_text = (claude / "codex-layer" / "mcp-whitelist.json").read_text(encoding="utf-8")
+    sm_text = (claude / "codex-layer" / "skills-manifest.json").read_text(encoding="utf-8")
+    mcp = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
+    allow = json.loads(wl_text)["allow"]
+    return core, layer, wl_text, sm_text, mcp, allow
+
+def render_all(home: Path) -> dict:
+    """Чистый рендер всех артефактов Codex: ключ → содержимое. Ничего не пишет."""
+    claude = home / ".claude"
+    core, layer, _, _, mcp, allow = _read_canon(home)
+    out = {
+        "AGENTS.md": render_agents_md(core, layer),
+        "config.toml#managed": render_mcp_toml(mcp, allow).rstrip(),
+        "hooks.json": json.dumps(render_hooks_json(home), ensure_ascii=False, indent=2),
+    }
+    for fname, toml_text in collect_agent_tomls(claude / "agents").items():
+        out[f"agents/{fname}"] = toml_text
+    return out
+
+def collect_inputs(home: Path) -> dict:
+    """sha256 входов канона; mcp-срез — только whitelisted (посторонние правки .claude.json не дёргают синк)."""
+    claude = home / ".claude"
+    core, layer, wl_text, sm_text, mcp, allow = _read_canon(home)
+    inputs = {
+        "core/AGENTS.core.md": _sha(core),
+        "codex-layer/AGENTS.codex.md": _sha(layer),
+        "codex-layer/mcp-whitelist.json": _sha(wl_text),
+        "codex-layer/skills-manifest.json": _sha(sm_text),
+        ".claude.json#mcpServers": _sha(json.dumps(
+            {k: mcp[k] for k in sorted(allow) if k in mcp}, sort_keys=True, ensure_ascii=False)),
+    }
+    for f in sorted((claude / "agents").glob("*.md")):
+        inputs[f"agents/{f.name}"] = _sha(f.read_text(encoding="utf-8"))
+    return inputs
+
 def _backup_once(p: Path) -> None:
     """[I3] Бэкап файла перед перезаписью — однократно (не затирает более старую копию)."""
     bak = p.with_suffix(p.suffix + ".bak-codex-sync")
@@ -230,38 +275,29 @@ def _backup_once(p: Path) -> None:
         bak.write_bytes(p.read_bytes())
 
 def main(home: Path, dry_run: bool = False):
-    import json
     claude, codex = home / ".claude", home / ".codex"
-    core = (claude / "core" / "AGENTS.core.md").read_text(encoding="utf-8")
-    layer = (claude / "codex-layer" / "AGENTS.codex.md").read_text(encoding="utf-8")
-    agents_md = render_agents_md(core, layer)
-    mcp = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
-    allow = json.loads((claude / "codex-layer" / "mcp-whitelist.json").read_text(encoding="utf-8"))["allow"]
+    rendered = render_all(home)
     manifest = json.loads((claude / "codex-layer" / "skills-manifest.json").read_text(encoding="utf-8"))
-    payload = render_mcp_toml(mcp, allow)
     cfg_path = codex / "config.toml"
-    new_cfg = apply_managed_block(cfg_path.read_text(encoding="utf-8"), payload)
-    hooks = render_hooks_json(home)
-    agents_out = collect_agent_tomls(claude / "agents")
-    # Прогноз junction'ов для dry_run
+    new_cfg = apply_managed_block(cfg_path.read_text(encoding="utf-8"), rendered["config.toml#managed"])
+    agent_keys = [k for k in rendered if k.startswith("agents/")]
     enabled_skills = [n for n in manifest.get("enable", []) if (claude / "skills" / n / "SKILL.md").exists()]
     if dry_run:
-        print(f"AGENTS.md: {len(agents_md.encode('utf-8'))} байт; config.toml payload: {len(payload)}; "
-              f"hooks: {sum(len(v) for v in hooks['hooks'].values())} групп; agents: {len(agents_out)}; "
-              f"junctions: {len(enabled_skills)}")
+        print(f"AGENTS.md: {len(rendered['AGENTS.md'].encode('utf-8'))} байт; "
+              f"config.toml payload: {len(rendered['config.toml#managed'])}; "
+              f"agents: {len(agent_keys)}; junctions: {len(enabled_skills)}")
         return
     for p in (cfg_path, codex / "AGENTS.md", codex / "hooks.json"):
         _backup_once(p)
-    # [I4] newline="\n" — на Windows write_text() иначе разворачивает \n в \r\n,
-    # и реальный размер файла на диске расходится с гейтом в render_agents_md (считает LF).
-    (codex / "AGENTS.md").write_text(agents_md, encoding="utf-8", newline="\n")
+    # [I4] newline="\n" — на Windows write_text() иначе разворачивает \n в \r\n
+    (codex / "AGENTS.md").write_text(rendered["AGENTS.md"], encoding="utf-8", newline="\n")
     cfg_path.write_text(new_cfg, encoding="utf-8", newline="\n")
-    (codex / "hooks.json").write_text(json.dumps(hooks, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
+    (codex / "hooks.json").write_text(rendered["hooks.json"], encoding="utf-8", newline="\n")
     (codex / "agents").mkdir(exist_ok=True)
-    for fname, toml_text in agents_out.items():
-        agent_path = codex / "agents" / fname
+    for key in agent_keys:
+        agent_path = codex / "agents" / key.split("/", 1)[1]
         _backup_once(agent_path)
-        agent_path.write_text(toml_text, encoding="utf-8", newline="\n")
+        agent_path.write_text(rendered[key], encoding="utf-8", newline="\n")
     ensure_skill_junctions(manifest, claude / "skills", home / ".agents" / "skills")
 
 if __name__ == "__main__":
