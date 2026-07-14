@@ -461,3 +461,17 @@ def test_sync_returns_4_and_keeps_file_on_invalid_result(make_canon, monkeypatch
                         lambda h: "[dup]\nx = 1\n\n[dup]\nx = 2")
     assert codex_sync.sync(home) == 4
     assert (home / ".codex" / "config.toml").read_text(encoding="utf-8") == before
+
+def test_fresh_machine_no_config_toml(make_canon):
+    """Эпик 2, задача 4: свежая машина без ~/.codex/config.toml — sync создаёт
+    файл из одного managed-блока (регрессия на ветки `if exists else ""`)."""
+    import tomllib as _toml
+    from codex_sync import sync, check, BEGIN
+    home = make_canon()
+    (home / ".codex" / "config.toml").unlink()
+    assert sync(home) == 0
+    raw = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    assert raw.startswith(BEGIN)                              # файл = один managed-блок
+    from codex_sync import END
+    _toml.loads(raw.replace(BEGIN, "").replace(END, ""))
+    assert check(home)["canon-newer"] == [] and check(home)["manual-drift"] == []
