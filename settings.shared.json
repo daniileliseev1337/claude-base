@@ -139,6 +139,17 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$HOME\\.claude\\scripts\\codex-autosync.ps1\"",
+            "shell": "powershell",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "PreToolUse": [
