@@ -197,6 +197,24 @@ def test_ensure_skill_junctions(tmp_path):
     assert not (dst / "old-skill").exists()
     assert (src / "old-skill" / "SKILL.md").exists()          # источник цел
 
+def test_skills_manifest_requires_explicit_enable_or_skip(tmp_path):
+    import pytest
+    from codex_sync import validate_skills_manifest
+    skills = tmp_path / "skills"
+    for name in ("enabled", "skipped"):
+        (skills / name).mkdir(parents=True)
+        (skills / name / "SKILL.md").write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
+    validate_skills_manifest(
+        {"enable": ["enabled"], "skip_reason": {"skipped": "нужен adapter"}}, skills
+    )
+    with pytest.raises(ValueError, match="не классифицированы"):
+        validate_skills_manifest({"enable": ["enabled"], "skip_reason": {}}, skills)
+    with pytest.raises(ValueError, match="одновременно"):
+        validate_skills_manifest(
+            {"enable": ["enabled"], "skip_reason": {"enabled": "дубль", "skipped": "причина"}},
+            skills,
+        )
+
 def test_render_all_keys_and_purity(make_canon):
     from codex_sync import render_all
     home = make_canon()
@@ -344,6 +362,24 @@ def test_check_reports_missing_skill_junction_and_sync_heals(make_canon):
     assert "skills/тест-скилл#junction" in res["canon-newer"]
     assert sync(home) == 0                                    # sync вылечил
     assert j.exists() and check(home)["canon-newer"] == []
+
+def test_foreign_skill_directory_is_manual_drift_and_preserved(make_canon):
+    import json as _json
+    from codex_sync import sync, check, _is_junction
+    home = make_canon()
+    claude = home / ".claude"
+    skill = claude / "skills" / "тест-скилл"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("---\nname: тест-скилл\n---\n", encoding="utf-8")
+    (claude / "codex-layer" / "skills-manifest.json").write_text(
+        _json.dumps({"enable": ["тест-скилл"], "skip_reason": {}}), encoding="utf-8")
+    foreign = home / ".agents" / "skills" / "тест-скилл"
+    foreign.mkdir(parents=True)
+    (foreign / "LOCAL.txt").write_text("не удалять", encoding="utf-8")
+    assert "skills/тест-скилл#junction" in check(home)["manual-drift"]
+    assert sync(home) == 3
+    assert (foreign / "LOCAL.txt").read_text(encoding="utf-8") == "не удалять"
+    assert not _is_junction(foreign)
 
 def test_targets_unknown_name_error(make_canon):
     import pytest as _pytest

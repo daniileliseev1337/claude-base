@@ -62,6 +62,14 @@ def test_task_and_result_schemas_are_valid(tmp_path):
     jsonschema.validate(task, task_schema)
     jsonschema.validate(make_result(task), result_schema)
 
+    invalid_task = make_task(tmp_path)
+    invalid_task["context"]["files"] = ["../.env"]
+    assert list(jsonschema.Draft202012Validator(task_schema).iter_errors(invalid_task))
+    invalid_result = make_result(task, changes=["C:/Users/example/.env"])
+    invalid_result["summary"] = ""
+    invalid_result["checks"] = []
+    assert list(jsonschema.Draft202012Validator(result_schema).iter_errors(invalid_result))
+
 
 def test_validate_task_rejects_sensitive_and_traversal_paths(tmp_path):
     task = make_task(tmp_path)
@@ -87,10 +95,29 @@ def test_validate_task_stops_recursion_and_requires_write_opt_in(tmp_path):
     bridge.validate_task(task, tmp_path, "codex", True)
 
 
+def test_validate_task_rejects_empty_source_and_secret_values(tmp_path):
+    task = make_task(tmp_path)
+    task["source"] = ""
+    with pytest.raises(bridge.BridgeError, match="source"):
+        bridge.validate_task(task, tmp_path, "codex", False)
+
+    task = make_task(tmp_path)
+    task["goal"] = "Проверь token=supersecretvalue123"
+    with pytest.raises(bridge.BridgeError, match="похожую на секрет"):
+        bridge.validate_task(task, tmp_path, "codex", False)
+    assert "supersecret" not in bridge._redact_text('{"token":"supersecretvalue123"}')
+    assert "123e4567" not in bridge._redact_text('{"session_id":"123e4567-e89b-12d3-a456-426614174000"}')
+
+
 def test_validate_result_enforces_read_only(tmp_path):
     task = make_task(tmp_path)
     with pytest.raises(bridge.BridgeError, match="read-only"):
         bridge.validate_result(make_result(task, changes=["changed.txt"]), task)
+
+    failed = make_result(task)
+    failed["checks"][0]["status"] = "fail"
+    with pytest.raises(bridge.BridgeError, match="completed требует"):
+        bridge.validate_result(failed, task)
 
 
 def test_commands_use_stdin_and_structured_output(tmp_path):
@@ -105,6 +132,10 @@ def test_commands_use_stdin_and_structured_output(tmp_path):
     assert "--json-schema" in claude and "--no-session-persistence" in claude
     assert claude[claude.index("--permission-mode") + 1] == "plan"
     assert "Read,Glob,Grep" in claude
+
+    runner = bridge._runner_schema(json.loads(bridge.RESULT_SCHEMA.read_text(encoding="utf-8")))
+    serialized = json.dumps(runner)
+    assert "pattern" not in serialized and "minLength" not in serialized
 
 
 def test_codex_roundtrip_preserves_utf8(monkeypatch, tmp_path):
@@ -127,6 +158,7 @@ def test_codex_roundtrip_preserves_utf8(monkeypatch, tmp_path):
     )
     assert bridge.run(args) == 0
     assert json.loads(output.read_text(encoding="utf-8"))["summary"] == "Кириллица сохранена."
+    assert output.with_suffix(".md").is_file()
 
 
 def test_claude_structured_output_roundtrip(monkeypatch, tmp_path):
@@ -165,6 +197,10 @@ def test_runner_failure_and_timeout_are_explicit(monkeypatch, tmp_path):
     )
     with pytest.raises(bridge.BridgeError, match="кодом 7"):
         bridge.run(args)
+    failure = (tmp_path / "out.failure.json")
+    assert failure.is_file()
+    assert json.loads(failure.read_text(encoding="utf-8"))["kind"] == "nonzero_exit"
+    assert failure.with_suffix(".md").is_file()
 
     monkeypatch.setattr(
         bridge, "_run_process",

@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import re
+import signal
 import shutil
 import subprocess
 import sys
@@ -33,7 +34,19 @@ RESULT_KEYS = {
 }
 SENSITIVE_PARTS = {
     ".credentials.json", ".hf-token", ".env", ".claude.json", "credentials",
-    "secrets", "secret", "tokens", "token",
+    "secrets", "secret", "tokens", "token", ".netrc", ".npmrc", ".pypirc",
+    "id_rsa", "id_ed25519",
+}
+SECRET_PATTERNS = (
+    re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
+    re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/-]{12,}"),
+    re.compile(r"(?i)\b(?:api[_ -]?key|password|secret|token)['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9._~+/-]{8,}"),
+)
+RUNNER_UNSUPPORTED_SCHEMA_KEYS = {
+    "$schema", "$id", "title", "pattern", "minLength", "maxLength",
+    "minItems", "maxItems", "uniqueItems",
 }
 
 
@@ -64,8 +77,43 @@ def _sensitive_path(value: str) -> bool:
     parts = {part.lower() for part in PurePosixPath(value).parts}
     if parts & SENSITIVE_PARTS:
         return True
+    if any(part.startswith(".env") or "credential" in part or "secret" in part
+           for part in parts):
+        return True
     lowered = value.lower()
-    return lowered.endswith(".pem") or lowered.endswith(".key") or lowered == ".git/config"
+    return (lowered.endswith((".pem", ".key", ".p12", ".pfx"))
+            or lowered in {".git/config", ".codex/config.toml"})
+
+
+def _secret_match(value) -> str | None:
+    if isinstance(value, str):
+        for pattern in SECRET_PATTERNS:
+            if pattern.search(value):
+                return pattern.pattern
+    elif isinstance(value, dict):
+        for child in value.values():
+            found = _secret_match(child)
+            if found:
+                return found
+    elif isinstance(value, list):
+        for child in value:
+            found = _secret_match(child)
+            if found:
+                return found
+    return None
+
+
+def _file_has_secret(path: Path) -> bool:
+    try:
+        if path.stat().st_size > 2 * 1024 * 1024:
+            return False
+        raw = path.read_bytes()
+    except OSError:
+        return False
+    if b"\x00" in raw:
+        return False
+    text = raw.decode("utf-8", errors="ignore")
+    return _secret_match(text) is not None
 
 
 def _string_list(value, name: str, *, nonempty: bool = False) -> None:
@@ -86,6 +134,8 @@ def validate_task(task: dict, cwd: Path, partner: str, allow_write: bool) -> Non
         raise BridgeError("task_id: используй 1–96 символов A-Z, a-z, 0-9, ._- ")
     if task["target"] != partner:
         raise BridgeError(f"target={task['target']!r} не совпадает с --partner={partner!r}")
+    if partner not in PARTNERS or not isinstance(task["source"], str) or not task["source"].strip():
+        raise BridgeError("source должен быть непустой строкой, partner — встроенным адаптером")
     if task["mode"] not in MODES or task["permissions"] not in PERMISSIONS:
         raise BridgeError("неизвестный mode или permissions")
     if not isinstance(task["hop_count"], int) or isinstance(task["hop_count"], bool):
@@ -118,8 +168,13 @@ def validate_task(task: dict, cwd: Path, partner: str, allow_write: bool) -> Non
         if _sensitive_path(value):
             raise BridgeError(f"чувствительный путь нельзя передавать партнёру: {value!r}")
     for value in context["files"]:
-        if not (cwd / value).is_file():
+        source = cwd / value
+        if not source.is_file():
             raise BridgeError(f"входной файл не найден: {value}")
+        if _file_has_secret(source):
+            raise BridgeError(f"входной файл похож на содержащий секрет: {value}")
+    if _secret_match(task):
+        raise BridgeError("task содержит строку, похожую на секрет")
 
 
 def validate_result(result: dict, task: dict) -> None:
@@ -146,11 +201,17 @@ def validate_result(result: dict, task: dict) -> None:
             raise BridgeError("checks[].status: неизвестное значение")
         if not all(isinstance(check[key], str) for key in ("name", "evidence")):
             raise BridgeError("checks[]: name и evidence должны быть строками")
+    if result["status"] == "completed" and any(
+        check["status"] != "pass" for check in result["checks"]
+    ):
+        raise BridgeError("completed требует status=pass у каждого checks[]")
     for value in result["changes"]:
         if not _portable_relative(value) or _sensitive_path(value):
             raise BridgeError(f"непереносимый или чувствительный путь в changes: {value!r}")
     if task["permissions"] == "read-only" and result["changes"]:
         raise BridgeError("read-only партнёр сообщил об изменённых файлах")
+    if _secret_match(result):
+        raise BridgeError("result содержит строку, похожую на секрет")
 
 
 def _find_nested_key(value, key: str):
@@ -205,18 +266,29 @@ def build_prompt(task: dict) -> str:
     )
 
 
+def _runner_schema(value):
+    """Убери ограничения, которых нет в Structured Outputs; runtime проверит строгий контракт."""
+    if isinstance(value, dict):
+        return {key: _runner_schema(child) for key, child in value.items()
+                if key not in RUNNER_UNSUPPORTED_SCHEMA_KEYS}
+    if isinstance(value, list):
+        return [_runner_schema(child) for child in value]
+    return value
+
+
 def build_command(partner: str, binary: Path, cwd: Path, output_file: Path,
-                  permissions: str, model: str | None) -> list[str]:
+                  permissions: str, model: str | None,
+                  schema_path: Path = RESULT_SCHEMA) -> list[str]:
     if partner == "codex":
         command = [
             str(binary), "exec", "-C", str(cwd), "--skip-git-repo-check", "--ephemeral",
-            "--ignore-user-config", "--sandbox", permissions, "--output-schema", str(RESULT_SCHEMA),
+            "--ignore-user-config", "--sandbox", permissions, "--output-schema", str(schema_path),
             "--output-last-message", str(output_file), "-",
         ]
         if model:
             command[2:2] = ["--model", model]
         return command
-    schema = json.dumps(_load_json(RESULT_SCHEMA), ensure_ascii=False, separators=(",", ":"))
+    schema = json.dumps(_load_json(schema_path), ensure_ascii=False, separators=(",", ":"))
     command = [
         str(binary), "-p", "--output-format", "json", "--json-schema", schema,
         "--no-session-persistence", "--permission-mode",
@@ -253,6 +325,61 @@ def _write_json_atomic(path: Path, value: dict) -> None:
     tmp.replace(path)
 
 
+def _redact_text(value: str) -> str:
+    redacted = value
+    for pattern in SECRET_PATTERNS:
+        redacted = pattern.sub("<redacted>", redacted)
+    redacted = re.sub(
+        r'("(?:session_id|uuid)"\s*:\s*")[^"]+("?)', r'\1<redacted>\2', redacted,
+        flags=re.I,
+    )
+    return redacted
+
+
+def _write_result_markdown(path: Path, result: dict) -> Path:
+    md_path = path.with_suffix(".md")
+    checks = "\n".join(
+        f"- `{item['status']}` — {item['name']}: {item['evidence']}"
+        for item in result["checks"]
+    )
+    changes = "\n".join(f"- `{item}`" for item in result["changes"]) or "- Нет."
+    text = (
+        f"# LLM interop result: {result['task_id']}\n\n"
+        f"- Статус: `{result['status']}`\n"
+        f"- Итог: {result['summary']}\n\n"
+        f"## Проверки\n\n{checks}\n\n"
+        f"## Изменения\n\n{changes}\n\n"
+        f"## Следующий шаг\n\n{result['next_step'] or 'Не указан.'}\n"
+    )
+    md_path.write_text(text, encoding="utf-8", newline="\n")
+    return md_path
+
+
+def _write_failure(output: Path, task: dict, partner: str, kind: str,
+                   detail: str, returncode: int | None = None) -> Path:
+    path = output.with_name(f"{output.stem}.failure.json")
+    value = {
+        "schema_version": "1.0",
+        "task_id": task["task_id"],
+        "partner": partner,
+        "status": "runner_error",
+        "kind": kind,
+        "returncode": returncode,
+        "detail": _redact_text(detail)[-4000:],
+    }
+    _write_json_atomic(path, value)
+    md = path.with_suffix(".md")
+    md.write_text(
+        f"# LLM interop failure: {task['task_id']}\n\n"
+        f"- Партнёр: `{partner}`\n"
+        f"- Тип: `{kind}`\n"
+        f"- Код: `{returncode}`\n\n"
+        f"## Диагностика\n\n```text\n{value['detail']}\n```\n",
+        encoding="utf-8", newline="\n",
+    )
+    return path
+
+
 def _terminate_tree(proc: subprocess.Popen) -> None:
     if os.name == "nt":
         subprocess.run(
@@ -260,7 +387,10 @@ def _terminate_tree(proc: subprocess.Popen) -> None:
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
         )
     else:
-        proc.kill()
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
     try:
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
@@ -279,6 +409,7 @@ def _run_process(command: list[str], prompt: str, cwd: Path, timeout: int,
         proc = subprocess.Popen(
             command, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd,
             creationflags=creationflags,
+            start_new_session=(os.name != "nt"),
         )
         try:
             returncode = proc.wait(timeout=timeout)
@@ -302,8 +433,14 @@ def run(args: argparse.Namespace) -> int:
     prompt = build_prompt(task)
     with tempfile.TemporaryDirectory(prefix="llm-interop-") as temp_dir:
         runner_output = Path(temp_dir) / "last-message.json"
+        runner_schema = Path(temp_dir) / "runner-result.schema.json"
+        runner_schema.write_text(
+            json.dumps(_runner_schema(_load_json(RESULT_SCHEMA)), ensure_ascii=False, indent=2),
+            encoding="utf-8", newline="\n",
+        )
         command = build_command(
-            args.partner, binary, cwd, runner_output, task["permissions"], args.model
+            args.partner, binary, cwd, runner_output, task["permissions"], args.model,
+            runner_schema,
         )
         if args.dry_run:
             preview = {
@@ -320,15 +457,37 @@ def run(args: argparse.Namespace) -> int:
                 preview["command"][schema_index] = "<result.schema.json>"
             print(json.dumps(preview, ensure_ascii=False, indent=2))
             return 0
-        proc = _run_process(command, prompt, cwd, args.timeout, Path(temp_dir))
+        try:
+            proc = _run_process(command, prompt, cwd, args.timeout, Path(temp_dir))
+        except BridgeError as exc:
+            failure = _write_failure(
+                Path(args.output).resolve(), task, args.partner, "timeout", str(exc)
+            )
+            raise BridgeError(f"{exc}; evidence={failure}") from exc
         if proc.returncode:
             detail = (proc.stderr or proc.stdout or "без диагностики").strip()[-2000:]
-            raise BridgeError(f"партнёр завершился с кодом {proc.returncode}: {detail}")
+            failure = _write_failure(
+                Path(args.output).resolve(), task, args.partner, "nonzero_exit", detail,
+                proc.returncode,
+            )
+            raise BridgeError(
+                f"партнёр завершился с кодом {proc.returncode}: {_redact_text(detail)}; "
+                f"evidence={failure}"
+            )
         raw = runner_output.read_text(encoding="utf-8") if args.partner == "codex" else proc.stdout
-        result = _extract_json(raw)
-        validate_result(result, task)
-        _write_json_atomic(Path(args.output).resolve(), result)
-        print(f"[llm-interop] {args.partner}: {result['status']} -> {Path(args.output).resolve()}")
+        try:
+            result = _extract_json(raw)
+            validate_result(result, task)
+        except BridgeError as exc:
+            failure = _write_failure(
+                Path(args.output).resolve(), task, args.partner, "invalid_result",
+                f"{exc}\n\nRAW:\n{raw[-3000:]}", proc.returncode,
+            )
+            raise BridgeError(f"{exc}; evidence={failure}") from exc
+        output = Path(args.output).resolve()
+        _write_json_atomic(output, result)
+        markdown = _write_result_markdown(output, result)
+        print(f"[llm-interop] {args.partner}: {result['status']} -> {output} + {markdown}")
         return 0
 
 

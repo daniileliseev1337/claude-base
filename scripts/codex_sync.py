@@ -126,6 +126,37 @@ def _is_junction(p: Path) -> bool:
     except (OSError, AttributeError):
         return False
 
+def _junction_points_to(dst: Path, source: Path) -> bool:
+    try:
+        return _is_junction(dst) and dst.resolve(strict=True) == source.resolve(strict=True)
+    except OSError:
+        return False
+
+def validate_skills_manifest(manifest: dict, skills_dir: Path) -> None:
+    """Каждый skill канона явно включён или осознанно пропущен с причиной."""
+    enabled = manifest.get("enable", [])
+    skipped = manifest.get("skip_reason", {})
+    if not isinstance(enabled, list) or any(not isinstance(name, str) for name in enabled):
+        raise ValueError("skills-manifest.enable должен быть списком строк")
+    if not isinstance(skipped, dict) or any(
+        not isinstance(name, str) or not isinstance(reason, str) or not reason.strip()
+        for name, reason in skipped.items()
+    ):
+        raise ValueError("skills-manifest.skip_reason должен быть map имя→непустая причина")
+    overlap = set(enabled) & set(skipped)
+    if overlap:
+        raise ValueError(f"скилл одновременно enable и skip_reason: {', '.join(sorted(overlap))}")
+    actual = {child.name for child in skills_dir.iterdir()
+              if child.is_dir() and (child / "SKILL.md").is_file()}
+    accounted = set(enabled) | set(skipped)
+    missing = actual - accounted
+    stale = accounted - actual
+    if missing or stale:
+        raise ValueError(
+            "skills-manifest не соответствует канону: "
+            f"не классифицированы={sorted(missing)}, отсутствуют={sorted(stale)}"
+        )
+
 def ensure_skill_junctions(manifest: dict, skills_dir: Path, agents_skills_dir: Path) -> list:
     """Junction на каждый скилл из манифеста в ~/.agents/skills (стандартный путь Codex).
     Возвращает список созданных. Чужие папки (не junction на skills_dir) не трогает."""
@@ -139,6 +170,9 @@ def ensure_skill_junctions(manifest: dict, skills_dir: Path, agents_skills_dir: 
     for n in enabled:
         dst = agents_skills_dir / n
         if dst.exists():
+            if not _junction_points_to(dst, skills_dir / n):
+                print(f"[codex_sync] warn: {dst} существует, но это не junction на канон — "
+                      "не трогаю", file=sys.stderr)
             continue
         r = subprocess.run(["cmd", "/c", "mklink", "/J", str(dst), str(skills_dir / n)],
                            capture_output=True, text=True)
@@ -465,10 +499,17 @@ def check(home: Path) -> dict:
     if sm_path.exists():
         manifest = json.loads(sm_path.read_text(encoding="utf-8"))
         skills_dir = claude / "skills"
+        validate_skills_manifest(manifest, skills_dir)
         agents_skills_dir = home / ".agents" / "skills"
         for name in manifest.get("enable", []):
-            if (skills_dir / name / "SKILL.md").exists() and not (agents_skills_dir / name).is_dir():
+            source = skills_dir / name
+            dst = agents_skills_dir / name
+            if not (source / "SKILL.md").exists():
+                continue
+            if not dst.exists():
                 res["canon-newer"].append(f"skills/{name}#junction")
+            elif not _junction_points_to(dst, source):
+                res["manual-drift"].append(f"skills/{name}#junction")
     return res
 
 def _backup_once(p: Path) -> None:
@@ -539,6 +580,9 @@ def diff_cmd(home: Path) -> int:
     expected = render_all(home)
     st = check(home)
     for key in st["manual-drift"]:
+        if key not in expected:
+            print(f"manual-drift: {key} — локальный каталог не является junction на канон")
+            continue
         disk = read_disk_output(home, key) or ""
         for line in difflib.unified_diff(expected[key].splitlines(), disk.splitlines(),
                                          fromfile=f"{key} (ожидаемо из канона)",

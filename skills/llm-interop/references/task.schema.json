@@ -22,12 +22,12 @@
       "additionalProperties": false,
       "required": ["files", "facts", "prior_decisions"],
       "properties": {
-        "files": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "files": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "^(?!/|~|[A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"}, "uniqueItems": true},
         "facts": {"type": "array", "items": {"type": "string"}},
         "prior_decisions": {"type": "array", "items": {"type": "string"}}
       }
     },
-    "constraints": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "done_when": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
     "deliverables": {
       "type": "array",
@@ -36,7 +36,7 @@
         "additionalProperties": false,
         "required": ["path", "description"],
         "properties": {
-          "path": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1, "pattern": "^(?!/|~|[A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
           "description": {"type": "string", "minLength": 1}
         }
       }
