@@ -158,6 +158,26 @@ def test_render_mcp_toml_http_server():
 def test_collect_agent_tomls_skips_nameless(tmp_path):
     from codex_sync import collect_agent_tomls
     (tmp_path / "good.md").write_text("---\nname: good\ndescription: d\nmodel: haiku\n---\nТело.\n", encoding="utf-8")
-    (tmp_path / "agents.md").write_text("# Индекс агентов\nпросто текст без фронтматтера\n", encoding="utf-8")
+    (tmp_path / "agents.md").write_text("# Индекс агентов\nпросто текст без фронтматтером\n", encoding="utf-8")
     result = collect_agent_tomls(tmp_path)
     assert list(result) == ["good.toml"]
+
+def test_ensure_skill_junctions(tmp_path):
+    from codex_sync import ensure_skill_junctions
+    src = tmp_path / "claude_skills"; dst = tmp_path / "agents_skills"
+    (src / "excel-helper").mkdir(parents=True)
+    (src / "excel-helper" / "SKILL.md").write_text("---\nname: excel-helper\n---\n", encoding="utf-8")
+    (src / "old-skill").mkdir()
+    (src / "old-skill" / "SKILL.md").write_text("---\nname: old-skill\n---\n", encoding="utf-8")
+    manifest = {"enable": ["excel-helper", "ghost"]}
+    made = ensure_skill_junctions(manifest, src, dst)
+    assert (dst / "excel-helper" / "SKILL.md").exists()      # junction работает
+    assert made == ["excel-helper"]                           # ghost пропущен с warn
+    # идемпотентность
+    assert ensure_skill_junctions(manifest, src, dst) == []
+    # cleanup: скилл выпал из манифеста -> junction снимается
+    import subprocess
+    subprocess.run(["cmd", "/c", "mklink", "/J", str(dst / "old-skill"), str(src / "old-skill")], capture_output=True)
+    ensure_skill_junctions(manifest, src, dst)
+    assert not (dst / "old-skill").exists()
+    assert (src / "old-skill" / "SKILL.md").exists()          # источник цел

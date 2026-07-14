@@ -52,6 +52,8 @@ def render_mcp_toml(mcp_servers: dict, allow: list) -> str:
     return "\n".join(out)
 
 def render_skills_toml(manifest: dict, skills_dir: Path) -> str:
+    """не используется main() с 2026-07-14 — skills.config не работает в десктоп-сборке,
+    оставлена для будущих версий"""
     out = []
     for name in manifest.get("enable", []):
         d = skills_dir / name
@@ -63,6 +65,50 @@ def render_skills_toml(manifest: dict, skills_dir: Path) -> str:
         out.append("enabled = true")
         out.append("")
     return "\n".join(out)
+
+def _is_junction(p: Path) -> bool:
+    """Проверить, является ли путь Windows directory junction или symlink."""
+    import os
+    try:
+        if not p.is_dir():
+            return False
+        # Windows symlink (os.path.islink работает, но может не ловить все junction'ы)
+        # Альтернативный способ: проверить атрибут файла FILE_ATTRIBUTE_REPARSE_POINT (0x400)
+        stat_result = os.stat(p, follow_symlinks=False)
+        return bool(stat_result.st_file_attributes & 0x400) or os.path.islink(str(p))
+    except (OSError, AttributeError):
+        return False
+
+def ensure_skill_junctions(manifest: dict, skills_dir: Path, agents_skills_dir: Path) -> list:
+    """Junction на каждый скилл из манифеста в ~/.agents/skills (стандартный путь Codex).
+    Возвращает список созданных. Чужие папки (не junction на skills_dir) не трогает."""
+    import subprocess
+    agents_skills_dir.mkdir(parents=True, exist_ok=True)
+    enabled = [n for n in manifest.get("enable", []) if (skills_dir / n / "SKILL.md").exists()]
+    for n in manifest.get("enable", []):
+        if n not in enabled:
+            print(f"[codex_sync] warn: скилл {n} не найден в {skills_dir}", file=sys.stderr)
+    made = []
+    for n in enabled:
+        dst = agents_skills_dir / n
+        if dst.exists():
+            continue
+        r = subprocess.run(["cmd", "/c", "mklink", "/J", str(dst), str(skills_dir / n)],
+                           capture_output=True, text=True)
+        if r.returncode == 0:
+            made.append(n)
+        else:
+            print(f"[codex_sync] warn: junction {n} не создан: {r.stderr.strip()}", file=sys.stderr)
+    # cleanup: junction'ы, указывающие в skills_dir, но выпавшие из манифеста
+    for child in agents_skills_dir.iterdir():
+        if child.name in enabled or not child.is_dir():
+            continue
+        if _is_junction(child) and (skills_dir / child.name).exists():
+            try:
+                child.rmdir()   # junction снимается rmdir, содержимое источника не трогается
+            except OSError:
+                print(f"[codex_sync] warn: не удалось удалить junction {child.name}", file=sys.stderr)
+    return made
 
 def _pwsh(script: Path) -> str:
     return f"powershell -NoProfile -ExecutionPolicy Bypass -File \"{script}\""
@@ -185,14 +231,17 @@ def main(home: Path, dry_run: bool = False):
     mcp = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
     allow = json.loads((claude / "codex-layer" / "mcp-whitelist.json").read_text(encoding="utf-8"))["allow"]
     manifest = json.loads((claude / "codex-layer" / "skills-manifest.json").read_text(encoding="utf-8"))
-    payload = render_mcp_toml(mcp, allow) + "\n" + render_skills_toml(manifest, claude / "skills")
+    payload = render_mcp_toml(mcp, allow)
     cfg_path = codex / "config.toml"
     new_cfg = apply_managed_block(cfg_path.read_text(encoding="utf-8"), payload)
     hooks = render_hooks_json(home)
     agents_out = collect_agent_tomls(claude / "agents")
+    # Прогноз junction'ов для dry_run
+    enabled_skills = [n for n in manifest.get("enable", []) if (claude / "skills" / n / "SKILL.md").exists()]
     if dry_run:
         print(f"AGENTS.md: {len(agents_md.encode('utf-8'))} байт; config.toml payload: {len(payload)}; "
-              f"hooks: {sum(len(v) for v in hooks['hooks'].values())} групп; agents: {len(agents_out)}")
+              f"hooks: {sum(len(v) for v in hooks['hooks'].values())} групп; agents: {len(agents_out)}; "
+              f"junctions: {len(enabled_skills)}")
         return
     for p in (cfg_path, codex / "AGENTS.md", codex / "hooks.json"):
         _backup_once(p)
@@ -204,6 +253,7 @@ def main(home: Path, dry_run: bool = False):
         agent_path = codex / "agents" / fname
         _backup_once(agent_path)
         agent_path.write_text(toml_text, encoding="utf-8")
+    ensure_skill_junctions(manifest, claude / "skills", home / ".agents" / "skills")
 
 if __name__ == "__main__":
     import argparse
