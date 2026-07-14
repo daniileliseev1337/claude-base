@@ -128,4 +128,5 @@ MCP-остатка. Полная гео-модель 3 состояний — [[
 
 ## Связи
 [[feedback_web_direct_access]] · [[ru-gov-access]] · [[web_access_r_jina_fallback]] ·
-[[web_access_survey_2026_06]] · [[playwright_mcp_pin_version]] · CLAUDE.md §«Веб-доступ».
+[[web_access_survey_2026_06]] · [[playwright_mcp_pin_version]] · CLAUDE.md §«Веб-доступ» ·
+Codex: см. `references/codex.md`.
