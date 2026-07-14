@@ -281,6 +281,21 @@ def _read_canon(home: Path):
     allow = json.loads(wl_text)["allow"]
     return core, layer, wl_text, sm_text, mcp, allow
 
+PROFILE_HEADER = ("# generated-by: codex_sync (канон: codex-layer/profiles/{name}.toml) — "
+                  "править канон, не этот файл\n")
+
+def render_profiles(home: Path) -> dict:
+    """Профили Codex: файл канона → ~/.codex/<name>.config.toml целиком (файл наш)."""
+    d = home / ".claude" / "codex-layer" / "profiles"
+    out = {}
+    if not d.exists():
+        return out
+    for f in sorted(d.glob("*.toml")):
+        text = f.read_text(encoding="utf-8")
+        tomllib.loads(text)      # невалидный канон профиля — падаем с понятной ошибкой
+        out[f"{f.stem}.config.toml"] = PROFILE_HEADER.format(name=f.stem) + text
+    return out
+
 def render_target_codex(home: Path) -> dict:
     """Чистый рендер всех артефактов таргета codex: ключ → содержимое. Ничего не пишет."""
     claude = home / ".claude"
@@ -292,6 +307,7 @@ def render_target_codex(home: Path) -> dict:
     }
     for fname, toml_text in collect_agent_tomls(claude / "agents").items():
         out[f"agents/{fname}"] = toml_text
+    out.update(render_profiles(home))
     return out
 
 def collect_inputs(home: Path) -> dict:

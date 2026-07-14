@@ -32,5 +32,9 @@ def make_canon(tmp_path):
             "---\nname: тест-агент\ndescription: тестовый ревьюер\nmodel: sonnet\ntools: Read\n---\nТело агента.\n",
             encoding="utf-8")
         (home / ".codex" / "config.toml").write_text("x = 1\n", encoding="utf-8")
+        prof = claude / "codex-layer" / "profiles"
+        prof.mkdir(exist_ok=True)
+        (prof / "plus.toml").write_text('model = "gpt-5.6-luna"\n', encoding="utf-8")
+        (prof / "pro.toml").write_text('model = "gpt-5.6-sol"\n', encoding="utf-8")
         return home
     return _make
