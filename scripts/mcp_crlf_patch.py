@@ -103,5 +103,5 @@ if __name__ == "__main__":
         if not venvs:
             sys.exit(0)        # мост выключен — проверять нечего
     if not venvs:
-        ap.error("нужен --venv, --scan или --from-overlay")
+        ap.error("[mcp_crlf_patch] нужен --venv, --scan или --from-overlay")
     sys.exit(run(venvs, args.check))

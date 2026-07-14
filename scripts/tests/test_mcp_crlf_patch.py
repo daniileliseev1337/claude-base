@@ -2,7 +2,6 @@
 """Тесты патчера CRLF-бага Python MCP SDK (python-sdk#2433)."""
 import pathlib
 import sys
-import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).parents[1]))
 from mcp_crlf_patch import (BUGGY, FIXED, classify, process_venv,
