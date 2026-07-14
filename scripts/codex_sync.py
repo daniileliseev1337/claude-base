@@ -147,6 +147,10 @@ TOOL_MAP = [
     (r"\bTask\b(?= tool| тул| \()", "spawn_agents"),
 ]
 
+# [I2] маркеры записи в tools: фронтматтера — есть хотя бы один → агент пишет файлы,
+# sandbox_mode не сужаем; нет ни одного (и tools вообще заданы) → read-only ревьюер.
+WRITE_TOOL_MARKERS = ("Write", "Edit", "search_and_replace", "add_paragraph")
+
 def _yaml_value(front: str, key: str) -> str:
     """Значение ключа фронтматтера; block-scalar (| и >) собирается целиком:
     | — с переводами строк, > — склейка пробелом."""
@@ -184,11 +188,14 @@ def convert_agent_md(text: str):
     name = _yaml_value(front, "name")
     model = MODEL_MAP.get(_yaml_value(front, "model"), "gpt-5.6-terra")
     desc = _yaml_value(front, "description")
+    tools = _yaml_value(front, "tools")
     for pat, repl in TOOL_MAP:
         body = re.sub(pat, repl, body)
         desc = re.sub(pat, repl, desc)
-    toml_text = (f"name = {_t(name)}\ndescription = {_t(desc)}\nmodel = {_t(model)}\n"
-                 f"developer_instructions = {_toml_block(body.strip())}\n")
+    toml_text = f"name = {_t(name)}\ndescription = {_t(desc)}\nmodel = {_t(model)}\n"
+    if tools and not any(marker in tools for marker in WRITE_TOOL_MARKERS):
+        toml_text += 'sandbox_mode = "read-only"\n'   # [I2] ревьюер без Write/Edit — сузить sandbox в Codex
+    toml_text += f"developer_instructions = {_toml_block(body.strip())}\n"
     return f"{name}.toml", toml_text
 
 def collect_agent_tomls(agents_dir: Path) -> dict:
@@ -245,14 +252,16 @@ def main(home: Path, dry_run: bool = False):
         return
     for p in (cfg_path, codex / "AGENTS.md", codex / "hooks.json"):
         _backup_once(p)
-    (codex / "AGENTS.md").write_text(agents_md, encoding="utf-8")
-    cfg_path.write_text(new_cfg, encoding="utf-8")
-    (codex / "hooks.json").write_text(json.dumps(hooks, ensure_ascii=False, indent=2), encoding="utf-8")
+    # [I4] newline="\n" — на Windows write_text() иначе разворачивает \n в \r\n,
+    # и реальный размер файла на диске расходится с гейтом в render_agents_md (считает LF).
+    (codex / "AGENTS.md").write_text(agents_md, encoding="utf-8", newline="\n")
+    cfg_path.write_text(new_cfg, encoding="utf-8", newline="\n")
+    (codex / "hooks.json").write_text(json.dumps(hooks, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
     (codex / "agents").mkdir(exist_ok=True)
     for fname, toml_text in agents_out.items():
         agent_path = codex / "agents" / fname
         _backup_once(agent_path)
-        agent_path.write_text(toml_text, encoding="utf-8")
+        agent_path.write_text(toml_text, encoding="utf-8", newline="\n")
     ensure_skill_junctions(manifest, claude / "skills", home / ".agents" / "skills")
 
 if __name__ == "__main__":

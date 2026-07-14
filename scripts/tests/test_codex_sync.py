@@ -137,6 +137,15 @@ def test_convert_agent_md_wildcard_tools():
     assert "mcp__" not in toml_text
     assert "spreadsheets" in toml_text and "documents" in toml_text
 
+def test_convert_agent_readonly_sandbox():
+    from codex_sync import convert_agent_md
+    ro = "---\nname: r\ndescription: d\nmodel: sonnet\ntools: Read, Grep, mcp__excel__read_data_from_excel\n---\nТело.\n"
+    _, t = convert_agent_md(ro)
+    assert 'sandbox_mode = "read-only"' in t
+    rw = "---\nname: w\ndescription: d\nmodel: sonnet\ntools: Read, Write, Edit\n---\nТело.\n"
+    _, t2 = convert_agent_md(rw)
+    assert "sandbox_mode" not in t2
+
 def test_render_agents_md_limit():
     from codex_sync import render_agents_md
     out = render_agents_md("ядро", "слой")
@@ -145,6 +154,12 @@ def test_render_agents_md_limit():
     import pytest
     with pytest.raises(ValueError):
         render_agents_md("x" * 33000, "y")
+
+def test_agents_md_written_lf(tmp_path, monkeypatch):
+    # мини-проверка: render_agents_md не содержит \r, а гейт меряет то, что пишется
+    from codex_sync import render_agents_md
+    out = render_agents_md("ядро", "слой")
+    assert "\r" not in out
 
 def test_render_mcp_toml_http_server():
     from codex_sync import render_mcp_toml
