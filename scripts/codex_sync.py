@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 BEGIN = "# >>> claude-base managed >>>"
@@ -52,6 +53,42 @@ def render_mcp_toml(mcp_servers: dict, allow: list) -> str:
                 out.append(f"{k} = {_t(env[k])}")
         out.append("")
     return "\n".join(out)
+
+def render_base_tables(home: Path) -> str:
+    """Эталонные секции base.toml для managed-блока. Только таблицы; секции,
+    заданные пользователем вне блока, пропускаются с предупреждением
+    (дубль таблицы = невалидный TOML)."""
+    p = home / ".claude" / "codex-layer" / "base.toml"
+    if not p.exists():
+        return ""
+    text = p.read_text(encoding="utf-8")
+    parsed = tomllib.loads(text)
+    toplevel = [k for k, v in parsed.items() if not isinstance(v, dict)]
+    if toplevel:
+        raise ValueError(f"base.toml: top-level ключи запрещены (уедут в чужую таблицу): {toplevel}")
+    cfg = home / ".codex" / "config.toml"
+    outside = cfg.read_text(encoding="utf-8") if cfg.exists() else ""
+    outside = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", re.S).sub("", outside)
+    user_tables = {k for k, v in tomllib.loads(outside).items() if isinstance(v, dict)}
+    blocks, name, current = [], None, []
+    for line in text.splitlines():
+        m = re.match(r"\[([A-Za-z0-9_.-]+)\]", line.strip())
+        if m:
+            if name is not None:
+                blocks.append((name, current))
+            name, current = m.group(1).split(".")[0], [line]
+        elif name is not None:
+            current.append(line)
+    if name is not None:
+        blocks.append((name, current))
+    kept = []
+    for tname, lines in blocks:
+        if tname in user_tables:
+            print(f"[codex_sync] warn: секция [{tname}] задана вне managed-блока — эталон пропущен",
+                  file=sys.stderr)
+            continue
+        kept.append("\n".join(lines).rstrip())
+    return "\n\n".join(kept)
 
 def render_skills_toml(manifest: dict, skills_dir: Path) -> str:
     """не используется main() с 2026-07-14 — skills.config не работает в десктоп-сборке,
@@ -245,7 +282,7 @@ def render_target_codex(home: Path) -> dict:
     core, layer, _, _, mcp, allow = _read_canon(home)
     out = {
         "AGENTS.md": render_agents_md(core, layer),
-        "config.toml#managed": render_mcp_toml(mcp, allow).rstrip(),
+        "config.toml#managed": (render_base_tables(home) + "\n\n" + render_mcp_toml(mcp, allow)).strip(),
         "hooks.json": json.dumps(render_hooks_json(home), ensure_ascii=False, indent=2),
     }
     for fname, toml_text in collect_agent_tomls(claude / "agents").items():
@@ -269,6 +306,9 @@ def collect_inputs(home: Path) -> dict:
     tj = claude / "codex-layer" / "targets.json"
     if tj.exists():
         inputs["codex-layer/targets.json"] = _sha(tj.read_text(encoding="utf-8"))
+    bt = claude / "codex-layer" / "base.toml"
+    if bt.exists():
+        inputs["codex-layer/base.toml"] = _sha(bt.read_text(encoding="utf-8"))
     return inputs
 
 def manifest_path(home: Path) -> Path:
@@ -403,24 +443,34 @@ def sync(home: Path, force=None, dry_run: bool = False) -> int:
         print(f"AGENTS.md: {len(rendered['AGENTS.md'].encode('utf-8'))} байт; "
               f"писать: {len(to_write)}; дрейф-скип: {len(skipped)}; junctions: {len(enabled_skills)}")
         return 3 if skipped else 0
+    build_error = False
     for key in to_write:
         p = _output_path(home, key)
         p.parent.mkdir(parents=True, exist_ok=True)
         _backup_once(p)
         if key == "config.toml#managed":
             existing = p.read_text(encoding="utf-8") if p.exists() else ""
-            _write_atomic(p, apply_managed_block(existing, rendered[key]))
+            new_cfg = apply_managed_block(existing, rendered[key])
+            try:
+                tomllib.loads(new_cfg)
+            except tomllib.TOMLDecodeError as e:
+                print(f"[codex_sync] error: итоговый config.toml невалиден — запись отменена: {e}",
+                      file=sys.stderr)
+                build_error = True
+                continue
+            _write_atomic(p, new_cfg)
         else:
             _write_atomic(p, rendered[key])
     ensure_skill_junctions(manifest, claude / "skills", home / ".agents" / "skills")
-    # манифест: записанное/чистое = ожидаемый хеш; пропущенный дрейф = прежнее значение (дрейф остаётся видимым)
+    # манифест: записанное/чистое = ожидаемый хеш; пропущенный дрейф (ручной или гейт-ошибка) = прежнее значение
     old = (load_manifest(home) or {}).get("outputs", {})
-    outputs = {k: (_sha(rendered[k]) if k not in skipped else old.get(k, ""))
+    unwritten = set(skipped) | ({"config.toml#managed"} if build_error else set())
+    outputs = {k: (_sha(rendered[k]) if k not in unwritten else old.get(k, ""))
                for k in rendered}
     save_manifest(home, collect_inputs(home), outputs)
     for k in skipped:
         print(f"[codex_sync] manual-drift пропущен: {k} (занеси в канон или sync --force-overwrite {k})")
-    return 3 if skipped else 0
+    return 4 if build_error else (3 if skipped else 0)
 
 def diff_cmd(home: Path) -> int:
     """Unified diff всех manual-drift ключей: ожидание из канона vs факт на диске. Всегда 0."""

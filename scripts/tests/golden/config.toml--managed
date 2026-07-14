@@ -1,3 +1,6 @@
+[agents]
+max_threads = 6
+
 [mcp_servers.time]
 command = 'uvx'
 args = ['mcp-server-time']

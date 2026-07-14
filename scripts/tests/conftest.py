@@ -22,6 +22,8 @@ def make_canon(tmp_path):
             json.dumps({"enable": []}), encoding="utf-8")
         (claude / "codex-layer" / "targets.json").write_text(
             json.dumps({"enable": ["codex"]}), encoding="utf-8")
+        (claude / "codex-layer" / "base.toml").write_text(
+            "[agents]\nmax_threads = 6\n", encoding="utf-8")
         (home / ".claude.json").write_text(json.dumps({"mcpServers": {
             "time": {"command": "uvx", "args": ["mcp-server-time"]},
             "excel": {"command": "uvx", "args": ["excel-mcp-server"]},  # вне whitelist

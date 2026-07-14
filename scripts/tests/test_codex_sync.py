@@ -375,3 +375,44 @@ def test_diff_cmd_shows_unified_diff(make_canon, capsys):
     diff_cmd(home)
     out = capsys.readouterr().out
     assert "AGENTS.md" in out and "+ручная правка" in out.replace("+ ручная", "+ручная")
+
+def test_base_tables_flow_into_managed_block(make_canon):
+    import tomllib as _toml
+    from codex_sync import sync
+    home = make_canon()
+    assert sync(home) == 0
+    raw = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    from codex_sync import BEGIN, END
+    block = raw.split(BEGIN)[1].split(END)[0]
+    assert "[agents]" in block and "[mcp_servers.time]" in block
+    assert block.index("[agents]") < block.index("[mcp_servers.time]")   # base перед MCP
+    _toml.loads(raw.replace(BEGIN, "").replace(END, ""))                 # файл валиден
+
+def test_base_collision_skipped_with_warn(make_canon, capsys):
+    from codex_sync import render_all
+    home = make_canon()
+    cfg = home / ".codex" / "config.toml"
+    cfg.write_text("x = 1\n[agents]\nmax_threads = 2\n", encoding="utf-8")
+    payload = render_all(home)["config.toml#managed"]
+    assert "[agents]" not in payload                                      # коллизия пропущена
+    assert "[agents]" in capsys.readouterr().err                          # warn напечатан
+
+def test_base_toplevel_key_rejected(make_canon):
+    import pytest as _pytest
+    from codex_sync import render_all
+    home = make_canon()
+    (home / ".claude" / "codex-layer" / "base.toml").write_text(
+        'web_search = "cached"\n[agents]\nmax_threads = 6\n', encoding="utf-8")
+    with _pytest.raises(ValueError, match="top-level"):
+        render_all(home)
+
+def test_sync_returns_4_and_keeps_file_on_invalid_result(make_canon, monkeypatch):
+    import codex_sync
+    home = make_canon()
+    codex_sync.sync(home)
+    before = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    # ломаем сборку: дубль таблицы внутри payload → итог невалиден, компоненты по отдельности валидны
+    monkeypatch.setattr(codex_sync, "render_base_tables",
+                        lambda h: "[dup]\nx = 1\n\n[dup]\nx = 2")
+    assert codex_sync.sync(home) == 4
+    assert (home / ".codex" / "config.toml").read_text(encoding="utf-8") == before

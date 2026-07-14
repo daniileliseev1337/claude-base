@@ -1,0 +1,11 @@
+# Эталонные общие секции Codex (канон). Только таблицы — top-level ключи запрещены
+# (managed-блок в конце config.toml, top-level ключ прилип бы к чужой таблице).
+[agents]
+max_threads = 6
+max_depth = 1
+
+[shell_environment_policy]
+inherit = "all"
+
+[sandbox_workspace_write]
+network_access = false
