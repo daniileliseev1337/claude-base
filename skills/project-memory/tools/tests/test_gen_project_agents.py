@@ -31,3 +31,9 @@ def test_main_writes_and_refuses_foreign(tmp_path):
     agents.write_text("# Чужой AGENTS.md (написан Codex)\n", encoding="utf-8")
     assert main(root) == 2                       # чужой файл не затираем
     assert "Чужой" in agents.read_text(encoding="utf-8")
+
+def test_main_refuses_empty_foreign_agents_md(tmp_path):
+    root = _proj(tmp_path)
+    (root / "AGENTS.md").write_text("", encoding="utf-8")
+    assert main(root) == 2                       # пустой файл — не наш, не трогаем и не падаем
+    assert (root / "AGENTS.md").read_text(encoding="utf-8") == ""

@@ -31,10 +31,12 @@ def main(root: Path) -> int:
         print("[gen_project_agents] CLAUDE.md не найден — проект без ядра, выходим")
         return 1
     dst = root / "AGENTS.md"
-    if dst.exists() and MARKER not in dst.read_text(encoding="utf-8").splitlines()[0]:
-        print(f"[gen_project_agents] {dst} существует и создан не нами — не трогаю "
-              "(если он и есть канон проекта, наш рендер не нужен)")
-        return 2
+    if dst.exists():
+        first = next(iter(dst.read_text(encoding="utf-8").splitlines()), "")
+        if MARKER not in first:
+            print(f"[gen_project_agents] {dst} существует и создан не нами — не трогаю "
+                  "(если он и есть канон проекта, наш рендер не нужен)")
+            return 2
     dst.write_text(out, encoding="utf-8", newline="\n")
     print(f"[gen_project_agents] записан {dst}")
     return 0
