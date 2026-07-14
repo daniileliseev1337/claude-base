@@ -559,3 +559,63 @@ def test_overlay_server_edit_tracked_in_inputs(make_canon):
     h2 = collect_inputs(home)
     assert h1[".claude.json#mcpServers"] != h2[".claude.json#mcpServers"]
     assert "codex-mcp-overlay" in h1                             # оверлей — вход манифеста
+
+# --- Эпик 3: CLI mcp on/off/status ---
+
+def test_mcp_on_patches_and_enables(make_canon, capsys):
+    from codex_sync import load_overlay, mcp_cmd
+    from mcp_crlf_patch import stdio_path, FIXED
+    home = make_canon()
+    venv = _fake_py_server(home)
+    assert mcp_cmd(home, "on", ["pyserv"]) == 0
+    assert load_overlay(home) == ["pyserv"]
+    assert FIXED in stdio_path(venv).read_text(encoding="utf-8")   # патч применён
+    cfg = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    assert "[mcp_servers.pyserv]" in cfg and "required = false" in cfg
+    assert "рестартни Codex" in capsys.readouterr().out
+
+def test_mcp_on_non_python_server_skips_patch(make_canon, capsys):
+    from codex_sync import load_overlay, mcp_cmd
+    home = make_canon()
+    assert mcp_cmd(home, "on", ["excel"]) == 0                    # command=uvx — патч не нужен
+    assert load_overlay(home) == ["excel"]
+    assert "не требуется" in capsys.readouterr().out
+
+def test_mcp_on_unknown_server_rejected(make_canon, capsys):
+    from codex_sync import load_overlay, mcp_cmd, sync
+    home = make_canon(); sync(home)
+    before = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    assert mcp_cmd(home, "on", ["ghost"]) == 1
+    assert load_overlay(home) == []                               # оверлей не тронут
+    assert (home / ".codex" / "config.toml").read_text(encoding="utf-8") == before
+    assert "ghost" in capsys.readouterr().err
+
+def test_mcp_on_patch_failure_aborts_atomically(make_canon, capsys):
+    from codex_sync import load_overlay, mcp_cmd, sync
+    home = make_canon(); sync(home)
+    venv = _fake_py_server(home)
+    # незнакомый SDK → unknown-pattern → отказ
+    from mcp_crlf_patch import stdio_path
+    stdio_path(venv).write_text("другой код\n", encoding="utf-8")
+    before = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    assert mcp_cmd(home, "on", ["pyserv"]) == 1
+    assert load_overlay(home) == []
+    assert (home / ".codex" / "config.toml").read_text(encoding="utf-8") == before
+    assert "мост не включён" in capsys.readouterr().err
+
+def test_mcp_off_and_status(make_canon, capsys):
+    from codex_sync import load_overlay, mcp_cmd, sync
+    home = make_canon(); sync(home)
+    base_cfg = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    _fake_py_server(home)
+    mcp_cmd(home, "on", ["pyserv"]); capsys.readouterr()
+    assert mcp_cmd(home, "status", []) == 0
+    out = capsys.readouterr().out
+    assert "pyserv" in out and "already-ok" in out                # патч-статус в status
+    assert mcp_cmd(home, "off", []) == 0                          # без имён = все
+    assert load_overlay(home) == []
+    assert (home / ".codex" / "config.toml").read_text(encoding="utf-8") == base_cfg
+
+def test_mcp_on_requires_names(make_canon):
+    from codex_sync import mcp_cmd
+    assert mcp_cmd(make_canon(), "on", []) == 1

@@ -547,6 +547,53 @@ def diff_cmd(home: Path) -> int:
         print()
     return 0
 
+def mcp_cmd(home: Path, action: str, names: list) -> int:
+    """Доменный MCP-мост по требованию: on = патч CRLF + оверлей + sync;
+    off = снять оверлей + sync; status = whitelist/оверлей/патч-статус."""
+    import mcp_crlf_patch as patcher
+    mcp = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
+    overlay = load_overlay(home)
+    if action == "status":
+        allow = json.loads((home / ".claude" / "codex-layer" / "mcp-whitelist.json")
+                           .read_text(encoding="utf-8"))["allow"]
+        print(f"whitelist: {', '.join(sorted(allow))}")
+        print(f"мост: {', '.join(overlay) if overlay else '(выключен)'}")
+        for n in overlay:
+            venv = patcher.venv_from_command(mcp.get(n, {}).get("command", ""))
+            st = patcher.process_venv(venv, check_only=True) if venv else "не python-venv"
+            print(f"  {n}: патч {st}")
+        return 0
+    if action == "on":
+        if not names:
+            print("[codex_sync] error: укажи сервер: mcp on <имя> [...]", file=sys.stderr)
+            return 1
+        unknown = [n for n in names if n not in mcp]
+        if unknown:
+            print(f"[codex_sync] error: нет в ~/.claude.json: {', '.join(unknown)}; "
+                  f"доступны: {', '.join(sorted(mcp))}", file=sys.stderr)
+            return 1
+        for n in names:                       # патч ДО включения; провал → конфиг не тронут
+            venv = patcher.venv_from_command(mcp[n].get("command", ""))
+            if venv is None:
+                print(f"[codex_sync] {n}: не python-venv — CRLF-патч не требуется")
+                continue
+            st = patcher.process_venv(venv, check_only=False)
+            print(f"[codex_sync] {n}: патч {st}")
+            if st not in patcher.OK:
+                print(f"[codex_sync] error: {n}: патч не применён ({st}) — "
+                      f"мост не включён, конфиг не тронут", file=sys.stderr)
+                return 1
+        save_overlay(home, sorted(set(overlay) | set(names)))
+        rc = sync(home)
+        print(f"[codex_sync] мост включён: {', '.join(load_overlay(home))} — рестартни Codex")
+        return rc
+    # off: без имён = выключить всё
+    remove = set(names) if names else set(overlay)
+    save_overlay(home, [n for n in overlay if n not in remove])
+    rc = sync(home)
+    print("[codex_sync] мост выключен — рестартни Codex")
+    return rc
+
 if __name__ == "__main__":
     import argparse
     try:
@@ -555,7 +602,9 @@ if __name__ == "__main__":
     except AttributeError:
         pass
     ap = argparse.ArgumentParser(description="Синк канона ~/.claude в ~/.codex")
-    ap.add_argument("cmd", nargs="?", default="sync", choices=["sync", "check", "diff"])
+    ap.add_argument("cmd", nargs="?", default="sync", choices=["sync", "check", "diff", "mcp"])
+    ap.add_argument("rest", nargs="*", metavar="on|off|status [имя ...]",
+                    help="для mcp: действие и имена серверов")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force-overwrite", action="append", default=[], metavar="KEY|all",
                      help="перезаписать ключ (или all) поверх ручного дрейфа")
@@ -569,5 +618,10 @@ if __name__ == "__main__":
         sys.exit(3 if res["manual-drift"] else (2 if res["canon-newer"] else 0))
     elif args.cmd == "diff":
         sys.exit(diff_cmd(home))
+    elif args.cmd == "mcp":
+        action = args.rest[0] if args.rest else "status"
+        if action not in ("on", "off", "status"):
+            ap.error(f"mcp: неизвестное действие {action} (on|off|status)")
+        sys.exit(mcp_cmd(home, action, args.rest[1:]))
     else:
         sys.exit(sync(home, force=set(args.force_overwrite), dry_run=args.dry_run))
