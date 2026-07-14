@@ -136,3 +136,55 @@ def convert_agent_md(text: str):
     toml_text = (f"name = {_t(name)}\ndescription = {_t(desc)}\nmodel = {_t(model)}\n"
                  f"developer_instructions = {_toml_block(body.strip())}\n")
     return f"{name}.toml", toml_text
+
+LANG_LINE = ("Отвечай пользователю по-русски. Код, имена файлов и идентификаторы — "
+             "латиницей; комментарии в коде — по-русски.\n\n")
+
+def render_agents_md(core: str, layer: str) -> str:
+    out = LANG_LINE + core.strip() + "\n\n---\n\n" + layer.strip() + "\n"
+    if len(out.encode("utf-8")) > 32768:
+        raise ValueError("AGENTS.md превышает 32 KiB — сокращай ядро/слой")
+    return out
+
+def main(home: Path, dry_run: bool = False):
+    import json
+    claude, codex = home / ".claude", home / ".codex"
+    core = (claude / "core" / "AGENTS.core.md").read_text(encoding="utf-8")
+    layer = (claude / "codex-layer" / "AGENTS.codex.md").read_text(encoding="utf-8")
+    agents_md = render_agents_md(core, layer)
+    mcp_raw = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
+    mcp = {}
+    for name, scfg in mcp_raw.items():
+        if "command" not in scfg:       # remote (type=http/sse) — TOML-схема пока не реализована
+            print(f"[codex_sync] warn: MCP-сервер {name} не stdio (type={scfg.get('type', '?')}) — пропущен", file=sys.stderr)
+            continue
+        mcp[name] = scfg
+    allow = json.loads((claude / "codex-layer" / "mcp-whitelist.json").read_text(encoding="utf-8"))["allow"]
+    manifest = json.loads((claude / "codex-layer" / "skills-manifest.json").read_text(encoding="utf-8"))
+    payload = render_mcp_toml(mcp, allow) + "\n" + render_skills_toml(manifest, claude / "skills")
+    cfg_path = codex / "config.toml"
+    new_cfg = apply_managed_block(cfg_path.read_text(encoding="utf-8"), payload)
+    hooks = render_hooks_json(home)
+    agents_out = {}
+    for f in sorted((claude / "agents").glob("*.md")):
+        fname, toml_text = convert_agent_md(f.read_text(encoding="utf-8"))
+        agents_out[fname] = toml_text
+    if dry_run:
+        print(f"AGENTS.md: {len(agents_md)} байт; config.toml payload: {len(payload)}; "
+              f"hooks: {sum(len(v) for v in hooks['hooks'].values())} групп; agents: {len(agents_out)}")
+        return
+    for p in (cfg_path, codex / "AGENTS.md", codex / "hooks.json"):     # бэкап каждого существующего (однократно)
+        bak = p.with_suffix(p.suffix + ".bak-codex-sync")
+        if p.exists() and not bak.exists():
+            bak.write_bytes(p.read_bytes())
+    (codex / "AGENTS.md").write_text(agents_md, encoding="utf-8")
+    cfg_path.write_text(new_cfg, encoding="utf-8")
+    (codex / "hooks.json").write_text(json.dumps(hooks, ensure_ascii=False, indent=2), encoding="utf-8")
+    (codex / "agents").mkdir(exist_ok=True)
+    for fname, toml_text in agents_out.items():
+        (codex / "agents" / fname).write_text(toml_text, encoding="utf-8")
+
+if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser(); ap.add_argument("--dry-run", action="store_true")
+    main(Path.home(), ap.parse_args().dry_run)

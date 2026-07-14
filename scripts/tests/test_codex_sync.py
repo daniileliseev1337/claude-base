@@ -136,3 +136,12 @@ def test_convert_agent_md_wildcard_tools():
     _, toml_text = convert_agent_md(text)
     assert "mcp__" not in toml_text
     assert "spreadsheets" in toml_text and "documents" in toml_text
+
+def test_render_agents_md_limit():
+    from codex_sync import render_agents_md
+    out = render_agents_md("ядро", "слой")
+    assert out.startswith("Отвечай пользователю по-русски")
+    assert "ядро" in out and "слой" in out
+    import pytest
+    with pytest.raises(ValueError):
+        render_agents_md("x" * 33000, "y")
