@@ -522,6 +522,16 @@ def test_overlay_corrupt_file_warns_and_empty(make_canon, capsys):
     assert load_overlay(home) == []
     assert "оверлей" in capsys.readouterr().err
 
+def test_overlay_wrong_types_warn_and_empty(make_canon, capsys):
+    from codex_sync import load_overlay, overlay_path
+    home = make_canon()
+    overlay_path(home).parent.mkdir(parents=True, exist_ok=True)
+    overlay_path(home).write_text('{"enable": "excel"}', encoding="utf-8")
+    assert load_overlay(home) == []
+    overlay_path(home).write_text('{"enable": [1, 2]}', encoding="utf-8")
+    assert load_overlay(home) == []
+    assert capsys.readouterr().err.count("оверлей") == 2
+
 def test_overlay_no_false_drift_and_off_is_byte_identical(make_canon):
     from codex_sync import check, save_overlay, sync
     home = make_canon(); sync(home)

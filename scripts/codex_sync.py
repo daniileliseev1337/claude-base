@@ -373,7 +373,10 @@ def load_overlay(home: Path) -> list:
     if not p.exists():
         return []
     try:
-        return list(json.loads(p.read_text(encoding="utf-8"))["enable"])
+        names = json.loads(p.read_text(encoding="utf-8"))["enable"]
+        if not isinstance(names, list) or not all(isinstance(n, str) for n in names):
+            raise ValueError("enable должен быть списком строк")
+        return names
     except (ValueError, KeyError, TypeError) as e:
         print(f"[codex_sync] warn: оверлей {p} битый ({e}) — мост считается выключенным", file=sys.stderr)
         return []
