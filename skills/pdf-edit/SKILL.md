@@ -158,6 +158,7 @@ pdf.save("output.pdf")
 4. **Сравнение «что изменилось» между двумя PDF** — бинарный diff бесполезен. Лучший путь: отрендерить страницы в PNG (`pdftoppm`) и сравнить через perceptual hash (imagehash) или multimodal vision.
 5. **Шрифты при редактировании** — если меняешь текст в PDF и нужный шрифт не embedded, текст потеряется. Проверять через `reader.metadata` или `pikepdf` perms.
 6. **Сжатие при сохранении** — `pikepdf.save()` по умолчанию пересжимает. Для минимальных правок передать `linearize=True` или ничего, а вот `compress_streams=False` сохранит исходные потоки.
+7. **«PDF file not found» при живом файле с «ё»/«й» в имени** — NFD-имя из внешнего источника: модель печатает NFC, NTFS не нормализует. Обход: wildcard-копия под ASCII-имя / `os.listdir`-матчинг с `unicodedata.normalize`. Полное описание — skill `doc-extract` («Ловушки извлечения») и anti-patterns A3.10.
 
 Ловушки ИЗВЛЕЧЕНИЯ (сдвиг колонок таблиц, CID/Distiller-шрифты, скан без текст-слоя) —
 переехали в skill `doc-extract`.
