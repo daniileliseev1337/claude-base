@@ -28,7 +28,7 @@ def _t(v: str) -> str:
     esc = s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
     return '"' + esc + '"'
 
-def render_mcp_toml(mcp_servers: dict, allow: list) -> str:
+def render_mcp_toml(mcp_servers: dict, allow: list, bridge=frozenset()) -> str:
     out = []
     for name in sorted(mcp_servers):
         if name not in allow:
@@ -46,6 +46,9 @@ def render_mcp_toml(mcp_servers: dict, allow: list) -> str:
         out.append(f"command = {_t(cfg['command'])}")
         args = cfg.get("args", [])
         out.append("args = [" + ", ".join(_t(a) for a in args) + "]")
+        if name in bridge:              # мост по требованию: не ронять десктоп и ждать тяжёлый старт
+            out.append("required = false")
+            out.append("startup_timeout_sec = 60")
         env = cfg.get("env") or {}
         if env:
             out.append(f"[mcp_servers.{name}.env]")
@@ -300,9 +303,12 @@ def render_target_codex(home: Path) -> dict:
     """Чистый рендер всех артефактов таргета codex: ключ → содержимое. Ничего не пишет."""
     claude = home / ".claude"
     core, layer, _, _, mcp, allow = _read_canon(home)
+    overlay = load_overlay(home)
+    eff_allow = sorted(set(allow) | set(overlay))
     out = {
         "AGENTS.md": render_agents_md(core, layer),
-        "config.toml#managed": (render_base_tables(home) + "\n\n" + render_mcp_toml(mcp, allow)).strip(),
+        "config.toml#managed": (render_base_tables(home) + "\n\n"
+                                + render_mcp_toml(mcp, eff_allow, bridge=set(overlay))).strip(),
         "hooks.json": json.dumps(render_hooks_json(home), ensure_ascii=False, indent=2),
     }
     for fname, toml_text in collect_agent_tomls(claude / "agents").items():
@@ -314,13 +320,16 @@ def collect_inputs(home: Path) -> dict:
     """sha256 входов канона; mcp-срез — только whitelisted (посторонние правки .claude.json не дёргают синк)."""
     claude = home / ".claude"
     core, layer, wl_text, sm_text, mcp, allow = _read_canon(home)
+    overlay = load_overlay(home)
+    eff = sorted(set(allow) | set(overlay))
     inputs = {
         "core/AGENTS.core.md": _sha(core),
         "codex-layer/AGENTS.codex.md": _sha(layer),
         "codex-layer/mcp-whitelist.json": _sha(wl_text),
         "codex-layer/skills-manifest.json": _sha(sm_text),
         ".claude.json#mcpServers": _sha(json.dumps(
-            {k: mcp[k] for k in sorted(allow) if k in mcp}, sort_keys=True, ensure_ascii=False)),
+            {k: mcp[k] for k in eff if k in mcp}, sort_keys=True, ensure_ascii=False)),
+        "codex-mcp-overlay": _sha(json.dumps(sorted(overlay), ensure_ascii=False)),
     }
     for f in sorted((claude / "agents").glob("*.md")):
         inputs[f"agents/{f.name}"] = _sha(f.read_text(encoding="utf-8"))
@@ -353,6 +362,30 @@ def load_manifest(home: Path):
         return json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None    # битый манифест = отсутствующий (безопасный режим: дрейф не перезапишем)
+
+def overlay_path(home: Path) -> Path:
+    return home / ".claude" / ".local-state" / "codex-mcp-overlay.json"
+
+def load_overlay(home: Path) -> list:
+    """Оверлей доменного моста. Битый файл → warn + [] (fail-safe: SessionStart-хук
+    не должен падать; render без моста → check покажет canon-newer/drift, не молчание)."""
+    p = overlay_path(home)
+    if not p.exists():
+        return []
+    try:
+        return list(json.loads(p.read_text(encoding="utf-8"))["enable"])
+    except (ValueError, KeyError, TypeError) as e:
+        print(f"[codex_sync] warn: оверлей {p} битый ({e}) — мост считается выключенным", file=sys.stderr)
+        return []
+
+def save_overlay(home: Path, names: list) -> None:
+    p = overlay_path(home)
+    if not names:
+        p.unlink(missing_ok=True)
+        return
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"enable": sorted(names)}, ensure_ascii=False, indent=2),
+                 encoding="utf-8", newline="\n")
 
 def _output_path_codex(home: Path, key: str) -> Path:
     """Путь артефакта таргета codex на диске по ключу рендера."""

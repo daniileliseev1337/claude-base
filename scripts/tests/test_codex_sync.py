@@ -475,3 +475,77 @@ def test_fresh_machine_no_config_toml(make_canon):
     from codex_sync import END
     _toml.loads(raw.replace(BEGIN, "").replace(END, ""))
     assert check(home)["canon-newer"] == [] and check(home)["manual-drift"] == []
+
+# --- Эпик 3: оверлей доменного моста ---
+
+def _fake_py_server(home, name="pyserv"):
+    """Сервер с python-venv command в .claude.json + поддельный venv с багованным stdio.py."""
+    import json as _json
+    venv = home / "srv" / ".venv"
+    p = venv / "Lib" / "site-packages" / "mcp" / "server" / "stdio.py"
+    p.parent.mkdir(parents=True)
+    p.write_text('stdout = anyio.wrap_file(TextIOWrapper(sys.stdout.buffer, encoding="utf-8"))\n',
+                 encoding="utf-8")
+    cj = home / ".claude.json"
+    data = _json.loads(cj.read_text(encoding="utf-8"))
+    data["mcpServers"][name] = {"command": str(venv / "Scripts" / "python.exe"),
+                                "args": ["-m", "srv"]}
+    cj.write_text(_json.dumps(data), encoding="utf-8")
+    return venv
+
+def test_overlay_extends_allow_with_bridge_options(make_canon):
+    import tomllib as _toml
+    from codex_sync import render_all, save_overlay
+    home = make_canon()
+    save_overlay(home, ["excel"])
+    block = render_all(home)["config.toml#managed"]
+    parsed = _toml.loads(block)
+    assert parsed["mcp_servers"]["excel"]["required"] is False
+    assert parsed["mcp_servers"]["excel"]["startup_timeout_sec"] == 60
+    assert "time" in parsed["mcp_servers"]                       # дефолт остался
+    assert "required" not in parsed["mcp_servers"]["time"]       # whitelist без bridge-опций
+
+def test_overlay_roundtrip_and_empty_deletes_file(make_canon):
+    from codex_sync import load_overlay, overlay_path, save_overlay
+    home = make_canon()
+    assert load_overlay(home) == []                              # файла нет
+    save_overlay(home, ["b", "a"])
+    assert load_overlay(home) == ["b", "a"] or load_overlay(home) == ["a", "b"]
+    save_overlay(home, [])
+    assert not overlay_path(home).exists() and load_overlay(home) == []
+
+def test_overlay_corrupt_file_warns_and_empty(make_canon, capsys):
+    from codex_sync import load_overlay, overlay_path, save_overlay
+    home = make_canon()
+    overlay_path(home).parent.mkdir(parents=True, exist_ok=True)
+    overlay_path(home).write_text("{битый", encoding="utf-8")
+    assert load_overlay(home) == []
+    assert "оверлей" in capsys.readouterr().err
+
+def test_overlay_no_false_drift_and_off_is_byte_identical(make_canon):
+    from codex_sync import check, save_overlay, sync
+    home = make_canon(); sync(home)
+    base_cfg = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    save_overlay(home, ["excel"])
+    res = check(home)
+    assert res["manual-drift"] == []                             # включение моста ≠ дрейф
+    assert "config.toml#managed" in res["canon-newer"]
+    assert sync(home) == 0
+    assert check(home)["canon-newer"] == [] and check(home)["manual-drift"] == []
+    save_overlay(home, [])
+    assert sync(home) == 0
+    assert (home / ".codex" / "config.toml").read_text(encoding="utf-8") == base_cfg
+
+def test_overlay_server_edit_tracked_in_inputs(make_canon):
+    import json as _json
+    from codex_sync import collect_inputs, save_overlay
+    home = make_canon()
+    save_overlay(home, ["excel"])
+    h1 = collect_inputs(home)
+    cj = home / ".claude.json"
+    data = _json.loads(cj.read_text(encoding="utf-8"))
+    data["mcpServers"]["excel"]["args"] = ["other"]
+    cj.write_text(_json.dumps(data), encoding="utf-8")
+    h2 = collect_inputs(home)
+    assert h1[".claude.json#mcpServers"] != h2[".claude.json#mcpServers"]
+    assert "codex-mcp-overlay" in h1                             # оверлей — вход манифеста
