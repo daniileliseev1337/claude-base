@@ -80,5 +80,21 @@ try {
   } else {
     $lines | Select-Object -First 20 | ForEach-Object { Write-Output $_ }
   }
+
+  # P9 (multi-LLM Epic 1): freshness check for the project's flat AGENTS.md
+  # (kept ASCII-only like the rest of this file - see header comment on why)
+  $agentsMd = Join-Path $root 'AGENTS.md'
+  $srcTimes = @('CLAUDE.md', 'Claude\CLAUDE.md') |
+    ForEach-Object { Join-Path $root $_ } | Where-Object { Test-Path -LiteralPath $_ } |
+    ForEach-Object { (Get-Item -LiteralPath $_).LastWriteTime }
+  if ($srcTimes.Count -gt 0) {
+    $newest = ($srcTimes | Sort-Object -Descending)[0]
+    $genCmd = 'python "$HOME\.claude\skills\project-memory\tools\gen_project_agents.py" .'
+    if (-not (Test-Path -LiteralPath $agentsMd)) {
+      Write-Output "[project-memory] Project AGENTS.md missing (Codex/Copilot won't see it) - generate: $genCmd"
+    } elseif ((Get-Item -LiteralPath $agentsMd).LastWriteTime -lt $newest) {
+      Write-Output "[project-memory] Project AGENTS.md is older than CLAUDE.md - regenerate: $genCmd"
+    }
+  }
 } catch {}
 exit 0
