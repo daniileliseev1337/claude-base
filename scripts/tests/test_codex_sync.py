@@ -323,6 +323,25 @@ def test_sync_preserves_foreign_config_and_is_atomic_style(make_canon):
     assert "[mcp_servers.time]" in cfg
     assert not list((home / ".codex").glob("*.tmp-codex-sync"))   # tmp-файлы подчистились
 
+def test_check_reports_missing_skill_junction_and_sync_heals(make_canon):
+    import json as _json
+    from codex_sync import sync, check
+    home = make_canon()
+    claude = home / ".claude"
+    skill = claude / "skills" / "тест-скилл"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("---\nname: тест-скилл\n---\n", encoding="utf-8")
+    (claude / "codex-layer" / "skills-manifest.json").write_text(
+        _json.dumps({"enable": ["тест-скилл"]}), encoding="utf-8")
+    assert sync(home) == 0                                    # junction создан
+    j = home / ".agents" / "skills" / "тест-скилл"
+    assert j.exists()
+    import subprocess; subprocess.run(["cmd", "/c", "rmdir", str(j)], capture_output=True)  # junction снят
+    res = check(home)
+    assert "skills/тест-скилл#junction" in res["canon-newer"]
+    assert sync(home) == 0                                    # sync вылечил
+    assert j.exists() and check(home)["canon-newer"] == []
+
 def test_diff_cmd_shows_unified_diff(make_canon, capsys):
     from codex_sync import sync, diff_cmd
     home = make_canon(); sync(home)

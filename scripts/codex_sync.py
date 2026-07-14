@@ -320,6 +320,17 @@ def check(home: Path) -> dict:
             res["canon-newer"].append(key)    # диск = то, что синк писал в прошлый раз → безопасно перегенерить
         else:
             res["manual-drift"].append(key)   # диск отличается и от ожидания, и от последней записи синка
+    # junctions скиллов сверяются по факту существования на диске (не по манифесту синка) —
+    # снятый вручную junction иначе невидим для check() между запусками sync
+    claude = home / ".claude"
+    sm_path = claude / "codex-layer" / "skills-manifest.json"
+    if sm_path.exists():
+        manifest = json.loads(sm_path.read_text(encoding="utf-8"))
+        skills_dir = claude / "skills"
+        agents_skills_dir = home / ".agents" / "skills"
+        for name in manifest.get("enable", []):
+            if (skills_dir / name / "SKILL.md").exists() and not (agents_skills_dir / name).is_dir():
+                res["canon-newer"].append(f"skills/{name}#junction")
     return res
 
 def _backup_once(p: Path) -> None:
