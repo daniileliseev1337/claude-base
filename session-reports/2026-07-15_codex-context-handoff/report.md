@@ -113,6 +113,19 @@
 - The child acknowledgement is still queued in the Codex App at this snapshot; do not claim
   final Epic 4b closure until it is observed and the independent auditor returns PASS.
 
+## Update: fresh task is the required handoff path
+
+- The same-directory `/fork` path is rejected for handoff: it copies completed history, so its
+  child immediately compacted. It is not evidence of a clean context transition.
+- A fresh project task on explicit `gpt-5.6-terra` was created as
+  `019f6667-7676-7391-9fbb-a31ddbbca342`. It received the LITE prompt and returned
+  `ACK-FRESH-TERRA` without auto-compaction.
+- A previous fresh task let the app auto-select `gpt-5.3-codex-spark` and failed before reply
+  because that model rejected `reasoning.summary`; this is an app/model compatibility error,
+  not a context-governor signal. Pin a compatible model for automated fresh handoff.
+- Canonical contract: persist state, continue native compaction, create a **fresh project task**
+  with the LITE prompt and an explicit compatible model. Do not use `/fork`.
+
 ## Следующий шаг
 1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
 2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.
