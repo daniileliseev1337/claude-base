@@ -109,6 +109,44 @@ def test_validate_task_rejects_empty_source_and_secret_values(tmp_path):
     assert "123e4567" not in bridge._redact_text('{"session_id":"123e4567-e89b-12d3-a456-426614174000"}')
 
 
+def test_runtime_mirrors_schema_for_empty_items_and_duplicates(tmp_path):
+    task = make_task(tmp_path)
+    task["constraints"] = [""]
+    with pytest.raises(bridge.BridgeError, match="пустые строки"):
+        bridge.validate_task(task, tmp_path, "codex", False)
+
+    task = make_task(tmp_path)
+    task["context"]["files"] = ["source.txt", "source.txt"]
+    with pytest.raises(bridge.BridgeError, match="дубли"):
+        bridge.validate_task(task, tmp_path, "codex", False)
+
+    task = make_task(tmp_path)
+    result = make_result(task)
+    result["checks"][0]["name"] = ""
+    result["checks"][0]["evidence"] = ""
+    with pytest.raises(bridge.BridgeError, match="не должны быть пустыми"):
+        bridge.validate_result(result, task)
+
+
+def test_secret_scan_covers_private_keys_and_large_files(tmp_path):
+    task = make_task(tmp_path)
+    private = tmp_path / "private.txt"
+    private.write_text("-----BEGIN PRIVATE KEY-----\nabc", encoding="utf-8")
+    task["context"]["files"] = ["private.txt"]
+    with pytest.raises(bridge.BridgeError, match="содержащий секрет"):
+        bridge.validate_task(task, tmp_path, "codex", False)
+
+    private.write_text("-----BEGIN ENCRYPTED PRIVATE KEY-----\nabc", encoding="utf-8")
+    with pytest.raises(bridge.BridgeError, match="содержащий секрет"):
+        bridge.validate_task(task, tmp_path, "codex", False)
+
+    large = tmp_path / "large.txt"
+    large.write_text("x" * (2 * 1024 * 1024 + 32) + "\ntoken=supersecretvalue123", encoding="utf-8")
+    task["context"]["files"] = ["large.txt"]
+    with pytest.raises(bridge.BridgeError, match="содержащий секрет"):
+        bridge.validate_task(task, tmp_path, "codex", False)
+
+
 def test_validate_result_enforces_read_only(tmp_path):
     task = make_task(tmp_path)
     with pytest.raises(bridge.BridgeError, match="read-only"):

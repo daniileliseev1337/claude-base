@@ -27,7 +27,7 @@
         }
       }
     },
-    "changes": {"type": "array", "items": {"type": "string", "pattern": "^(?!/|~|[A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"}},
+    "changes": {"type": "array", "items": {"type": "string", "pattern": "^(?!/|~|[A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"}, "uniqueItems": true},
     "assumptions": {"type": "array", "items": {"type": "string"}},
     "risks": {"type": "array", "items": {"type": "string"}},
     "questions": {"type": "array", "items": {"type": "string"}},

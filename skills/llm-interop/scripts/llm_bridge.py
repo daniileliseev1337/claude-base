@@ -43,6 +43,8 @@ SECRET_PATTERNS = (
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/-]{12,}"),
     re.compile(r"(?i)\b(?:api[_ -]?key|password|secret|token)['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9._~+/-]{8,}"),
+    re.compile(r"-----BEGIN (?:(?:RSA|EC|OPENSSH|DSA|ENCRYPTED) )?PRIVATE KEY-----"),
+    re.compile(r"-----BEGIN PGP PRIVATE KEY BLOCK-----"),
 )
 RUNNER_UNSUPPORTED_SCHEMA_KEYS = {
     "$schema", "$id", "title", "pattern", "minLength", "maxLength",
@@ -105,22 +107,28 @@ def _secret_match(value) -> str | None:
 
 def _file_has_secret(path: Path) -> bool:
     try:
-        if path.stat().st_size > 2 * 1024 * 1024:
-            return False
-        raw = path.read_bytes()
+        with path.open("rb") as stream:
+            tail = ""
+            while True:
+                raw = stream.read(1024 * 1024)
+                if not raw:
+                    return False
+                text = tail + raw.decode("utf-8", errors="ignore")
+                if _secret_match(text):
+                    return True
+                tail = text[-512:]
     except OSError:
         return False
-    if b"\x00" in raw:
-        return False
-    text = raw.decode("utf-8", errors="ignore")
-    return _secret_match(text) is not None
 
 
-def _string_list(value, name: str, *, nonempty: bool = False) -> None:
+def _string_list(value, name: str, *, nonempty: bool = False,
+                 items_nonempty: bool = False) -> None:
     if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
         raise BridgeError(f"{name}: ожидался список строк")
     if nonempty and not value:
         raise BridgeError(f"{name}: список не должен быть пустым")
+    if items_nonempty and any(not item.strip() for item in value):
+        raise BridgeError(f"{name}: пустые строки недопустимы")
 
 
 def validate_task(task: dict, cwd: Path, partner: str, allow_write: bool) -> None:
@@ -147,12 +155,16 @@ def validate_task(task: dict, cwd: Path, partner: str, allow_write: bool) -> Non
     if not isinstance(task["goal"], str) or not task["goal"].strip():
         raise BridgeError("goal не должен быть пустым")
     for name in ("constraints", "done_when"):
-        _string_list(task[name], name, nonempty=(name == "done_when"))
+        _string_list(
+            task[name], name, nonempty=(name == "done_when"), items_nonempty=True
+        )
     context = task["context"]
     if not isinstance(context, dict) or set(context) != {"files", "facts", "prior_decisions"}:
         raise BridgeError("context должен содержать только files, facts, prior_decisions")
     for name in ("files", "facts", "prior_decisions"):
         _string_list(context[name], f"context.{name}")
+    if len(context["files"]) != len(set(context["files"])):
+        raise BridgeError("context.files: дубли недопустимы")
     if not isinstance(task["deliverables"], list):
         raise BridgeError("deliverables: ожидался список")
     paths = list(context["files"])
@@ -190,6 +202,8 @@ def validate_result(result: dict, task: dict) -> None:
         raise BridgeError("summary результата пуст")
     for name in ("changes", "assumptions", "risks", "questions"):
         _string_list(result[name], name)
+    if len(result["changes"]) != len(set(result["changes"])):
+        raise BridgeError("changes: дубли недопустимы")
     if not isinstance(result["next_step"], str):
         raise BridgeError("next_step: ожидалась строка")
     if not isinstance(result["checks"], list) or not result["checks"]:
@@ -201,6 +215,8 @@ def validate_result(result: dict, task: dict) -> None:
             raise BridgeError("checks[].status: неизвестное значение")
         if not all(isinstance(check[key], str) for key in ("name", "evidence")):
             raise BridgeError("checks[]: name и evidence должны быть строками")
+        if not check["name"].strip() or not check["evidence"].strip():
+            raise BridgeError("checks[]: name и evidence не должны быть пустыми")
     if result["status"] == "completed" and any(
         check["status"] != "pass" for check in result["checks"]
     ):

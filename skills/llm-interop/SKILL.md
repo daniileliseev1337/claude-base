@@ -72,6 +72,10 @@ python ~/.claude/skills/llm-interop/scripts/llm_bridge.py `
 JSON, считай делегацию непройденной, сохрани stderr и не пересказывай догадку как
 результат партнёра.
 
+Bridge сохраняет рядом два представления: `result.json` для машинной проверки и
+`result.md` для человека. При timeout, non-zero exit или невалидном ответе он пишет
+`result.failure.json` и `result.failure.md` с отредактированной диагностикой.
+
 ## Прими результат
 
 1. Сверь `task_id` и `status`.
