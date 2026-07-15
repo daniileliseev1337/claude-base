@@ -14,7 +14,7 @@ try {
     $stateDir = Join-Path $env:USERPROFILE '.claude\.local-state\codex-context-governor'
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
     $session = if ($event.session_id) { $event.session_id } else { 'unknown-session' }
-    $handoffLite = 'Continue after PreCompact. First read Claude/CLAUDE.md, the top of Claude/ЖУРНАЛ СЕССИЙ.md, and Claude/STATUS.md; finish a safe step, update STATUS, the journal, and the current session-report. Then continue only with the recorded next step. Do not estimate context from the transcript.'
+    $handoffLite = 'Continue after PreCompact. First read Claude/CLAUDE.md and Claude/STATUS.md, then read the top session journal named in CLAUDE.md; finish a safe step, update STATUS, that journal, and the current session-report. Then continue only with the recorded next step. Do not estimate context from the transcript.'
     $state = [ordered]@{
         event = $event.hook_event_name
         session_id = $event.session_id

@@ -32,7 +32,7 @@ try {
     if ($post.systemMessage -notmatch 'Automatic compaction completed') { throw 'PostCompact contract failed' }
     $statePath = Join-Path $tmp '.claude\.local-state\codex-context-governor\governor-test-session.json'
     $state = Get-Content -Raw -Encoding utf8 $statePath | ConvertFrom-Json
-    if ($state.event -ne 'PostCompact' -or $state.turn_id -ne 'turn-post' -or -not $state.handoff_lite) { throw 'state contract failed' }
+    if ($state.event -ne 'PostCompact' -or $state.turn_id -ne 'turn-post' -or $state.handoff_lite -notmatch 'session journal named in CLAUDE.md') { throw 'state contract failed' }
     Write-Host 'PASS codex context governor contract'
 } finally {
     $env:USERPROFILE = $originalProfile
