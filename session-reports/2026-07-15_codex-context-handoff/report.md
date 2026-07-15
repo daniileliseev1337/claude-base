@@ -87,6 +87,18 @@
 - Повторный независимый audit PASS: TOML разбирается, `codex_sync.py check` завершён с code 0.
 - Epic 4b закрыт: governor automatic agent handoff и capability registry готовы; Epic 5 не начат.
 
+## Update: reopened after observed PreCompact deadlock
+
+- Desktop `PreCompact` fired at `2026-07-15T17:45:25+03:00` for the project task and wrote
+  a LITE handoff state. It also exposed a contract defect: `continue:false` ended the hook run
+  before the main agent could create the next task.
+- Governor now returns `continue:true`: it persists the same state, permits native compaction,
+  and tells the main agent to update project state and create the LITE task. PowerShell contract PASS.
+- Capability registry strict gates now pass: 18 capabilities, 16 roles (7 RO/9 RW), 37 skills
+  (11 enabled/26 skipped), full adapter rendering, 86 Python PASS and `codex_sync.py check` code 0.
+- Epic 4b is not closed until a disposable native E2E records a child task ID, delivered LITE
+  prompt, child acknowledgement, restoration of `190000`/`total`, and final independent audit.
+
 ## Следующий шаг
 1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
 2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.

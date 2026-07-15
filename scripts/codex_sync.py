@@ -276,25 +276,54 @@ def load_capability_registry(home: Path) -> dict:
     if len(caps) != len(data["capabilities"]):
         raise ValueError("capability registry: duplicate capability_id")
     roles = {x["role_id"]: x for x in data["role_adapters"]}
+    skills = {x["skill_id"]: x for x in data["skill_adapters"]}
+    if len(roles) != len(data["role_adapters"]) or len(skills) != len(data["skill_adapters"]):
+        raise ValueError("capability registry: duplicate role_id or skill_id")
     if len(roles) != 16 or sum(x["permission_class"] == "ro" for x in roles.values()) != 7 or sum(x["permission_class"] == "rw" for x in roles.values()) != 9:
         raise ValueError("capability registry: expected 7 RO and 9 RW role adapters")
     for item in [*data["role_adapters"], *data["skill_adapters"]]:
-        for cap_id in item["required_capabilities"]:
+        optional = item.get("optional_capabilities", [])
+        for cap_id in [*item["required_capabilities"], *optional]:
             cap = caps.get(cap_id)
             if cap is None:
                 raise ValueError(f"capability registry: unresolved capability {cap_id}")
             if not cap["providers"] and cap["verification"]["status"] != "blocked":
                 raise ValueError(f"capability registry: {cap_id} has no provider or blocked state")
+        if set(item["required_capabilities"]) & set(optional):
+            raise ValueError("capability registry: capability cannot be both required and optional")
+    for capability in data["capabilities"]:
+        for provider in capability["providers"]:
+            if set(provider["environments"]) != {"claude", "codex"}:
+                raise ValueError("capability registry: provider must declare Claude and Codex environments")
+            if provider["enabled_by_default"] and provider["availability"] != "available":
+                raise ValueError("capability registry: default provider must be available")
+            if provider["availability"] == "blocked" and capability["verification"]["status"] != "blocked":
+                raise ValueError("capability registry: blocked provider requires blocked capability")
     manifest = json.loads((base / "skills-manifest.json").read_text(encoding="utf-8"))
     classified = set(manifest.get("enable", [])) | set(manifest.get("skip_reason", {}))
-    skill_ids = {x["skill_id"] for x in data["skill_adapters"]}
+    skill_ids = set(skills)
     if classified != skill_ids or len(manifest.get("enable", [])) != 11 or len(manifest.get("skip_reason", {})) != 26:
         raise ValueError("capability registry: skill adapters must mirror the existing 11/26 manifest classification")
+    for skill_id, adapter in skills.items():
+        enabled = skill_id in manifest["enable"]
+        if (adapter["manifest_state"] == "enabled") != enabled:
+            raise ValueError("capability registry: activation may only follow the manifest")
+        if not enabled and adapter["skip_reason"] != manifest["skip_reason"][skill_id]:
+            raise ValueError("capability registry: skipped skill must retain its manifest reason")
+    patterns = set()
     for mapping in data["tool_map"]:
         if mapping["capability_id"] not in caps:
             raise ValueError(f"capability registry: TOOL_MAP references {mapping['capability_id']}")
+        if mapping["raw_tool_pattern"] in patterns:
+            raise ValueError("capability registry: duplicate TOOL_MAP pattern")
+        patterns.add(mapping["raw_tool_pattern"])
+        try:
+            re.compile(mapping["raw_tool_pattern"])
+        except re.error as e:
+            raise ValueError(f"capability registry: invalid TOOL_MAP pattern: {e}") from e
     data["_capabilities"] = caps
     data["_roles"] = roles
+    data["_skills"] = skills
     return data
 
 def _map_raw_tools(text: str, registry: dict) -> str:
@@ -357,6 +386,12 @@ def convert_agent_md(text: str, registry: dict | None = None):
             raise ValueError(f"capability registry: missing role adapter {name}")
         if adapter:
             body += "\n\n[Capability adapter]\nrequired: " + ", ".join(adapter["required_capabilities"])
+            body += "\noptional: " + ", ".join(adapter["optional_capabilities"] or ["none"])
+            body += "\npermission_class: " + adapter["permission_class"]
+            body += "\ninput_contract: " + adapter["input_contract"]
+            body += "\noutput_contract: " + adapter["output_contract"]
+            body += "\nverification.claude: " + adapter["verification"].get("claude", "static")
+            body += "\nverification.codex: " + adapter["verification"].get("codex", "static")
             body += "\nfallback: " + adapter["fallback"] + "\nhandoff: " + adapter["handoff"]
     toml_text = f"name = {_t(name)}\ndescription = {_t(desc)}\nmodel = {_t(model)}\n"
     if (registry is not None and name and registry["_roles"][name]["permission_class"] == "ro") or (registry is None and tools and not any(marker in tools for marker in WRITE_TOOL_MARKERS)):
@@ -372,6 +407,8 @@ def collect_agent_tomls(agents_dir: Path, registry: dict | None = None) -> dict:
         try:
             fname, toml_text = convert_agent_md(f.read_text(encoding="utf-8"), registry)
         except ValueError as e:
+            if registry is not None and str(e).startswith("capability registry:"):
+                raise
             print(f"[codex_sync] warn: {f.name} пропущен: {e}", file=sys.stderr)
             continue
         if fname == ".toml":
