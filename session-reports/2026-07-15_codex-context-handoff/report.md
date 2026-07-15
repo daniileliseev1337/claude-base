@@ -80,6 +80,13 @@
   старым `manual-drift config.toml#managed`: в Desktop отсутствует канонический MCP `time`.
   Runtime `[hooks.state]`/`[memories]` не затёрты; решение об MCP оставлено владельцу.
 
+## Update: final gate passed
+- Владелец выбрал удалить неиспользуемый `time`: он удалён из канонического whitelist и
+  фактического `~/.codex/config.toml`. Runtime `[hooks.state]`, `[memories]` и системный
+  `node_repl` сохранены.
+- Повторный независимый audit PASS: TOML разбирается, `codex_sync.py check` завершён с code 0.
+- Epic 4b закрыт: governor automatic agent handoff и capability registry готовы; Epic 5 не начат.
+
 ## Следующий шаг
 1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
 2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.
