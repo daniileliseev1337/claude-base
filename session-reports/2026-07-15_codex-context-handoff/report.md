@@ -126,6 +126,17 @@
 - Canonical contract: persist state, continue native compaction, create a **fresh project task**
   with the LITE prompt and an explicit compatible model. Do not use `/fork`.
 
+## Reconciliation: current Epic 4b source of truth
+
+- This section supersedes the historical `final gate passed`, queued fork-child, and partial
+  auditor PASS entries above. They remain evidence of their local checks only.
+- The only canonical E2E child is fresh Terra task `019f6667-7676-7391-9fbb-a31ddbbca342`.
+  Its first response is `ACK-FRESH-TERRA`; it did not auto-compact.
+- Fork child `019f665e-5480-79e0-8598-1efd6e0ae0cc` and its queued ACK are invalid for E2E
+  acceptance because fork inherited the source history.
+- An independent audit returned NOT PASS solely because these historical records were not yet
+  reconciled. Re-run that read-only audit against this section before closing Epic 4b.
+
 ## Следующий шаг
 1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
 2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.
