@@ -69,7 +69,7 @@ def test_render_skills_toml(tmp_path):
 def test_render_hooks_json_structure(tmp_path):
     from codex_sync import render_hooks_json
     hooks = render_hooks_json(tmp_path)
-    assert set(hooks["hooks"].keys()) == {"SessionStart", "Stop", "PostToolUse"}
+    assert set(hooks["hooks"].keys()) == {"SessionStart", "Stop", "PostToolUse", "PreCompact", "PostCompact"}
 
     start = hooks["hooks"]["SessionStart"][0]["hooks"]
     assert "auto-pull.ps1" in start[0]["command"]          # pull строго первым
@@ -86,6 +86,12 @@ def test_render_hooks_json_structure(tmp_path):
     assert ptu["matcher"] == ".*"
     assert "log-tool-usage.ps1" in ptu["hooks"][0]["command"]
     assert ptu["hooks"][0]["timeout"] == 10
+
+    for event in ("PreCompact", "PostCompact"):
+        compact = hooks["hooks"][event][0]
+        assert compact["matcher"] == "auto"
+        assert "codex_context_governor.ps1" in compact["hooks"][0]["command"]
+        assert compact["hooks"][0]["timeout"] == 10
 
     for group in hooks["hooks"].values():
         for m in group:
@@ -343,6 +349,20 @@ def test_sync_preserves_foreign_config_and_is_atomic_style(make_canon):
     assert cfg.startswith("x = 1")                            # чужое цело
     assert "[mcp_servers.time]" in cfg
     assert not list((home / ".codex").glob("*.tmp-codex-sync"))   # tmp-файлы подчистились
+
+def test_sync_migrates_and_preserves_codex_runtime_state(make_canon):
+    from codex_sync import BEGIN, END, check, sync
+    home = make_canon(); sync(home)
+    cfg = home / ".codex" / "config.toml"
+    raw = cfg.read_text(encoding="utf-8")
+    runtime = "[hooks.state]\n\n[memories]\ngenerate_memories = true\n"
+    cfg.write_text(raw.replace("[mcp_servers.time]", runtime + "\n[mcp_servers.time]"), encoding="utf-8")
+    assert "config.toml#managed" in check(home)["canon-newer"]
+    assert sync(home) == 0
+    migrated = cfg.read_text(encoding="utf-8")
+    assert migrated.index(END) < migrated.index("[hooks.state]")
+    assert "generate_memories = true" in migrated
+    assert check(home)["manual-drift"] == [] and check(home)["canon-newer"] == []
 
 def test_check_reports_missing_skill_junction_and_sync_heals(make_canon):
     import json as _json

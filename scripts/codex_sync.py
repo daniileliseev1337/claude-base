@@ -10,14 +10,45 @@ from pathlib import Path
 BEGIN = "# >>> claude-base managed >>>"
 END = "# <<< claude-base managed <<<"
 
+
+def _is_codex_runtime_table(name: str) -> bool:
+    """Таблицы, которыми владеет Codex App, а не канонический синк."""
+    return name == "memories" or name == "hooks.state" or name.startswith("hooks.state.")
+
+
+def _split_codex_runtime_tables(text: str) -> tuple[str, str]:
+    """Отделить runtime-секции App, сохранив их текст без семантической правки."""
+    headers = list(re.finditer(r"(?m)^\[(?P<name>[^\]]+)\][ \t]*$", text))
+    if not headers:
+        return text, ""
+    kept, runtime = [], []
+    cursor = 0
+    for i, header in enumerate(headers):
+        start = header.start()
+        end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
+        kept.append(text[cursor:start])
+        part = text[start:end]
+        if _is_codex_runtime_table(header.group("name")):
+            runtime.append(part.strip())
+        else:
+            kept.append(part)
+        cursor = end
+    return "".join(kept), "\n\n".join(part for part in runtime if part)
+
 def apply_managed_block(existing: str, payload: str) -> str:
     block = f"{BEGIN}\n{payload.rstrip()}\n{END}\n"
-    pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", re.S)
+    pattern = re.compile(re.escape(BEGIN) + r"\n(.*?)\n?" + re.escape(END) + r"\n?", re.S)
+    old_payloads = [m.group(1) for m in pattern.finditer(existing)]
     stripped = pattern.sub("", existing)          # убрать ВСЕ старые блоки
+    stripped, runtime = _split_codex_runtime_tables(stripped)
+    for old_payload in old_payloads:
+        _, inside_runtime = _split_codex_runtime_tables(old_payload)
+        if inside_runtime:
+            runtime = "\n\n".join(part for part in (runtime, inside_runtime) if part)
     if not stripped.strip():
-        return block                              # [M1] пустой файл → только блок
+        return block + ("\n" + runtime.rstrip() + "\n" if runtime else "")
     sep = "" if stripped.endswith("\n\n") else ("\n" if stripped.endswith("\n") else "\n\n")
-    return stripped + sep + block
+    return stripped + sep + block + ("\n" + runtime.rstrip() + "\n" if runtime else "")
 
 def _t(v: str) -> str:
     # TOML literal string для простых значений (Windows-пути без экранирования);
@@ -210,6 +241,8 @@ def render_hooks_json(home: Path) -> dict:
             entry(s / "auto-push.ps1", 60),
         ]}],
         "PostToolUse": [{"matcher": ".*", "hooks": [entry(s / "log-tool-usage.ps1", 10)]}],
+        "PreCompact": [{"matcher": "auto", "hooks": [entry(s / "codex_context_governor.ps1", 10)]}],
+        "PostCompact": [{"matcher": "auto", "hooks": [entry(s / "codex_context_governor.ps1", 10)]}],
     }}
 
 MODEL_MAP = {
@@ -488,6 +521,10 @@ def check(home: Path) -> dict:
         disk = read_disk_output(home, key)
         if disk is not None and disk == expected[key]:
             res["clean"].append(key)          # диск совпал с ожиданием — чисто в любом случае
+        elif key == "config.toml#managed" and disk is not None and _split_codex_runtime_tables(disk)[0].rstrip() == expected[key]:
+            # App мог вписать собственные доверенные хеши внутрь старого managed-блока.
+            # Это безопасная миграция: sync вынесет их за маркер, не затирая значения.
+            res["canon-newer"].append(key)
         elif disk is None or base_outputs.get(key) == _sha(disk):
             res["canon-newer"].append(key)    # диск = то, что синк писал в прошлый раз → безопасно перегенерить
         else:
