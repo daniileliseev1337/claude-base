@@ -99,6 +99,20 @@
 - Epic 4b is not closed until a disposable native E2E records a child task ID, delivered LITE
   prompt, child acknowledgement, restoration of `190000`/`total`, and final independent audit.
 
+## Update: native handoff after threshold restoration
+
+- Fresh native `PreCompact` state was recorded at `2026-07-15T18:16:06+03:00` for
+  session `019f655f-3daf-72c1-9837-d49acb89d863`; it contains `handoff_required: true`
+  and the canonical LITE prompt. The governor now permits compaction with `continue:true`.
+- Runtime verification: `model_auto_compact_token_limit = 190000`, scope `total`,
+  `[hooks.state]` and `[memories]` remain present, and `time` is absent.
+- A same-directory fork created child task `019f665e-5480-79e0-8598-1efd6e0ae0cc` and
+  accepted the LITE prompt. The source active turn was marked interrupted by the app.
+- Verification rerun: governor contract PASS, `86 passed` for the Python suite,
+  and `codex_sync.py check` exited 0 (one pre-existing informational unnamed-agent warning).
+- The child acknowledgement is still queued in the Codex App at this snapshot; do not claim
+  final Epic 4b closure until it is observed and the independent auditor returns PASS.
+
 ## Следующий шаг
 1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
 2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.
