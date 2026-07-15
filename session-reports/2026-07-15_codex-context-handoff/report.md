@@ -42,28 +42,25 @@
   runtime migration PASS. Независимый auditor не принял Done when без прямого
   исполнения compact hooks в App.
 
-## Update: прямой native smoke и открытый runtime-разрыв
+## Update: прямой native smoke и live PreCompact
 - В Desktop App disposable-задача с временным `model_auto_compact_token_limit = 1`
-  показала автоматическое сжатие контекста после каждого действия. Это подтверждает,
-  что App применяет native threshold; после теста значение восстановлено точно на
-  `190000`, scope остаётся `total`.
-- `~/.codex/config.toml` после возврата сохраняет `[hooks.state]` и `[memories]`.
-- `~/.codex/hooks.json` содержит оба compact-hook с matcher `auto`, но каталог
-  `.claude/.local-state/codex-context-governor/` не получил state JSON и в UI нет
-  сообщения PreCompact. Поэтому live execution `PreCompact(auto)`/`PostCompact(auto)`
-  не подтверждено; текущая реализация не даёт право утверждать, что handoff остановит
-  compaction. Нужны диагностика Desktop App или поддерживаемая альтернатива, затем
-  повторный smoke и независимый auditor.
+  показала автоматическое сжатие; после trust обоих hook state зафиксировал реальный
+  `PreCompact` для Desktop session `019f655f-3daf-72c1-9837-d49acb89d863`.
+- `continue:false` у `PreCompact` останавливает compaction, но не текущий turn. Это
+  поддерживаемая семантика common hook output: хук не создаёт задачу и не редактирует
+  ядро проекта. Поэтому handoff user-mediated, а не ложная «автоматизация».
+- State хранит LITE-prompt: STATUS → верх журнала → session-report → новая задача.
+  `PostCompact` не появляется после отменённого PreCompact; это ожидаемо, а не провал.
+- Рабочий `190000`/`total` и runtime `[hooks.state]`/`[memories]` сохранены. Contract
+  governor PASS, `test_codex_sync.py` — 59 PASS. Независимый auditor проверяет final.
 - Независимый read-only audit после smoke: PASS по корректности этой границы
   (threshold `190000`/`total`, runtime-секции и оба hook-определения на месте,
   state-файлов нет). Полный Done when не закрыт.
 
 ## Следующий шаг
-1. Считать native threshold проверенным, а execution compact-hooks — нет.
-2. Выяснить по диагностике Desktop App или официальной документации, поддерживает ли
-   текущая сборка именно `PreCompact`/`PostCompact`; не заменять это парсингом транскрипта.
-3. После подтверждённого поддерживаемого механизма повторить smoke со state JSON и
-   независимым auditor; только затем продолжить capability registry, adapters и TOOL_MAP.
+1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
+2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.
+3. После final auditor перейти к capability registry, adapters и TOOL_MAP; Эпик 5 не начинать.
 
 ## Промпт для нового чата
 > Продолжение программы «Реворк базы». Контекст прошлой задачи достиг 203k при согласованном пороге handoff ~190k; экономь окно с первого шага.

@@ -25,14 +25,14 @@ function Invoke-Governor([string]$event, [string]$turn) {
 try {
     $env:USERPROFILE = $tmp
     $pre = Invoke-Governor 'PreCompact' 'turn-pre' | ConvertFrom-Json
-    if ($pre.continue -ne $false -or $pre.stopReason -notmatch 'handoff' -or $pre.systemMessage -notmatch '190k') {
+    if ($pre.continue -ne $false -or $pre.stopReason -notmatch 'handoff' -or $pre.systemMessage -notmatch 'Auto-compaction stopped') {
         throw 'PreCompact contract failed'
     }
     $post = Invoke-Governor 'PostCompact' 'turn-post' | ConvertFrom-Json
-    if ($post.systemMessage -notmatch 'Automatic compaction') { throw 'PostCompact contract failed' }
+    if ($post.systemMessage -notmatch 'Automatic compaction completed') { throw 'PostCompact contract failed' }
     $statePath = Join-Path $tmp '.claude\.local-state\codex-context-governor\governor-test-session.json'
     $state = Get-Content -Raw -Encoding utf8 $statePath | ConvertFrom-Json
-    if ($state.event -ne 'PostCompact' -or $state.turn_id -ne 'turn-post') { throw 'state contract failed' }
+    if ($state.event -ne 'PostCompact' -or $state.turn_id -ne 'turn-post' -or -not $state.handoff_lite) { throw 'state contract failed' }
     Write-Host 'PASS codex context governor contract'
 } finally {
     $env:USERPROFILE = $originalProfile

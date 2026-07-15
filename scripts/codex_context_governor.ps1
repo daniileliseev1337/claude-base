@@ -14,6 +14,7 @@ try {
     $stateDir = Join-Path $env:USERPROFILE '.claude\.local-state\codex-context-governor'
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
     $session = if ($event.session_id) { $event.session_id } else { 'unknown-session' }
+    $handoffLite = 'Continue after PreCompact. First read Claude/CLAUDE.md, the top of Claude/ЖУРНАЛ СЕССИЙ.md, and Claude/STATUS.md; finish a safe step, update STATUS, the journal, and the current session-report. Then continue only with the recorded next step. Do not estimate context from the transcript.'
     $state = [ordered]@{
         event = $event.hook_event_name
         session_id = $event.session_id
@@ -21,6 +22,8 @@ try {
         turn_id = $event.turn_id
         model = $event.model
         recorded_at = (Get-Date).ToString('o')
+        handoff_required = ($event.hook_event_name -eq 'PreCompact')
+        handoff_lite = $handoffLite
     }
     $state | ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $stateDir "$session.json") -Encoding utf8
 
@@ -28,11 +31,11 @@ try {
         [ordered]@{
             continue = $false
             stopReason = 'Context governor: handoff required before compaction.'
-            systemMessage = 'Context reached the native 190k limit. Before continuing: finish a safe step, update Claude/STATUS.md, the top session journal and session-report; then prepare a LITE prompt with state links and move to a new task. Do not estimate tokens from the transcript.'
+            systemMessage = 'Auto-compaction stopped: handoff required. Before the next substantive step, finish a safe step and update Claude/STATUS.md, the top session journal, and the current session-report. Then create a new task with the LITE prompt in governor state. Do not estimate tokens from the transcript.'
         } | ConvertTo-Json -Compress
     } else {
         [ordered]@{
-            systemMessage = 'Automatic compaction completed. Check the context-governor record; handoff before the next substantive step remains preferred.'
+            systemMessage = 'Automatic compaction completed. Check context-governor state; handoff remains preferred before the next substantive step.'
         } | ConvertTo-Json -Compress
     }
 } catch {
