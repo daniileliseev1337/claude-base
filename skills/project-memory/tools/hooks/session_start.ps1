@@ -3,7 +3,8 @@
 #   1) prints the top 2 journal entries into session context ("read journal first"),
 #   2) writes a session marker used by session_end.ps1 (Stop) to detect an
 #      "unclosed" session (files changed, journal not updated).
-# Outside memory projects: silent no-op. NEVER breaks a session (exit 0 always).
+# Outside memory projects: bootstrap a nearby CLAUDE.md if present, otherwise no-op.
+# NEVER breaks a session (exit 0 always).
 # ASCII-only source on purpose (PowerShell 5.1 / no-BOM robustness).
 # Journal file name is Russian ("ZHURNAL SESSIY.md"), assembled from codepoints.
 
@@ -34,10 +35,26 @@ try {
     Remove-Item -Force -EA SilentlyContinue
 
   # walk up from cwd looking for <root>\Claude\<journal>
-  $root = $null; $journal = $null
+  $root = $null; $journal = $null; $claudeRoot = $null
   $d = $null
   if (Test-Path -LiteralPath $cwd) { $d = Get-Item -LiteralPath $cwd }
   for ($i = 0; ($i -lt 12) -and $d; $i++) {
+    if (-not $claudeRoot) {
+      $rootClaude = Join-Path $d.FullName 'CLAUDE.md'
+      if (Test-Path -LiteralPath $rootClaude) {
+        $isMemoryDir = $false
+        if (($d.Name -eq 'Claude') -and $d.Parent) {
+          $parentClaude = Join-Path $d.Parent.FullName 'CLAUDE.md'
+          $isMemoryDir = (Test-Path -LiteralPath (Join-Path $d.FullName $JournalName)) -or
+                         (Test-Path -LiteralPath $parentClaude)
+        }
+        if ($isMemoryDir) {
+          $claudeRoot = $d.Parent.FullName
+        } else {
+          $claudeRoot = $d.FullName
+        }
+      }
+    }
     $cand = Join-Path (Join-Path $d.FullName 'Claude') $JournalName
     if (Test-Path -LiteralPath $cand) { $root = $d.FullName; $journal = $cand; break }
     if ($d.Name -eq 'Claude') {
@@ -45,6 +62,17 @@ try {
       if (Test-Path -LiteralPath $cand2) { $root = $d.Parent.FullName; $journal = $cand2; break }
     }
     $d = $d.Parent
+  }
+
+  # Project AGENTS bootstrap: content-based and ownership-safe in the generator.
+  # This also covers a plain project with only root CLAUDE.md and no memory journal.
+  if (-not $claudeRoot -and $root) { $claudeRoot = $root }
+  if ($claudeRoot) {
+    $toolsDir = Split-Path $PSScriptRoot -Parent
+    $generator = Join-Path $toolsDir 'gen_project_agents.py'
+    if (Test-Path -LiteralPath $generator) {
+      & python $generator --quiet-current $claudeRoot
+    }
   }
   if (-not $journal) { exit 0 }   # not a memory project - stay silent
 
@@ -81,20 +109,5 @@ try {
     $lines | Select-Object -First 20 | ForEach-Object { Write-Output $_ }
   }
 
-  # P9 (multi-LLM Epic 1): freshness check for the project's flat AGENTS.md
-  # (kept ASCII-only like the rest of this file - see header comment on why)
-  $agentsMd = Join-Path $root 'AGENTS.md'
-  $srcTimes = @('CLAUDE.md', 'Claude\CLAUDE.md') |
-    ForEach-Object { Join-Path $root $_ } | Where-Object { Test-Path -LiteralPath $_ } |
-    ForEach-Object { (Get-Item -LiteralPath $_).LastWriteTime }
-  if ($srcTimes.Count -gt 0) {
-    $newest = ($srcTimes | Sort-Object -Descending)[0]
-    $genCmd = 'python "$HOME\.claude\skills\project-memory\tools\gen_project_agents.py" .'
-    if (-not (Test-Path -LiteralPath $agentsMd)) {
-      Write-Output "[project-memory] Project AGENTS.md missing (Codex/Copilot won't see it) - generate: $genCmd"
-    } elseif ((Get-Item -LiteralPath $agentsMd).LastWriteTime -lt $newest) {
-      Write-Output "[project-memory] Project AGENTS.md is older than CLAUDE.md - regenerate: $genCmd"
-    }
-  }
 } catch {}
 exit 0

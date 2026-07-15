@@ -37,10 +37,12 @@ python "$HOME/.claude/skills/project-memory/tools/bootstrap.py" "Имя прое
   следующий шаг) — самому НЕ выдумывать.
 - `--profile` зарезервирован (v1: только `core`; `templates/profiles/` —
   точка расширения, первый профиль добавит блок ПТО).
-- После разворота или курирования прогнать
-  `tools/gen_project_agents.py <root>` — плоский `AGENTS.md` проекта из
-  CLAUDE.md для Codex/Copilot/Cursor (П9, мульти-LLM); чужой AGENTS.md
-  без нашего маркера инструмент не трогает.
+- `tools/gen_project_agents.py <root>` собирает плоский `AGENTS.md` проекта из
+  CLAUDE.md для Codex/Copilot/Cursor (П9, мульти-LLM). Различает `current`,
+  `missing`, `stale`, `foreign` по содержимому и маркеру собственности: актуальный
+  не перезаписывает, отсутствующий создаёт, устаревший свой обновляет, чужой не
+  трогает. `SessionStart` запускает это автоматически и поддерживает проект только
+  с корневым `CLAUDE.md`; Codex-слой повторяет шаг как fallback для desktop.
 
 ## 2. Курирование протухания (propose → review → apply)
 

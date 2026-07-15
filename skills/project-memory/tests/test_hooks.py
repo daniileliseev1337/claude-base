@@ -70,6 +70,78 @@ def test_start_noop_outside_project(tmp_path):
     assert r.stdout.strip() == b""
 
 
+def test_start_bootstraps_project_with_only_claude_md(tmp_path):
+    proj = tmp_path / "plain-project"
+    proj.mkdir()
+    (proj / "CLAUDE.md").write_text("# Только CLAUDE\n", encoding="utf-8")
+
+    r = run_hook("session_start.ps1",
+                 {"session_id": "single", "cwd": str(proj)}, tmp_path / "st")
+
+    assert r.returncode == 0
+    agents = proj / "AGENTS.md"
+    assert agents.exists()
+    assert "Только CLAUDE" in agents.read_text(encoding="utf-8")
+
+
+def test_start_bootstraps_plain_project_from_subfolder(tmp_path):
+    proj = tmp_path / "plain-project"
+    sub = proj / "docs" / "nested"
+    sub.mkdir(parents=True)
+    (proj / "CLAUDE.md").write_text("# Корень найден\n", encoding="utf-8")
+
+    r = run_hook("session_start.ps1",
+                 {"session_id": "nested", "cwd": str(sub)}, tmp_path / "st")
+
+    assert r.returncode == 0
+    assert (proj / "AGENTS.md").exists()
+    assert not (sub / "AGENTS.md").exists()
+
+
+def test_start_allows_project_root_named_claude(tmp_path):
+    proj = tmp_path / "Claude"
+    proj.mkdir()
+    (proj / "CLAUDE.md").write_text("# Проект с таким именем\n", encoding="utf-8")
+
+    r = run_hook("session_start.ps1",
+                 {"session_id": "named-claude", "cwd": str(proj)}, tmp_path / "st")
+
+    assert r.returncode == 0
+    assert (proj / "AGENTS.md").exists()
+    assert not (tmp_path / "AGENTS.md").exists()
+
+
+def test_start_preserves_foreign_agents_md(tmp_path):
+    proj = tmp_path / "foreign-project"
+    proj.mkdir()
+    (proj / "CLAUDE.md").write_text("# Claude source\n", encoding="utf-8")
+    agents = proj / "AGENTS.md"
+    agents.write_text("# Ручной AGENTS\n", encoding="utf-8")
+
+    r = run_hook("session_start.ps1",
+                 {"session_id": "foreign", "cwd": str(proj)}, tmp_path / "st")
+
+    assert r.returncode == 0
+    assert agents.read_text(encoding="utf-8") == "# Ручной AGENTS\n"
+
+
+def test_start_updates_stale_generated_agents_md(tmp_path):
+    proj = tmp_path / "stale-project"
+    proj.mkdir()
+    source = proj / "CLAUDE.md"
+    source.write_text("# Первая версия\n", encoding="utf-8")
+    state = tmp_path / "st"
+    run_hook("session_start.ps1",
+             {"session_id": "stale-1", "cwd": str(proj)}, state)
+
+    source.write_text("# Вторая версия\n", encoding="utf-8")
+    r = run_hook("session_start.ps1",
+                 {"session_id": "stale-2", "cwd": str(proj)}, state)
+
+    assert r.returncode == 0
+    assert "Вторая версия" in (proj / "AGENTS.md").read_text(encoding="utf-8")
+
+
 def test_start_prints_journal_top_and_writes_marker(tmp_path):
     proj, _ = make_project(tmp_path)
     state = tmp_path / "st"
