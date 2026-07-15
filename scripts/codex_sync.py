@@ -337,6 +337,46 @@ def _map_raw_tools(text: str, registry: dict) -> str:
         raise ValueError(f"capability registry: unresolved raw MCP tool {raw}")
     return re.sub(r"mcp__[A-Za-z0-9-]+__[A-Za-z0-9_*\\]+", replace, text)
 
+def _adapt_legacy_tool_prose_for_codex(text: str) -> str:
+    """Нейтрализовать в Codex-выводе только известные Claude-specific имена инструментов."""
+    # Сначала заменяем целую историческую лестницу, чтобы не оставить ложный порядок провайдеров.
+    web_ladder = r"`?exa`?\s*(?:→|->|/)\s*`?firecrawl`?\s*(?:→|->|/)\s*`?fetch`?\s*(?:→|->|/)\s*`?playwright`?\s*(?:→|->|/)\s*`?WebFetch`?"
+    text = re.sub(
+        web_ladder,
+        "capability `web.search` → capability `web.fetch` / `web.extract` → capability `web.browser.interact`",
+        text,
+        flags=re.I,
+    )
+    provenance_replacements = (
+        (r"(?i)exa_cntd_ru", "web_search_cntd_ru"),
+        (r"(?i)firecrawl_cntd_ru", "web_extract_cntd_ru"),
+        (r"(?i)playwright_cntd_ru", "web_browser_cntd_ru"),
+        (r"(?i)cntd_ru_WebFetch", "cntd_ru_web_fetch"),
+        (r"(?i)firecrawl_(search|scrape|extract)", r"web_extract_\1"),
+        (r"(?i)memory/feedback_webfetch_reality_check\.md", "исторический feedback-файл о веб-проверке"),
+        (r"(?i)Exa-first", "web-first"),
+        (r"(?i)web_search_exa", "web_search"),
+        (r"(?i)web_fetch_exa", "web_fetch"),
+    )
+    for pattern, replacement in provenance_replacements:
+        text = re.sub(pattern, replacement, text)
+    replacements = (
+        (r"(?<![A-Za-z0-9_-])AskUserQuestion(?![A-Za-z0-9_-])", "уточняющий вопрос пользователю"),
+        (r"(?<![A-Za-z0-9_-])WebFetch(?![A-Za-z0-9_-])", "capability `web.fetch`"),
+        (r"(?<![A-Za-z0-9_-])exa(?![A-Za-z0-9_-])", "capability `web.search`"),
+        (r"(?<![A-Za-z0-9_-])firecrawl(?![A-Za-z0-9_-])", "capability `web.extract`"),
+        (r"(?<![A-Za-z0-9_-])playwright(?![A-Za-z0-9_-])", "capability `web.browser.interact`"),
+        (r"(?<!web\.)(?<![A-Za-z0-9_-])fetch(?![A-Za-z0-9_-])", "capability `web.fetch`"),
+        (r"(?<![A-Za-z0-9_])Bash(?![A-Za-z0-9_])", "PowerShell"),
+        (r"(?<![A-Za-z0-9_])Glob(?![A-Za-z0-9_])", "rg --files"),
+        (r"(?<![A-Za-z0-9_])Grep(?![A-Za-z0-9_])", "rg"),
+        (r"`tail`", "`Get-Content -Tail`"),
+        (r"`grep`", "`rg`"),
+    )
+    for pattern, replacement in replacements:
+        text = re.sub(pattern, replacement, text, flags=re.I)
+    return text
+
 def _yaml_value(front: str, key: str) -> str:
     """Значение ключа фронтматтера; block-scalar (| и >) собирается целиком:
     | — с переводами строк, > — склейка пробелом."""
@@ -381,6 +421,7 @@ def convert_agent_md(text: str, registry: dict | None = None):
             desc = re.sub(pat, repl, desc)
     else:
         body, desc = _map_raw_tools(body, registry), _map_raw_tools(desc, registry)
+        body, desc = _adapt_legacy_tool_prose_for_codex(body), _adapt_legacy_tool_prose_for_codex(desc)
         adapter = registry["_roles"].get(name) if name else None
         if name and adapter is None:
             raise ValueError(f"capability registry: missing role adapter {name}")

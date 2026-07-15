@@ -143,6 +143,28 @@ def test_convert_agent_md_wildcard_tools():
     assert "mcp__" not in toml_text
     assert "spreadsheets" in toml_text and "documents" in toml_text
 
+def test_convert_agent_registry_neutralizes_legacy_tool_prose():
+    from codex_sync import convert_agent_md
+    registry = {
+        "tool_map": [],
+        "_capabilities": {},
+        "_roles": {
+            "legacy-prose": {
+                "required_capabilities": [], "optional_capabilities": [], "permission_class": "rw",
+                "input_contract": "in", "output_contract": "out",
+                "verification": {"claude": "static", "codex": "static"},
+                "fallback": "none", "handoff": "none",
+            }
+        },
+    }
+    md = ("---\nname: legacy-prose\ndescription: exa\nmodel: haiku\n---\n"
+          "exa → firecrawl → fetch → playwright → WebFetch; AskUserQuestion; Bash, Glob, Grep; `tail`; `grep`.\n")
+    _, toml_text = convert_agent_md(md, registry)
+    for legacy in ("exa", "firecrawl", "playwright", "WebFetch", "AskUserQuestion", "Bash", "Glob", "Grep", "`tail`", "`grep`"):
+        assert legacy.lower() not in toml_text.lower()
+    assert "capability `web.search`" in toml_text
+    assert "уточняющий вопрос пользователю" in toml_text
+
 def test_convert_agent_readonly_sandbox():
     from codex_sync import convert_agent_md
     ro = "---\nname: r\ndescription: d\nmodel: sonnet\ntools: Read, Grep, mcp__excel__read_data_from_excel\n---\nТело.\n"

@@ -34,9 +34,9 @@ try {
         throw 'PreCompact state contract failed'
     }
     $post = Invoke-Governor 'PostCompact' 'turn-post' | ConvertFrom-Json
-    if ($post.systemMessage -notmatch 'Automatic compaction completed') { throw 'PostCompact contract failed' }
+    if ($post.systemMessage -notmatch 'Automatic compaction completed' -or $post.systemMessage -notmatch 'Preserve the PreCompact handoff state') { throw 'PostCompact contract failed' }
     $state = Get-Content -Raw -Encoding utf8 $statePath | ConvertFrom-Json
-    if ($state.event -ne 'PostCompact' -or $state.turn_id -ne 'turn-post' -or $state.handoff_lite -notmatch 'session journal named in CLAUDE.md') { throw 'state contract failed' }
+    if ($state.event -ne 'PreCompact' -or -not $state.handoff_required -or $state.turn_id -ne 'turn-pre' -or $state.handoff_lite -notmatch 'session journal named in CLAUDE.md') { throw 'PostCompact must preserve the PreCompact handoff state' }
     Write-Host 'PASS codex context governor contract'
 } finally {
     $env:USERPROFILE = $originalProfile
