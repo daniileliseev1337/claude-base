@@ -2,7 +2,34 @@
   "enable": [
     "excel-helper", "word-helper", "doc-extract", "pdf-edit",
     "facts-layer", "project-memory", "domain-grilling", "karpathy-guidelines",
-    "handoff-to-new-chat", "web-access"
+    "handoff-to-new-chat", "llm-interop", "web-access"
   ],
-  "skip_reason": {}
+  "skip_reason": {
+    "acad-recreation": "AutoCAD runtime и Claude-MCP обвязка; включать после capability-адаптера",
+    "cad-reader": "сначала исправить невалидный YAML frontmatter и проверить CAD backend",
+    "chains-pattern": "Claude-specific команды оркестрации; нужен нейтральный adapter",
+    "co-verify": "семантика переносима, но document capability ещё не обкатана в Эпике 5",
+    "doc-finder": "нужен mapping веб-поиска и загрузки файлов",
+    "graphify": "Claude Agent/hooks и битая ссылка на reference; сначала разделить core/adapter",
+    "id-tom-priemka": "Claude Workflow/vision fan-out; нужен adapter ролей и PDF vision",
+    "image-text-replace": "тяжёлые локальные зависимости; нужен runtime smoke",
+    "local-osint-recon": "машинный Kali WSL и персональные пути",
+    "local-video-digest": "локальные media/Whisper зависимости; нужен runtime profile",
+    "pd-tep-extractor": "нужен проверенный PDF extraction adapter",
+    "pnr-vor-helper": "нужен совместный DOCX/XLSX test-drive",
+    "revit-family-generator": "внешний Revit runtime; включать по доменному профилю",
+    "revit-family-generator-ru": "локальный Revit/famfab pipeline; включать по доменному профилю",
+    "revit-testbed": "живой Revit-стенд; только доменный профиль",
+    "ru-gov-access": "host/network-specific доступ; нужен capability fallback",
+    "skill-development": "конфликт producer/consumer политики правки общей базы",
+    "spec-writer": "нужен проверенный document adapter",
+    "stroy-formatting": "Claude AskUserQuestion и внешние formatting templates",
+    "structured-artifacts": "переносим; включить после trigger forward-test",
+    "supervisor": "Claude Agent SDK и remote-control; оставить Claude-only",
+    "supplier-due-diligence": "нужен web/document capability mapping",
+    "svor-vor-works-base": "переносим; включить после domain forward-test",
+    "understanding-map": "Claude Desktop/widget/Artifacts specific",
+    "upd-parser": "нужен PDF/XLSX capability test-drive",
+    "yandex-disk-uploader": "локальная .env и организационная структура архива"
+  }
 }
