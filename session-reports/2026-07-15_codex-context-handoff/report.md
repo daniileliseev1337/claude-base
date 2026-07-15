@@ -137,6 +137,18 @@
 - An independent audit returned NOT PASS solely because these historical records were not yet
   reconciled. Re-run that read-only audit against this section before closing Epic 4b.
 
+## Final: Epic 4b closed
+
+- The repeated independent read-only audit returned `PASS` after reconciliation.
+- Accepted E2E chain: native `PreCompact` state → fresh task
+  `019f6667-7676-7391-9fbb-a31ddbbca342` on `gpt-5.6-terra` → `ACK-FRESH-TERRA`,
+  without auto-compaction.
+- Final checks: governor contract PASS; Python suite `86 passed`; `codex_sync.py check`
+  code 0; config `190000` / `total`; `[hooks.state]` and `[memories]` preserved;
+  `time` absent.
+- Epic 4b is closed. Do not start Epic 5. The next task, if any, starts from this report
+  and must not use `/fork` for handoff.
+
 ## Следующий шаг
 1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
 2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.
