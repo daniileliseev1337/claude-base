@@ -6,6 +6,7 @@ import re
 import sys
 import tomllib
 from pathlib import Path
+from jsonschema import Draft202012Validator
 
 BEGIN = "# >>> claude-base managed >>>"
 END = "# <<< claude-base managed <<<"
@@ -265,6 +266,48 @@ TOOL_MAP = [
 # sandbox_mode не сужаем; нет ни одного (и tools вообще заданы) → read-only ревьюер.
 WRITE_TOOL_MARKERS = ("Write", "Edit", "search_and_replace", "add_paragraph")
 
+def load_capability_registry(home: Path) -> dict:
+    """Загрузить единственный канон capability-адаптеров и проверить связи."""
+    base = home / ".claude" / "codex-layer"
+    schema = json.loads((base / "capability-registry.schema.json").read_text(encoding="utf-8"))
+    data = json.loads((base / "capability-registry.json").read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(data)
+    caps = {x["capability_id"]: x for x in data["capabilities"]}
+    if len(caps) != len(data["capabilities"]):
+        raise ValueError("capability registry: duplicate capability_id")
+    roles = {x["role_id"]: x for x in data["role_adapters"]}
+    if len(roles) != 16 or sum(x["permission_class"] == "ro" for x in roles.values()) != 7 or sum(x["permission_class"] == "rw" for x in roles.values()) != 9:
+        raise ValueError("capability registry: expected 7 RO and 9 RW role adapters")
+    for item in [*data["role_adapters"], *data["skill_adapters"]]:
+        for cap_id in item["required_capabilities"]:
+            cap = caps.get(cap_id)
+            if cap is None:
+                raise ValueError(f"capability registry: unresolved capability {cap_id}")
+            if not cap["providers"] and cap["verification"]["status"] != "blocked":
+                raise ValueError(f"capability registry: {cap_id} has no provider or blocked state")
+    manifest = json.loads((base / "skills-manifest.json").read_text(encoding="utf-8"))
+    classified = set(manifest.get("enable", [])) | set(manifest.get("skip_reason", {}))
+    skill_ids = {x["skill_id"] for x in data["skill_adapters"]}
+    if classified != skill_ids or len(manifest.get("enable", [])) != 11 or len(manifest.get("skip_reason", {})) != 26:
+        raise ValueError("capability registry: skill adapters must mirror the existing 11/26 manifest classification")
+    for mapping in data["tool_map"]:
+        if mapping["capability_id"] not in caps:
+            raise ValueError(f"capability registry: TOOL_MAP references {mapping['capability_id']}")
+    data["_capabilities"] = caps
+    data["_roles"] = roles
+    return data
+
+def _map_raw_tools(text: str, registry: dict) -> str:
+    """Заменить только известные raw MCP identifiers; неизвестный не маскировать."""
+    def replace(match):
+        raw = match.group(0).replace("\\*", "*")
+        for item in registry["tool_map"]:
+            if re.fullmatch(item["raw_tool_pattern"], raw):
+                cap = registry["_capabilities"][item["capability_id"]]
+                return f"capability `{cap['capability_id']}` ({cap['purpose']})"
+        raise ValueError(f"capability registry: unresolved raw MCP tool {raw}")
+    return re.sub(r"mcp__[A-Za-z0-9-]+__[A-Za-z0-9_*\\]+", replace, text)
+
 def _yaml_value(front: str, key: str) -> str:
     """Значение ключа фронтматтера; block-scalar (| и >) собирается целиком:
     | — с переводами строк, > — склейка пробелом."""
@@ -293,7 +336,7 @@ def _toml_block(s: str) -> str:
     esc = s.replace("\\", "\\\\").replace('"""', '""\\"')
     return '"""\n' + esc + '\n"""'
 
-def convert_agent_md(text: str):
+def convert_agent_md(text: str, registry: dict | None = None):
     text = text.replace("\r\n", "\n")  # CRLF-агенты реальны (5/17 в базе)
     m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
     if not m:
@@ -303,22 +346,31 @@ def convert_agent_md(text: str):
     model = MODEL_MAP.get(_yaml_value(front, "model"), "gpt-5.6-terra")
     desc = _yaml_value(front, "description")
     tools = _yaml_value(front, "tools")
-    for pat, repl in TOOL_MAP:
-        body = re.sub(pat, repl, body)
-        desc = re.sub(pat, repl, desc)
+    if registry is None:
+        for pat, repl in TOOL_MAP:
+            body = re.sub(pat, repl, body)
+            desc = re.sub(pat, repl, desc)
+    else:
+        body, desc = _map_raw_tools(body, registry), _map_raw_tools(desc, registry)
+        adapter = registry["_roles"].get(name) if name else None
+        if name and adapter is None:
+            raise ValueError(f"capability registry: missing role adapter {name}")
+        if adapter:
+            body += "\n\n[Capability adapter]\nrequired: " + ", ".join(adapter["required_capabilities"])
+            body += "\nfallback: " + adapter["fallback"] + "\nhandoff: " + adapter["handoff"]
     toml_text = f"name = {_t(name)}\ndescription = {_t(desc)}\nmodel = {_t(model)}\n"
-    if tools and not any(marker in tools for marker in WRITE_TOOL_MARKERS):
+    if (registry is not None and name and registry["_roles"][name]["permission_class"] == "ro") or (registry is None and tools and not any(marker in tools for marker in WRITE_TOOL_MARKERS)):
         toml_text += 'sandbox_mode = "read-only"\n'   # [I2] ревьюер без Write/Edit — сузить sandbox в Codex
     toml_text += f"developer_instructions = {_toml_block(body.strip())}\n"
     return f"{name}.toml", toml_text
 
-def collect_agent_tomls(agents_dir: Path) -> dict:
+def collect_agent_tomls(agents_dir: Path, registry: dict | None = None) -> dict:
     """[I2] Обходит agents/*.md; пропускает не-агентские файлы (без фронтматтера
     или без name: в фронтматтере) с предупреждением вместо мусорного '.toml'."""
     out = {}
     for f in sorted(agents_dir.glob("*.md")):
         try:
-            fname, toml_text = convert_agent_md(f.read_text(encoding="utf-8"))
+            fname, toml_text = convert_agent_md(f.read_text(encoding="utf-8"), registry)
         except ValueError as e:
             print(f"[codex_sync] warn: {f.name} пропущен: {e}", file=sys.stderr)
             continue
@@ -370,6 +422,8 @@ def render_target_codex(home: Path) -> dict:
     """Чистый рендер всех артефактов таргета codex: ключ → содержимое. Ничего не пишет."""
     claude = home / ".claude"
     core, layer, _, _, mcp, allow = _read_canon(home)
+    registry_path = claude / "codex-layer" / "capability-registry.json"
+    registry = load_capability_registry(home) if registry_path.exists() else None
     overlay = load_overlay(home)
     eff_allow = sorted(set(allow) | set(overlay))
     out = {
@@ -378,7 +432,7 @@ def render_target_codex(home: Path) -> dict:
                                 + render_mcp_toml(mcp, eff_allow, bridge=set(overlay))).strip(),
         "hooks.json": json.dumps(render_hooks_json(home), ensure_ascii=False, indent=2),
     }
-    for fname, toml_text in collect_agent_tomls(claude / "agents").items():
+    for fname, toml_text in collect_agent_tomls(claude / "agents", registry).items():
         out[f"agents/{fname}"] = toml_text
     out.update(render_profiles(home))
     return out
@@ -398,6 +452,10 @@ def collect_inputs(home: Path) -> dict:
             {k: mcp[k] for k in eff if k in mcp}, sort_keys=True, ensure_ascii=False)),
         "codex-mcp-overlay": _sha(json.dumps(sorted(overlay), ensure_ascii=False)),
     }
+    for name in ("capability-registry.json", "capability-registry.schema.json"):
+        p = claude / "codex-layer" / name
+        if p.exists():
+            inputs[f"codex-layer/{name}"] = _sha(p.read_text(encoding="utf-8"))
     for f in sorted((claude / "agents").glob("*.md")):
         inputs[f"agents/{f.name}"] = _sha(f.read_text(encoding="utf-8"))
     tj = claude / "codex-layer" / "targets.json"

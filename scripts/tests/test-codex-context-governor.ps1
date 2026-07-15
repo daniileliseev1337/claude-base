@@ -25,7 +25,7 @@ function Invoke-Governor([string]$event, [string]$turn) {
 try {
     $env:USERPROFILE = $tmp
     $pre = Invoke-Governor 'PreCompact' 'turn-pre' | ConvertFrom-Json
-    if ($pre.continue -ne $false -or $pre.stopReason -notmatch 'handoff' -or $pre.systemMessage -notmatch 'Auto-compaction stopped') {
+    if ($pre.continue -ne $false -or $pre.stopReason -notmatch 'handoff' -or $pre.systemMessage -notmatch 'automatic agent handoff' -or $pre.systemMessage -notmatch 'main agent must create a new task') {
         throw 'PreCompact contract failed'
     }
     $post = Invoke-Governor 'PostCompact' 'turn-post' | ConvertFrom-Json

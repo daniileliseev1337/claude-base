@@ -48,19 +48,42 @@
   `PreCompact` для Desktop session `019f655f-3daf-72c1-9837-d49acb89d863`.
 - `continue:false` у `PreCompact` останавливает compaction, но не текущий turn. Это
   поддерживаемая семантика common hook output: хук не создаёт задачу и не редактирует
-  ядро проекта. Поэтому handoff user-mediated, а не ложная «автоматизация».
+  ядро проекта. Hook не создаёт задачу сам, но передаёт сигнал основному агенту; после
+  безопасного шага агент автоматически создаёт новую задачу с LITE-prompt. Пользователь не
+  выполняет перенос вручную.
 - State хранит LITE-prompt: STATUS → верх журнала → session-report → новая задача.
   `PostCompact` не появляется после отменённого PreCompact; это ожидаемо, а не провал.
 - Рабочий `190000`/`total` и runtime `[hooks.state]`/`[memories]` сохранены. Contract
-  governor PASS, `test_codex_sync.py` — 59 PASS. Независимый auditor проверяет final.
+  governor PASS, полный Python-набор — 80 PASS. Независимый final auditor PASS.
+  Отдельный `config.toml#managed` drift — отсутствующий канонический time MCP — не перезаписан.
 - Независимый read-only audit после smoke: PASS по корректности этой границы
   (threshold `190000`/`total`, runtime-секции и оба hook-определения на месте,
   state-файлов нет). Полный Done when не закрыт.
 
+## Update: automatic agent handoff
+- Владелец подтвердил целевой сценарий: после `PreCompact` основной агент сам создаёт новую
+  project-задачу с LITE-prompt; пользователь не переносит работу вручную.
+- `PreCompact` остаётся источником сигнала, а не UI-автоматизацией: hook сохраняет state и
+  останавливает compaction; агент после безопасного шага обновляет STATUS, журнал и report,
+  затем вызывает штатное создание задачи.
+- Контрактное сообщение и PowerShell-тест уточнены; `test-codex-context-governor.ps1` PASS,
+  полный Python-набор — 80 PASS. Независимый read-only audit PASS: утверждение допустимо
+  только как automatic agent handoff, не как создание задачи самим hook.
+
+## Update: capability registry
+- Добавлены `codex-layer/capability-registry.json` и schema: 16 capabilities, 16 role adapters
+  (7 RO/9 RW) и 37 skill adapters; manifest сохраняет прежние 11 enabled / 26 skipped.
+- `codex_sync.py` валидирует schema и связи, включает registry в input hashes и заменяет raw MCP
+  только определёнными capability IDs. 16 сгенерированных TOML не содержат `mcp__*`; Revit
+  остаётся on-demand/blocked, не включён по умолчанию.
+- 80 Python PASS. Независимый audit: инкремент PASS по составу, но полный Done when BLOCKED
+  старым `manual-drift config.toml#managed`: в Desktop отсутствует канонический MCP `time`.
+  Runtime `[hooks.state]`/`[memories]` не затёрты; решение об MCP оставлено владельцу.
+
 ## Следующий шаг
 1. При PreCompact выполнить LITE-prompt из state: обновить STATUS, верх журнала и report.
 2. Создать новую задачу и продолжить только зафиксированный безопасный следующий шаг.
-3. После final auditor перейти к capability registry, adapters и TOOL_MAP; Эпик 5 не начинать.
+3. Перейти к capability registry, adapters и TOOL_MAP; Эпик 5 не начинать.
 
 ## Промпт для нового чата
 > Продолжение программы «Реворк базы». Контекст прошлой задачи достиг 203k при согласованном пороге handoff ~190k; экономь окно с первого шага.

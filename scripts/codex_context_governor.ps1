@@ -31,7 +31,7 @@ try {
         [ordered]@{
             continue = $false
             stopReason = 'Context governor: handoff required before compaction.'
-            systemMessage = 'Auto-compaction stopped: handoff required. Before the next substantive step, finish a safe step and update Claude/STATUS.md, the top session journal, and the current session-report. Then create a new task with the LITE prompt in governor state. Do not estimate tokens from the transcript.'
+            systemMessage = 'Auto-compaction stopped: automatic agent handoff required. Before the next substantive step, finish a safe step and update Claude/STATUS.md, the top session journal, and the current session-report. Then the main agent must create a new task with the LITE prompt in governor state. Do not estimate tokens from the transcript.'
         } | ConvertTo-Json -Compress
     } else {
         [ordered]@{
