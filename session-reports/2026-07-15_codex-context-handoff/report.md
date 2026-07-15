@@ -42,13 +42,28 @@
   runtime migration PASS. Независимый auditor не принял Done when без прямого
   исполнения compact hooks в App.
 
-## Прямой App smoke: обязательный следующий шаг
-1. Перезагрузи Codex App или открой `/hooks`, проверь и доверь `PreCompact` и `PostCompact`.
-2. Для disposable задачи временно поставь `model_auto_compact_token_limit = 1`,
-   перезагрузи App и отправь два коротких сообщения; затем верни значение `190000`.
-3. Подтверди state JSON в `.claude/.local-state/codex-context-governor/` и видимое
-   сообщение `PreCompact`; проверь, что компакция не обошла handoff.
-4. После PASS продолжи capability registry, adapters 16 ролей/skills и TOOL_MAP.
+## Update: прямой native smoke и открытый runtime-разрыв
+- В Desktop App disposable-задача с временным `model_auto_compact_token_limit = 1`
+  показала автоматическое сжатие контекста после каждого действия. Это подтверждает,
+  что App применяет native threshold; после теста значение восстановлено точно на
+  `190000`, scope остаётся `total`.
+- `~/.codex/config.toml` после возврата сохраняет `[hooks.state]` и `[memories]`.
+- `~/.codex/hooks.json` содержит оба compact-hook с matcher `auto`, но каталог
+  `.claude/.local-state/codex-context-governor/` не получил state JSON и в UI нет
+  сообщения PreCompact. Поэтому live execution `PreCompact(auto)`/`PostCompact(auto)`
+  не подтверждено; текущая реализация не даёт право утверждать, что handoff остановит
+  compaction. Нужны диагностика Desktop App или поддерживаемая альтернатива, затем
+  повторный smoke и независимый auditor.
+- Независимый read-only audit после smoke: PASS по корректности этой границы
+  (threshold `190000`/`total`, runtime-секции и оба hook-определения на месте,
+  state-файлов нет). Полный Done when не закрыт.
+
+## Следующий шаг
+1. Считать native threshold проверенным, а execution compact-hooks — нет.
+2. Выяснить по диагностике Desktop App или официальной документации, поддерживает ли
+   текущая сборка именно `PreCompact`/`PostCompact`; не заменять это парсингом транскрипта.
+3. После подтверждённого поддерживаемого механизма повторить smoke со state JSON и
+   независимым auditor; только затем продолжить capability registry, adapters и TOOL_MAP.
 
 ## Промпт для нового чата
 > Продолжение программы «Реворк базы». Контекст прошлой задачи достиг 203k при согласованном пороге handoff ~190k; экономь окно с первого шага.
