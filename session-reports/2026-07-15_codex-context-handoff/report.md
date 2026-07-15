@@ -30,15 +30,35 @@
 - Документация Codex описывает `PreCompact`/`PostCompact`, но hook payload не содержит реальную цифру токенов. Не считать размер транскрипта заменой счётчика.
 - До реализаций провести live-smoke hooks в текущем Codex App: появление `[hooks.state]` — сильный сигнал, что прежний диагноз «desktop hooks мертвы» мог устареть.
 
+## Update: context governor implementation
+- В runtime установлен `model_auto_compact_token_limit = 190000` со scope `total`.
+  Это авторитетный threshold event; числовой счётчик из hook payload не доступен.
+- `PreCompact` и `PostCompact` с matcher `auto` добавлены в `hooks.json`. Первый
+  останавливает компакцию и требует STATUS → журнал → report → LITE-handoff;
+  второй сохраняет диагностический state. Транскрипт не парсится для порога.
+- `codex_sync.py` теперь выносит runtime `[hooks.state]` и `[memories]` за
+  managed-блок; обычный sync сохранил текущие значения, `check` clean.
+- Проверки: 80 Python-тестов, golden snapshot, synthetic hook-contract и
+  runtime migration PASS. Независимый auditor не принял Done when без прямого
+  исполнения compact hooks в App.
+
+## Прямой App smoke: обязательный следующий шаг
+1. Перезагрузи Codex App или открой `/hooks`, проверь и доверь `PreCompact` и `PostCompact`.
+2. Для disposable задачи временно поставь `model_auto_compact_token_limit = 1`,
+   перезагрузи App и отправь два коротких сообщения; затем верни значение `190000`.
+3. Подтверди state JSON в `.claude/.local-state/codex-context-governor/` и видимое
+   сообщение `PreCompact`; проверь, что компакция не обошла handoff.
+4. После PASS продолжи capability registry, adapters 16 ролей/skills и TOOL_MAP.
+
 ## Промпт для нового чата
 > Продолжение программы «Реворк базы». Контекст прошлой задачи достиг 203k при согласованном пороге handoff ~190k; экономь окно с первого шага.
 >
-> Цель: реализовать следующий инкремент Эпика 4b — надёжный Codex context governor и handoff в новую задачу; затем вернуться к capability registry, semantic adapters 16 ролей/skills и TOOL_MAP. Не начинать Эпик 5.
+> Цель: закрыть прямой App smoke context governor, затем перейти к capability registry, semantic adapters 16 ролей/skills и TOOL_MAP. Не начинать Эпик 5.
 >
-> Сделано: project bootstrap `CLAUDE.md → AGENTS.md` закрыт (166 тестов, auditor PASSED); границы registry зафиксированы в `docs/superpowers/specs/2026-07-15-epic4b-capability-boundaries.md`.
+> Сделано: bootstrap закрыт (166 тестов, auditor PASSED); governor установлен на 190k, Pre/PostCompact(auto) развёрнуты, runtime state сохранён, 80 Python-тестов и hook-contract PASS. Границы registry зафиксированы в `docs/superpowers/specs/2026-07-15-epic4b-capability-boundaries.md`.
 >
 > Перед работой прочитай `Claude/CLAUDE.md`, верх `Claude/ЖУРНАЛ СЕССИЙ.md`, `Claude/STATUS.md`, верх `0_СТАТУС_программы.md`, затем этот report. Не читай report целиком повторно: сначала `rg -n "^##"`, потом только нужные секции.
 >
-> Важные факты: владелец выбрал порог ~190k для окна ~258k; перед handoff обновлять STATUS/журнал/report; текущий `codex_sync.py check` показывает manual-drift `config.toml#managed`, потому что Codex App добавил `[hooks.state]` и `[memories]`. Не перезаписывай их силой. Проверь, действительно ли текущий Codex App исполняет PreCompact/PostCompact hooks и можно ли получить авторитетный сигнал порога без парсинга транскрипта.
+> Важные факты: владелец выбрал порог ~190k для окна ~258k; перед handoff обновлять STATUS/журнал/report. `codex_sync.py check` clean: `[hooks.state]` и `[memories]` перенесены за managed-блок. Числового hook-счётчика нет; авторитетен native threshold event, не транскрипт.
 >
-> Done when ближайшего инкремента: правила/конфиг задают ранний переход около 190k, handoff сначала фиксирует ядро проекта, новая задача получает LITE-prompt и ссылки на состояние, runtime config не затирается, есть live-smoke и независимый аудит.
+> Ближайший Done when: после reload/restart доверены Pre/PostCompact; disposable auto-compaction записывает state JSON и показывает PreCompact handoff. Только затем начинать registry/adapters/TOOL_MAP.
