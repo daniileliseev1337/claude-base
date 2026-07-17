@@ -22,7 +22,7 @@
 ## Remaining release blockers
 
 1. VS Code GUI checklist в `%USERPROFILE%/.claude/session-reports/2026-07-14_codex-phase3/vscode-verify.md` не заполнен: установка и runtime уже PASS, но боковая панель, авторизация и рабочий сценарий не доказаны.
-2. Не определён release repository и не оформлено решение: коммитить generated `AGENTS.md` или собирать его при установке.
+2. Исторический пункт initial handoff, закрытый в последующей Reconciliation: release repository определён как `~/.claude`; generated `AGENTS.md` не является release-артефактом.
 3. Нет доказанной ежедневной безинцидентной обкатки синка/хуков.
 4. В preflight остаются scoped backlog Epic 1–3 и upstream hook-regression check; сверить их с roadmap и закрывать отдельными evidence либо фиксировать owner decision.
 
