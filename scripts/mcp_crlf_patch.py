@@ -14,6 +14,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from codex_mcp_overlay import OverlayError, load_overlay_names
 
 BUGGY = 'TextIOWrapper(sys.stdout.buffer, encoding="utf-8")'
 FIXED = 'TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="")'
@@ -65,19 +66,65 @@ def run(venvs: list, check_only: bool) -> int:
 
 
 def _overlay_venvs(home: Path) -> list:
-    """venv'ы python-серверов из активного оверлея моста (формат задачи 2:
-    .local-state/codex-mcp-overlay.json = {"enable": [имена]})."""
-    op = home / ".claude" / ".local-state" / "codex-mcp-overlay.json"
-    if not op.exists():
-        return []
-    names = json.loads(op.read_text(encoding="utf-8")).get("enable", [])
-    mcp = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
+    """venv'ы python-серверов из единого parser-а активного overlay моста."""
+    names = load_overlay_names(home)
+    try:
+        payload = json.loads((home / ".claude.json").read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise OverlayError("~/.claude.json должен быть объектом")
+        mcp = payload.get("mcpServers", {})
+        if not isinstance(mcp, dict):
+            raise OverlayError("mcpServers должен быть объектом")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError) as error:
+        raise OverlayError(str(error)) from error
     out = []
     for n in names:
-        v = venv_from_command(mcp.get(n, {}).get("command", ""))
+        server = mcp.get(n)
+        if not isinstance(server, dict):
+            raise OverlayError(f"mcpServers.{n} должен быть объектом")
+        command = server.get("command", "")
+        if not isinstance(command, str):
+            raise OverlayError(f"mcpServers.{n}.command должен быть строкой")
+        v = venv_from_command(command)
         if v is not None:
             out.append(str(v))
     return out
+
+
+def main(argv=None, home: Path | None = None) -> int:
+    """Запустить патчер и различить patch failure (1) от ошибки входного overlay (2)."""
+    ap = argparse.ArgumentParser(description="Патч CRLF-бага mcp/server/stdio.py в venv")
+    ap.add_argument("--venv", action="append", default=[], help="путь к venv (повторяемый)")
+    ap.add_argument("--scan", action="store_true", help="просканировать ~/.claude/mcp-servers/*/.venv")
+    ap.add_argument("--from-overlay", action="store_true",
+                    help="venv'ы серверов активного оверлея моста (для дрейф-скана)")
+    ap.add_argument("--overlay-names", action="store_true",
+                    help="вывести имена из активного overlay через единый parser")
+    ap.add_argument("--check", action="store_true", help="только диагностика, без записи")
+    args = ap.parse_args(argv)
+    home = home or Path.home()
+    try:
+        if args.overlay_names:
+            if args.venv or args.scan or args.from_overlay:
+                ap.error("--overlay-names нельзя сочетать с выбором venv")
+            for name in load_overlay_names(home):
+                print(name)
+            return 0
+        venvs = list(args.venv)
+        if args.scan:
+            root = home / ".claude" / "mcp-servers"
+            if root.exists():
+                venvs += [str(d / ".venv") for d in sorted(root.iterdir()) if (d / ".venv").is_dir()]
+        if args.from_overlay:
+            venvs += _overlay_venvs(home)
+            if not venvs:
+                return 0        # мост выключен или в нём нет Python-venv — проверять нечего
+    except OverlayError as error:
+        print(f"[mcp_crlf_patch] input-error: {error}", file=sys.stderr)
+        return 2
+    if not venvs:
+        ap.error("[mcp_crlf_patch] нужен --venv, --scan или --from-overlay")
+    return run(venvs, args.check)
 
 
 if __name__ == "__main__":
@@ -86,22 +133,4 @@ if __name__ == "__main__":
         sys.stderr.reconfigure(encoding="utf-8")
     except AttributeError:
         pass
-    ap = argparse.ArgumentParser(description="Патч CRLF-бага mcp/server/stdio.py в venv")
-    ap.add_argument("--venv", action="append", default=[], help="путь к venv (повторяемый)")
-    ap.add_argument("--scan", action="store_true", help="просканировать ~/.claude/mcp-servers/*/.venv")
-    ap.add_argument("--from-overlay", action="store_true",
-                    help="venv'ы серверов активного оверлея моста (для дрейф-скана)")
-    ap.add_argument("--check", action="store_true", help="только диагностика, без записи")
-    args = ap.parse_args()
-    venvs = list(args.venv)
-    if args.scan:
-        root = Path.home() / ".claude" / "mcp-servers"
-        if root.exists():
-            venvs += [str(d / ".venv") for d in sorted(root.iterdir()) if (d / ".venv").is_dir()]
-    if args.from_overlay:
-        venvs += _overlay_venvs(Path.home())
-        if not venvs:
-            sys.exit(0)        # мост выключен — проверять нечего
-    if not venvs:
-        ap.error("[mcp_crlf_patch] нужен --venv, --scan или --from-overlay")
-    sys.exit(run(venvs, args.check))
+    sys.exit(main())

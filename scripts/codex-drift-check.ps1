@@ -30,16 +30,13 @@ try {
             Write-Output "  diff: python ~/.claude/scripts/codex_sync.py diff · отбросить: ... sync --force-overwrite <ключ|all>"
         }
         # Эпик 3: активный доменный мост — напоминание + контроль CRLF-патча
-        $overlay = Join-Path $claudeDir '.local-state\codex-mcp-overlay.json'
-        if (Test-Path $overlay) {
-            $names = $null
-            try { $names = (Get-Content $overlay -Raw -Encoding UTF8 | ConvertFrom-Json).enable } catch {}
-            if ($names -and $names.Count -gt 0) {
-                Write-Output ("i доменный MCP-мост Codex включён: " + ($names -join ', ') + " — после задачи: python ~/.claude/scripts/codex_sync.py mcp off")
-                & python (Join-Path $claudeDir 'scripts\mcp_crlf_patch.py') --from-overlay --check 2>$null | Out-Null
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Output ("! CRLF-патч слетел (обновление venv?) — python ~/.claude/scripts/codex_sync.py mcp on " + ($names -join ' '))
-                }
+        $patchPy = Join-Path $claudeDir 'scripts\mcp_crlf_patch.py'
+        $names = @(& python $patchPy --overlay-names 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $names.Count -gt 0) {
+            Write-Output ("i доменный MCP-мост Codex включён: " + ($names -join ', ') + " — после задачи: python ~/.claude/scripts/codex_sync.py mcp off")
+            & python $patchPy --from-overlay --check 2>$null | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Write-Output ("! CRLF-патч слетел (обновление venv?) — python ~/.claude/scripts/codex_sync.py mcp on " + ($names -join ' '))
             }
         }
     } finally { Remove-Item -Force $lock }

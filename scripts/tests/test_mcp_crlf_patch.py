@@ -3,8 +3,10 @@
 import pathlib
 import sys
 
+import pytest
+
 sys.path.insert(0, str(pathlib.Path(__file__).parents[1]))
-from mcp_crlf_patch import (BUGGY, FIXED, classify, process_venv,
+from mcp_crlf_patch import (BUGGY, FIXED, classify, main, process_venv,
                             run, stdio_path, venv_from_command)
 
 STDIO_BUGGY = (
@@ -72,3 +74,45 @@ def test_run_exit_codes(tmp_path, capsys):
     assert run([str(good), str(tmp_path / "ghost")], check_only=False) == 1
     out = capsys.readouterr().out
     assert "not-found" in out and "already-ok" in out
+
+
+def test_from_overlay_uses_shared_parser_and_classifies_invalid_input(tmp_path, capsys):
+    from codex_mcp_overlay import overlay_path
+
+    p = overlay_path(tmp_path)
+    p.parent.mkdir(parents=True)
+    p.write_text('{"enable": "pyserv"}', encoding="utf-8")
+
+    assert main(["--from-overlay", "--check"], home=tmp_path) == 2
+    assert "input-error" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("config", ["[]", '{"mcpServers": null}', '{"mcpServers": []}',
+                                      '{"mcpServers": {"pyserv": []}}'])
+def test_from_overlay_classifies_malformed_mcp_configuration(tmp_path, capsys, config):
+    from codex_mcp_overlay import overlay_path
+
+    p = overlay_path(tmp_path)
+    p.parent.mkdir(parents=True)
+    p.write_text('{"enable": ["pyserv"]}', encoding="utf-8")
+    (tmp_path / ".claude.json").write_text(config, encoding="utf-8")
+
+    assert main(["--from-overlay", "--check"], home=tmp_path) == 2
+    assert "input-error" in capsys.readouterr().err
+
+
+def test_from_overlay_checks_and_patches_python_venv(tmp_path):
+    import json
+    from codex_mcp_overlay import overlay_path
+
+    venv = _make_venv(tmp_path, STDIO_BUGGY)
+    (tmp_path / ".claude.json").write_text(json.dumps({"mcpServers": {
+        "pyserv": {"command": str(venv / "Scripts" / "python.exe")}
+    }}), encoding="utf-8")
+    p = overlay_path(tmp_path)
+    p.parent.mkdir(parents=True)
+    p.write_text('{"enable": ["pyserv"]}', encoding="utf-8")
+
+    assert main(["--from-overlay", "--check"], home=tmp_path) == 1
+    assert main(["--from-overlay"], home=tmp_path) == 0
+    assert main(["--from-overlay", "--check"], home=tmp_path) == 0

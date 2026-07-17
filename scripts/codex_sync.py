@@ -11,6 +11,7 @@ import sys
 import tomllib
 from pathlib import Path
 from jsonschema import Draft202012Validator
+from codex_mcp_overlay import OverlayError, load_overlay_names, normalize_overlay_names, overlay_path
 
 BEGIN = "# >>> claude-base managed >>>"
 END = "# <<< claude-base managed <<<"
@@ -579,19 +580,6 @@ def load_manifest(home: Path):
     except (OSError, ValueError):
         return None    # битый манифест = отсутствующий (безопасный режим: дрейф не перезапишем)
 
-def overlay_path(home: Path) -> Path:
-    return home / ".claude" / ".local-state" / "codex-mcp-overlay.json"
-
-
-def _validate_overlay_names(names: list) -> list:
-    """Проверить и нормализовать имена оверлея до записи или рендера."""
-    if not isinstance(names, list):
-        raise ValueError("enable должен быть списком строк")
-    if not all(isinstance(name, str) and name.strip() for name in names):
-        raise ValueError("enable должен быть списком непустых строк")
-    return sorted(set(names))
-
-
 def effective_allow(allow: list, overlay: list) -> list:
     """Единый список MCP для рендера и provenance без дублей."""
     return sorted(set(allow) | set(overlay))
@@ -604,15 +592,14 @@ def load_overlay(home: Path) -> list:
     if not p.exists():
         return []
     try:
-        names = json.loads(p.read_text(encoding="utf-8"))["enable"]
-        return _validate_overlay_names(names)
-    except (ValueError, KeyError, TypeError) as e:
+        return load_overlay_names(home)
+    except OverlayError as e:
         print(f"[codex_sync] warn: оверлей {p} битый ({e}) — мост считается выключенным", file=sys.stderr)
         return []
 
 def save_overlay(home: Path, names: list) -> None:
     p = overlay_path(home)
-    normalized = _validate_overlay_names(names)
+    normalized = normalize_overlay_names(names)
     if not normalized:
         p.unlink(missing_ok=True)
         return

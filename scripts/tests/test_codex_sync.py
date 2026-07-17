@@ -887,3 +887,11 @@ def test_cli_argparse_routes_mcp_action_and_rejects_extra_arguments(make_canon, 
     assert main(["mcp", "status", "excel"], home=home) == 1
     assert main(["check", "unexpected"], home=home) == 2
     assert "только с mcp" in capsys.readouterr().err
+
+
+def test_drift_hook_uses_shared_overlay_parser_via_patcher():
+    hook = (pathlib.Path(__file__).parents[1] / "codex-drift-check.ps1").read_text(encoding="utf-8")
+
+    assert "ConvertFrom-Json" not in hook
+    assert "--overlay-names" in hook
+    assert "--from-overlay --check" in hook
