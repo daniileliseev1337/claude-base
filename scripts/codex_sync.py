@@ -513,7 +513,7 @@ def render_target_codex(home: Path, context=None) -> dict:
     registry_path = claude / "codex-layer" / "capability-registry.json"
     registry = load_capability_registry(home, context=context) if registry_path.exists() else None
     overlay = load_overlay(home)
-    eff_allow = sorted(set(allow) | set(overlay))
+    eff_allow = effective_allow(allow, overlay)
     out = {
         "AGENTS.md": render_agents_md(core, layer),
         "config.toml#managed": (render_base_tables(home) + "\n\n"
@@ -533,7 +533,7 @@ def collect_inputs(home: Path, context=None) -> dict:
     core, layer, wl_text, mcp, allow = _read_canon(home)
     sm_text = context["skills_manifest_text"]
     overlay = load_overlay(home)
-    eff = sorted(set(allow) | set(overlay))
+    eff = effective_allow(allow, overlay)
     inputs = {
         "core/AGENTS.core.md": _sha(core),
         "codex-layer/AGENTS.codex.md": _sha(layer),
@@ -582,6 +582,21 @@ def load_manifest(home: Path):
 def overlay_path(home: Path) -> Path:
     return home / ".claude" / ".local-state" / "codex-mcp-overlay.json"
 
+
+def _validate_overlay_names(names: list) -> list:
+    """Проверить и нормализовать имена оверлея до записи или рендера."""
+    if not isinstance(names, list):
+        raise ValueError("enable должен быть списком строк")
+    if not all(isinstance(name, str) and name.strip() for name in names):
+        raise ValueError("enable должен быть списком непустых строк")
+    return sorted(set(names))
+
+
+def effective_allow(allow: list, overlay: list) -> list:
+    """Единый список MCP для рендера и provenance без дублей."""
+    return sorted(set(allow) | set(overlay))
+
+
 def load_overlay(home: Path) -> list:
     """Оверлей доменного моста. Битый файл → warn + [] (fail-safe: SessionStart-хук
     не должен падать; render без моста → check покажет canon-newer/drift, не молчание)."""
@@ -590,21 +605,19 @@ def load_overlay(home: Path) -> list:
         return []
     try:
         names = json.loads(p.read_text(encoding="utf-8"))["enable"]
-        if not isinstance(names, list) or not all(isinstance(n, str) for n in names):
-            raise ValueError("enable должен быть списком строк")
-        return names
+        return _validate_overlay_names(names)
     except (ValueError, KeyError, TypeError) as e:
         print(f"[codex_sync] warn: оверлей {p} битый ({e}) — мост считается выключенным", file=sys.stderr)
         return []
 
 def save_overlay(home: Path, names: list) -> None:
     p = overlay_path(home)
-    if not names:
+    normalized = _validate_overlay_names(names)
+    if not normalized:
         p.unlink(missing_ok=True)
         return
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps({"enable": sorted(names)}, ensure_ascii=False, indent=2),
-                 encoding="utf-8", newline="\n")
+    _write_atomic(p, json.dumps({"enable": normalized}, ensure_ascii=False, indent=2) + "\n")
 
 def _output_path_codex(home: Path, key: str) -> Path:
     """Путь артефакта таргета codex на диске по ключу рендера."""
@@ -794,9 +807,19 @@ def mcp_cmd(home: Path, action: str, names: list) -> int:
     """Доменный MCP-мост по требованию: on = патч CRLF + оверлей + sync;
     off = снять оверлей + sync; status = whitelist/оверлей/патч-статус."""
     import mcp_crlf_patch as patcher
+    if action not in ("on", "off", "status"):
+        print(f"[codex_sync] error: неизвестное действие {action} (on|off|status)", file=sys.stderr)
+        return 1
+    if not isinstance(names, list) or not all(isinstance(name, str) and name.strip() for name in names):
+        print("[codex_sync] error: имена серверов должны быть непустыми строками", file=sys.stderr)
+        return 1
+    names = sorted(set(names))
     mcp = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
     overlay = load_overlay(home)
     if action == "status":
+        if names:
+            print("[codex_sync] error: mcp status не принимает имена серверов", file=sys.stderr)
+            return 1
         allow = json.loads((home / ".claude" / "codex-layer" / "mcp-whitelist.json")
                            .read_text(encoding="utf-8"))["allow"]
         print(f"whitelist: {', '.join(sorted(allow))}")
@@ -831,19 +854,19 @@ def mcp_cmd(home: Path, action: str, names: list) -> int:
         print(f"[codex_sync] мост включён: {', '.join(load_overlay(home))} — рестартни Codex")
         return rc
     # off: без имён = выключить всё
+    inactive = [name for name in names if name not in overlay]
+    if inactive:
+        print(f"[codex_sync] error: не включены в мост: {', '.join(inactive)}", file=sys.stderr)
+        return 1
     remove = set(names) if names else set(overlay)
     save_overlay(home, [n for n in overlay if n not in remove])
     rc = sync(home)
     print("[codex_sync] мост выключен — рестартни Codex")
     return rc
 
-if __name__ == "__main__":
+def main(argv=None, home: Path | None = None) -> int:
+    """Разобрать CLI и вернуть код завершения без неявного завершения процесса."""
     import argparse
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")   # кириллица при захвате из PowerShell
-        sys.stderr.reconfigure(encoding="utf-8")
-    except AttributeError:
-        pass
     ap = argparse.ArgumentParser(description="Синк канона ~/.claude в ~/.codex")
     ap.add_argument("cmd", nargs="?", default="sync", choices=["sync", "check", "diff", "mcp"])
     ap.add_argument("rest", nargs="*", metavar="on|off|status [имя ...]",
@@ -851,20 +874,33 @@ if __name__ == "__main__":
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force-overwrite", action="append", default=[], metavar="KEY|all",
                      help="перезаписать ключ (или all) поверх ручного дрейфа")
-    args = ap.parse_args()
-    home = Path.home()
+    args = ap.parse_args(argv)
+    home = home or Path.home()
+    if args.cmd != "mcp" and args.rest:
+        print("[codex_sync] error: аргументы допустимы только с mcp", file=sys.stderr)
+        return 2
+    if args.cmd != "sync" and (args.dry_run or args.force_overwrite):
+        print("[codex_sync] error: --dry-run и --force-overwrite допустимы только с sync", file=sys.stderr)
+        return 2
     if args.cmd == "check":
         res = check(home)
         for cat in ("canon-newer", "manual-drift"):
             for key in res[cat]:
                 print(f"{cat}\t{key}")
-        sys.exit(3 if res["manual-drift"] else (2 if res["canon-newer"] else 0))
+        return 3 if res["manual-drift"] else (2 if res["canon-newer"] else 0)
     elif args.cmd == "diff":
-        sys.exit(diff_cmd(home))
+        return diff_cmd(home)
     elif args.cmd == "mcp":
         action = args.rest[0] if args.rest else "status"
-        if action not in ("on", "off", "status"):
-            ap.error(f"mcp: неизвестное действие {action} (on|off|status)")
-        sys.exit(mcp_cmd(home, action, args.rest[1:]))
+        return mcp_cmd(home, action, args.rest[1:])
     else:
-        sys.exit(sync(home, force=set(args.force_overwrite), dry_run=args.dry_run))
+        return sync(home, force=set(args.force_overwrite), dry_run=args.dry_run)
+
+
+if __name__ == "__main__":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")   # кириллица при захвате из PowerShell
+        sys.stderr.reconfigure(encoding="utf-8")
+    except AttributeError:
+        pass
+    sys.exit(main())

@@ -823,3 +823,67 @@ def test_mcp_off_and_status(make_canon, capsys):
 def test_mcp_on_requires_names(make_canon):
     from codex_sync import mcp_cmd
     assert mcp_cmd(make_canon(), "on", []) == 1
+
+
+def test_effective_allow_deduplicates_overlay_and_whitelist():
+    from codex_sync import effective_allow
+
+    assert effective_allow(["time", "time"], ["excel", "time", "excel"]) == ["excel", "time"]
+
+
+def test_save_overlay_validates_normalizes_and_uses_atomic_writer(make_canon, monkeypatch):
+    import pytest
+    import codex_sync
+    from codex_sync import load_overlay, overlay_path, save_overlay
+
+    home = make_canon()
+    target = overlay_path(home)
+    original_writer = codex_sync._write_atomic
+    calls = []
+
+    def tracked_writer(path, text):
+        calls.append(path)
+        original_writer(path, text)
+
+    monkeypatch.setattr(codex_sync, "_write_atomic", tracked_writer)
+    save_overlay(home, ["excel", "time", "excel"])
+
+    assert calls == [target]
+    assert load_overlay(home) == ["excel", "time"]
+    before = target.read_bytes()
+    for bad in ("excel", [""], ["excel", 1]):
+        with pytest.raises(ValueError):
+            save_overlay(home, bad)
+    assert target.read_bytes() == before
+    assert not target.with_name(target.name + ".tmp-codex-sync").exists()
+
+
+def test_mcp_cmd_rejects_unknown_action_and_ghost_or_inactive_off(make_canon, capsys):
+    from codex_sync import load_overlay, mcp_cmd
+
+    home = make_canon()
+    assert mcp_cmd(home, "enable", ["excel"]) == 1
+    assert mcp_cmd(home, "status", ["excel"]) == 1
+    assert mcp_cmd(home, "off", ["ghost"]) == 1
+    assert mcp_cmd(home, "off", ["excel"]) == 1
+    assert load_overlay(home) == []
+    assert "неизвестное действие" in capsys.readouterr().err
+
+
+def test_mcp_on_normalizes_duplicate_names(make_canon):
+    from codex_sync import load_overlay, mcp_cmd
+
+    home = make_canon()
+    assert mcp_cmd(home, "on", ["excel", "excel"]) == 0
+    assert load_overlay(home) == ["excel"]
+
+
+def test_cli_argparse_routes_mcp_action_and_rejects_extra_arguments(make_canon, capsys):
+    from codex_sync import main
+
+    home = make_canon()
+    assert main(["mcp", "status"], home=home) == 0
+    assert main(["mcp", "on"], home=home) == 1
+    assert main(["mcp", "status", "excel"], home=home) == 1
+    assert main(["check", "unexpected"], home=home) == 2
+    assert "только с mcp" in capsys.readouterr().err
