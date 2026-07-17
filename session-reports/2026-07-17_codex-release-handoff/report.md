@@ -37,3 +37,19 @@
 ## Recommended next step
 
 Начать с GUI-checklist VS Code. Если интерфейс требует ручного действия пользователя (авторизация/команда Codex), зафиксировать точный наблюдаемый результат и продолжить с остальными пунктами, не имитируя PASS.
+
+## Reconciliation — 2026-07-17 18:31 MSK
+
+- Release-repository определён: `~/.claude` / `claude-base`. Project-specific
+  `AGENTS.md` — generated output конкретного проекта; в release-repository раздаётся
+  генератор. Для текущего проекта пункт закрыт как scope clarification.
+- Текущая Codex Desktop-задача доказала live `SessionStart` и `PostToolUse`; задача
+  того же дня содержит `Stop`. CLI и VS Code hook runtime отдельно не доказаны.
+- Независимый backlog-аудит подтвердил 9 OPEN-пунктов Epic 1 Minor; у Epic 2/3
+  остаются технические OPEN-хвосты.
+- GUI-checklist нельзя автоматизировать доступным Windows UI skill: Codex extension
+  исключён его safety policy. Требуется ручная проверка владельца.
+- Текущий verdict выпуска: **NOT PASS**. Следующий code-инкремент после handoff —
+  Epic 1 safety-пакет (`_write_atomic` cleanup, first-sync drift test, partial
+  force-overwrite test, CLI docstring), затем независимый audit.
+- Full evidence: `Claude/reports/2026-07-17-release-gate-reconciliation.md`.
