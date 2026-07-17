@@ -9,6 +9,15 @@ def test_cli_docstring_lists_current_commands_and_force_option():
     assert "sync|check|diff|mcp" in codex_sync.__doc__
     assert "--force-overwrite" in codex_sync.__doc__
 
+def test_sync_docstring_describes_full_return_and_option_contract():
+    from codex_sync import sync
+    assert "0" in sync.__doc__ and "3" in sync.__doc__ and "4" in sync.__doc__
+    assert "dry_run" in sync.__doc__ and "force" in sync.__doc__
+
+def test_autosync_log_append_is_explicit_utf8():
+    script = (pathlib.Path(__file__).parents[1] / "codex-autosync.ps1").read_text(encoding="utf-8")
+    assert "Add-Content -LiteralPath $logFile -Encoding UTF8" in script
+
 def test_block_appended_preserves_foreign_content():
     src = 'model = "gpt-5.6-sol"\n\n[plugins."visualize@openai-bundled"]\nenabled = true\n'
     out = apply_managed_block(src, "[mcp_servers.time]\ncommand = 'uvx'\n")
@@ -394,6 +403,49 @@ def test_sync_force_overwrite_only_selected_drift(make_canon):
     assert hooks_json.read_text(encoding="utf-8") == "ручная правка hooks\n"
     assert check(home)["manual-drift"] == ["hooks.json"]
 
+def test_diff_renders_once_and_emits_each_warning_once(make_canon, capsys):
+    from codex_sync import diff_cmd, sync
+    home = make_canon(); sync(home)
+    capsys.readouterr()
+    (home / ".claude" / "agents" / "agents.md").write_text(
+        "нет frontmatter и имени\n", encoding="utf-8")
+
+    assert diff_cmd(home) == 0
+
+    assert capsys.readouterr().err.count("agents.md пропущен") == 1
+
+def test_sync_reads_skills_manifest_once(make_canon, monkeypatch):
+    from codex_sync import sync
+    home = make_canon()
+    manifest = home / ".claude" / "codex-layer" / "skills-manifest.json"
+    original = pathlib.Path.read_text
+    reads = 0
+
+    def counted_read_text(path, *args, **kwargs):
+        nonlocal reads
+        if path == manifest:
+            reads += 1
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, "read_text", counted_read_text)
+    assert sync(home) == 0
+    assert reads == 1
+
+def test_manifest_inputs_are_diagnostic_provenance(make_canon):
+    from codex_sync import check, collect_inputs, load_manifest, sync
+    assert "диагност" in collect_inputs.__doc__.lower()
+    home = make_canon(); sync(home)
+    before = load_manifest(home)
+    (home / ".claude" / "core" / "AGENTS.core.md").write_text(
+        "# Ядро\nПравило 1: думай, прежде чем действовать.\n\n",
+        encoding="utf-8", newline="\n")
+
+    # Изменение входных байтов, не меняющее render из-за strip(), остаётся
+    # diagnostic provenance и не создаёт ложный output drift.
+    assert check(home)["manual-drift"] == []
+    assert check(home)["canon-newer"] == []
+    assert load_manifest(home)["inputs"] == before["inputs"]
+
 def test_write_atomic_cleans_tmp_when_replace_fails(tmp_path, monkeypatch):
     import os
     import pytest
@@ -526,6 +578,20 @@ def test_base_collision_skipped_with_warn(make_canon, capsys):
     payload = render_all(home)["config.toml#managed"]
     assert "[agents]" not in payload                                      # коллизия пропущена
     assert "[agents]" in capsys.readouterr().err                          # warn напечатан
+
+def test_nested_user_table_does_not_suppress_parent_base_table(make_canon, capsys):
+    import tomllib as _toml
+    from codex_sync import apply_managed_block, render_base_tables
+    home = make_canon()
+    cfg = home / ".codex" / "config.toml"
+    outside = "x = 1\n[agents.foo]\nbar = 1\n"
+    cfg.write_text(outside, encoding="utf-8", newline="\n")
+
+    payload = render_base_tables(home)
+
+    assert "[agents]" in payload
+    assert "секция [agents]" not in capsys.readouterr().err
+    _toml.loads(apply_managed_block(outside, payload))
 
 def test_base_toplevel_key_rejected(make_canon):
     import pytest as _pytest
