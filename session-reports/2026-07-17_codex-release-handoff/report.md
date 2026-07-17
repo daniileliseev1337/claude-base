@@ -87,3 +87,14 @@
 - Первый audit пакета B = NOT PASSED: malformed `.claude.json` выбрасывал `AttributeError`. Четыре red-regressions воспроизвели этот defect; после validation root/server types финальный fresh audit = PASSED.
 - Final evidence: `python -m pytest scripts/tests -q` = 112 PASS; Python compile, PowerShell ParseFile и `git diff --check` = PASS. Оба коммита pushed в `origin/main`; user-owned dirty `codex-layer/AGENTS.codex.md` и `codex-layer/mcp-whitelist.json` не staged.
 - Следующая fresh задача: не начинать Epic 6. Выполнить только ручные/time gates (VS Code GUI checklist, отдельные CLI и VS Code hook-smoke, daily soak) при доступности owner-visible среды; orphan-output policy Epic 2 требует решения владельца. Full release остаётся **NOT PASS**.
+
+## Fresh LITE prompt — 2026-07-17
+
+> Продолжение release-gate Codex. Экономь контекст: сначала прочитай только верх `Claude/CLAUDE.md`, `Claude/STATUS.md`, `0_СТАТУС_программы.md` и нужную секцию этого отчёта.
+>
+> Цель: удержать строгий release verdict и закрывать только доказуемые manual/time gates.
+> Сделано: Epic 3 overlay/parser/CLI/patcher закрыт в `8a20cfa` и `9f36f34`, финальный independent audit PASSED, `scripts/tests` = 112 PASS.
+> Следующий шаг: не начинать Epic 6; выполнить owner-visible VS Code GUI checklist, отдельные CLI и VS Code hook-smoke либо зафиксировать фактический blocker. Daily soak оставь NOT PASS, пока не появится требуемая длительность и чистые логи.
+> Границы: не отключай MCP/hooks/plugins/пользовательские сессии; не меняй Word/PDF claims; не stage/revert user-owned `codex-layer/AGENTS.codex.md` и `codex-layer/mcp-whitelist.json`; Revit external origin не push без owner authorization.
+>
+> Детали — в этом `report.md`; используй cascade loading по заголовкам, не читай историю целиком.
