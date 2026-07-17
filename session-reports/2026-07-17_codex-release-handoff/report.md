@@ -49,7 +49,26 @@
   остаются технические OPEN-хвосты.
 - GUI-checklist нельзя автоматизировать доступным Windows UI skill: Codex extension
   исключён его safety policy. Требуется ручная проверка владельца.
-- Текущий verdict выпуска: **NOT PASS**. Следующий code-инкремент после handoff —
-  Epic 1 safety-пакет (`_write_atomic` cleanup, first-sync drift test, partial
-  force-overwrite test, CLI docstring), затем независимый audit.
+- Текущий verdict выпуска: **NOT PASS**. Epic 1 safety-пакет, названный следующим
+  code-инкрементом (`_write_atomic` cleanup, first-sync drift test, partial
+  force-overwrite test, CLI docstring), закрыт ниже; 5 Minor Epic 1 остаются OPEN.
 - Full evidence: `Claude/reports/2026-07-17-release-gate-reconciliation.md`.
+
+## Epic 1 safety package — 2026-07-17
+
+- Scope закрыт: cleanup `_write_atomic`, first-sync drift test, partial
+  force-overwrite test и актуальный CLI docstring.
+- Красная стадия: тесты docstring и cleanup воспроизвели дефекты; first-sync и
+  partial force-overwrite подтвердили уже корректное поведение sync.
+- Реализация: `_write_atomic` удаляет `.tmp-codex-sync` в `finally`; module docstring
+  перечисляет `sync|check|diff|mcp`, `--dry-run` и `--force-overwrite KEY|all`.
+- Верификация: 4/4 новых теста PASS; `test_codex_sync.py` + golden + capability =
+  71/71 PASS; `git diff --check` и `py_compile` прошли.
+- Свежий независимый auditor = **PASSED**: самостоятельно подтверждены 64/64
+  `test_codex_sync.py` и 71/71 связанного набора, scope-выходов нет.
+- Epic 1 Minor backlog: из 9 OPEN закрыты 4; остаются 5 — UTF-8 `Add-Content`,
+  duplicate warn, роль manifest `inputs`, повторное чтение skills-manifest и
+  устаревший canon-newer recipe.
+- MCP/hooks/plugins не менялись; Word/PDF claims не расширялись; Epic 6 не начат.
+- VS Code GUI-checklist, отдельные CLI/VS Code hook-smoke и daily soak остаются OPEN.
+- Полный release verdict: **NOT PASS**.

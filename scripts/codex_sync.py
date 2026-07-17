@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Генератор среды Codex из канона ~/.claude. Запуск: python codex_sync.py [--dry-run]"""
+"""Генератор среды Codex из канона ~/.claude.
+
+Запуск: python codex_sync.py [sync|check|diff|mcp] [--dry-run]
+        [--force-overwrite KEY|all]
+"""
 import hashlib
 import json
 import re
@@ -695,8 +699,11 @@ def _write_atomic(p: Path, text: str) -> None:
     """Атомарная запись: tmp-файл рядом + os.replace (без «половинчатого» файла при сбое)."""
     import os
     tmp = p.with_name(p.name + ".tmp-codex-sync")
-    tmp.write_text(text, encoding="utf-8", newline="\n")
-    os.replace(tmp, p)
+    try:
+        tmp.write_text(text, encoding="utf-8", newline="\n")
+        os.replace(tmp, p)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 def sync(home: Path, force=None, dry_run: bool = False) -> int:
     """Drift-aware сборка ~/.codex из канона ~/.claude. Возврат: 0 ок, 3 — ручной дрейф пропущен

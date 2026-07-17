@@ -3,6 +3,12 @@ import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parents[1]))
 from codex_sync import apply_managed_block, BEGIN, END
 
+
+def test_cli_docstring_lists_current_commands_and_force_option():
+    import codex_sync
+    assert "sync|check|diff|mcp" in codex_sync.__doc__
+    assert "--force-overwrite" in codex_sync.__doc__
+
 def test_block_appended_preserves_foreign_content():
     src = 'model = "gpt-5.6-sol"\n\n[plugins."visualize@openai-bundled"]\nenabled = true\n'
     out = apply_managed_block(src, "[mcp_servers.time]\ncommand = 'uvx'\n")
@@ -346,6 +352,17 @@ def test_sync_writes_manifest_and_regenerates_on_canon_change(make_canon):
     assert sync(home) == 0                                   # canon-newer → перегенерено
     assert "Ядро v2" in (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
 
+def test_first_sync_preserves_preexisting_manual_drift(make_canon):
+    from codex_sync import sync, check, manifest_path
+    home = make_canon()
+    agents_md = home / ".codex" / "AGENTS.md"
+    agents_md.write_text("ручная правка до первого синка\n", encoding="utf-8", newline="\n")
+
+    assert not manifest_path(home).exists()
+    assert sync(home) == 3
+    assert agents_md.read_text(encoding="utf-8") == "ручная правка до первого синка\n"
+    assert check(home)["manual-drift"] == ["AGENTS.md"]
+
 def test_sync_skips_manual_drift_and_returns_3(make_canon):
     from codex_sync import sync
     home = make_canon(); sync(home)
@@ -363,6 +380,38 @@ def test_sync_force_overwrite_resets_drift(make_canon):
     assert sync(home, force={"all"}) == 0
     res = check(home)
     assert res["manual-drift"] == [] and res["canon-newer"] == []
+
+def test_sync_force_overwrite_only_selected_drift(make_canon):
+    from codex_sync import sync, check, render_all
+    home = make_canon(); sync(home)
+    agents_md = home / ".codex" / "AGENTS.md"
+    hooks_json = home / ".codex" / "hooks.json"
+    agents_md.write_text("ручная правка AGENTS\n", encoding="utf-8", newline="\n")
+    hooks_json.write_text("ручная правка hooks\n", encoding="utf-8", newline="\n")
+
+    assert sync(home, force={"AGENTS.md"}) == 3
+    assert agents_md.read_text(encoding="utf-8") == render_all(home)["AGENTS.md"]
+    assert hooks_json.read_text(encoding="utf-8") == "ручная правка hooks\n"
+    assert check(home)["manual-drift"] == ["hooks.json"]
+
+def test_write_atomic_cleans_tmp_when_replace_fails(tmp_path, monkeypatch):
+    import os
+    import pytest
+    from codex_sync import _write_atomic
+
+    target = tmp_path / "target.txt"
+    target.write_text("исходное\n", encoding="utf-8")
+    tmp = target.with_name(target.name + ".tmp-codex-sync")
+
+    def fail_replace(source, destination):
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+    with pytest.raises(OSError, match="replace failed"):
+        _write_atomic(target, "новое\n")
+
+    assert target.read_text(encoding="utf-8") == "исходное\n"
+    assert not tmp.exists()
 
 def test_sync_preserves_foreign_config_and_is_atomic_style(make_canon):
     from codex_sync import sync
