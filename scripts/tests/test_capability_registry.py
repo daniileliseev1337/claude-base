@@ -65,9 +65,12 @@ def test_registry_required_capabilities_are_honest():
             if provider["profile"] == "Revit/AutoCAD":
                 assert provider["enabled_by_default"] is False
                 assert provider["availability"] == "on-demand"
-                assert capability["verification"]["status"] == "forward-test"
+                assert capability["verification"]["status"] in {"forward-test", "live"}
     assert registry["_capabilities"]["pdf.write"]["verification"]["status"] == "blocked"
-    assert registry["_capabilities"]["autocad.inspect"]["verification"]["status"] == "forward-test"
+    assert registry["_capabilities"]["revit.inspect"]["verification"]["status"] == "live"
+    assert registry["_capabilities"]["revit.execute"]["verification"]["status"] == "forward-test"
+    assert registry["_capabilities"]["revit.modify"]["verification"]["status"] == "forward-test"
+    assert registry["_capabilities"]["autocad.inspect"]["verification"]["status"] == "live"
 
 
 def test_converter_has_no_raw_mcp_and_rejects_unknown_identifier():
