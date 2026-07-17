@@ -109,7 +109,8 @@ def render_base_tables(home: Path) -> str:
     outside = cfg.read_text(encoding="utf-8") if cfg.exists() else ""
     outside = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", re.S).sub("", outside)
     try:
-        user_tables = {k for k, v in tomllib.loads(outside).items() if isinstance(v, dict)}
+        tomllib.loads(outside)
+        user_tables = set(re.findall(r"(?m)^\s*\[([A-Za-z0-9_.-]+)\]\s*(?:#.*)?$", outside))
     except tomllib.TOMLDecodeError as e:
         print(f"[codex_sync] warn: config.toml вне managed-блока не парсится ({e}) — фильтр коллизий пропущен",
               file=sys.stderr)
@@ -120,7 +121,7 @@ def render_base_tables(home: Path) -> str:
         if m:
             if name is not None:
                 blocks.append((name, current))
-            name, current = m.group(1).split(".")[0], [line]
+            name, current = m.group(1), [line]
         elif name is not None:
             current.append(line)
     if name is not None:
@@ -270,7 +271,7 @@ TOOL_MAP = [
 # sandbox_mode не сужаем; нет ни одного (и tools вообще заданы) → read-only ревьюер.
 WRITE_TOOL_MARKERS = ("Write", "Edit", "search_and_replace", "add_paragraph")
 
-def load_capability_registry(home: Path) -> dict:
+def load_capability_registry(home: Path, context=None) -> dict:
     """Загрузить единственный канон capability-адаптеров и проверить связи."""
     base = home / ".claude" / "codex-layer"
     schema = json.loads((base / "capability-registry.schema.json").read_text(encoding="utf-8"))
@@ -303,7 +304,7 @@ def load_capability_registry(home: Path) -> dict:
                 raise ValueError("capability registry: default provider must be available")
             if provider["availability"] == "blocked" and capability["verification"]["status"] != "blocked":
                 raise ValueError("capability registry: blocked provider requires blocked capability")
-    manifest = json.loads((base / "skills-manifest.json").read_text(encoding="utf-8"))
+    manifest = (context or _load_sync_context(home))["skills_manifest"]
     classified = set(manifest.get("enable", [])) | set(manifest.get("skip_reason", {}))
     skill_ids = set(skills)
     if classified != skill_ids or len(manifest.get("enable", [])) != 11 or len(manifest.get("skip_reason", {})) != 26:
@@ -474,16 +475,21 @@ def render_agents_md(core: str, layer: str) -> str:
 def _sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
+def _load_sync_context(home: Path) -> dict:
+    """Один снимок общих входов, которые нужны нескольким фазам sync/check/diff."""
+    p = home / ".claude" / "codex-layer" / "skills-manifest.json"
+    text = p.read_text(encoding="utf-8")
+    return {"skills_manifest_text": text, "skills_manifest": json.loads(text)}
+
 def _read_canon(home: Path):
-    """Общие входы: контенты канона + mcp-срез. Одна точка чтения для render_all и collect_inputs."""
+    """Общие входы рендера: контенты канона + mcp-срез."""
     claude = home / ".claude"
     core = (claude / "core" / "AGENTS.core.md").read_text(encoding="utf-8")
     layer = (claude / "codex-layer" / "AGENTS.codex.md").read_text(encoding="utf-8")
     wl_text = (claude / "codex-layer" / "mcp-whitelist.json").read_text(encoding="utf-8")
-    sm_text = (claude / "codex-layer" / "skills-manifest.json").read_text(encoding="utf-8")
     mcp = json.loads((home / ".claude.json").read_text(encoding="utf-8")).get("mcpServers", {})
     allow = json.loads(wl_text)["allow"]
-    return core, layer, wl_text, sm_text, mcp, allow
+    return core, layer, wl_text, mcp, allow
 
 PROFILE_HEADER = ("# generated-by: codex_sync (канон: codex-layer/profiles/{name}.toml) — "
                   "править канон, не этот файл\n")
@@ -500,12 +506,12 @@ def render_profiles(home: Path) -> dict:
         out[f"{f.stem}.config.toml"] = PROFILE_HEADER.format(name=f.stem) + text
     return out
 
-def render_target_codex(home: Path) -> dict:
+def render_target_codex(home: Path, context=None) -> dict:
     """Чистый рендер всех артефактов таргета codex: ключ → содержимое. Ничего не пишет."""
     claude = home / ".claude"
-    core, layer, _, _, mcp, allow = _read_canon(home)
+    core, layer, _, mcp, allow = _read_canon(home)
     registry_path = claude / "codex-layer" / "capability-registry.json"
-    registry = load_capability_registry(home) if registry_path.exists() else None
+    registry = load_capability_registry(home, context=context) if registry_path.exists() else None
     overlay = load_overlay(home)
     eff_allow = sorted(set(allow) | set(overlay))
     out = {
@@ -519,10 +525,13 @@ def render_target_codex(home: Path) -> dict:
     out.update(render_profiles(home))
     return out
 
-def collect_inputs(home: Path) -> dict:
-    """sha256 входов канона; mcp-срез — только whitelisted (посторонние правки .claude.json не дёргают синк)."""
+def collect_inputs(home: Path, context=None) -> dict:
+    """Диагностический provenance: sha256 входов канона, не классификатор drift.
+    MCP-срез включает только whitelisted-серверы, чтобы посторонние правки не создавали шум."""
     claude = home / ".claude"
-    core, layer, wl_text, sm_text, mcp, allow = _read_canon(home)
+    context = context or _load_sync_context(home)
+    core, layer, wl_text, mcp, allow = _read_canon(home)
+    sm_text = context["skills_manifest_text"]
     overlay = load_overlay(home)
     eff = sorted(set(allow) | set(overlay))
     inputs = {
@@ -609,7 +618,8 @@ def _output_path_codex(home: Path, key: str) -> Path:
 # Реестр таргетов: имя среды → рендер артефактов и резолвер путей.
 # Новая среда = новая пара функций + строка здесь; ядро (check/sync/manifest) не трогается.
 TARGETS = {
-    "codex": {"render": render_target_codex, "path": _output_path_codex},
+    "codex": {"render": render_target_codex, "render_context": render_target_codex,
+              "path": _output_path_codex},
 }
 
 def _enabled_targets(home: Path) -> list:
@@ -622,11 +632,13 @@ def _enabled_targets(home: Path) -> list:
         raise ValueError(f"targets.json: неизвестные таргеты {unknown}; доступны {sorted(TARGETS)}")
     return names
 
-def render_all(home: Path) -> dict:
+def render_all(home: Path, context=None) -> dict:
     """Объединённый рендер включённых таргетов. Ключи уникальны между таргетами."""
     out = {}
     for name in _enabled_targets(home):
-        part = TARGETS[name]["render"](home)
+        target = TARGETS[name]
+        renderer = target.get("render_context") if context is not None else None
+        part = renderer(home, context=context) if renderer else target["render"](home)
         dup = sorted(set(part) & set(out))
         if dup:
             raise ValueError(f"коллизия ключей между таргетами: {dup}")
@@ -649,12 +661,13 @@ def read_disk_output(home: Path, key: str):
         return m.group(1).rstrip() if m else None
     return p.read_text(encoding="utf-8")
 
-def check(home: Path) -> dict:
+def check(home: Path, expected=None, context=None) -> dict:
     """Трёхсторонняя сверка канон ↔ манифест ↔ диск. Категория на каждый ключ рендера."""
     res = {"clean": [], "canon-newer": [], "manual-drift": []}
     if not (home / ".codex").exists():
         return res
-    expected = render_all(home)
+    context = context or _load_sync_context(home)
+    expected = expected if expected is not None else render_all(home, context=context)
     man = load_manifest(home) or {}
     base_outputs = man.get("outputs", {})
     for key in sorted(expected):
@@ -674,7 +687,7 @@ def check(home: Path) -> dict:
     claude = home / ".claude"
     sm_path = claude / "codex-layer" / "skills-manifest.json"
     if sm_path.exists():
-        manifest = json.loads(sm_path.read_text(encoding="utf-8"))
+        manifest = context["skills_manifest"]
         skills_dir = claude / "skills"
         validate_skills_manifest(manifest, skills_dir)
         agents_skills_dir = home / ".agents" / "skills"
@@ -706,20 +719,25 @@ def _write_atomic(p: Path, text: str) -> None:
         tmp.unlink(missing_ok=True)
 
 def sync(home: Path, force=None, dry_run: bool = False) -> int:
-    """Drift-aware сборка ~/.codex из канона ~/.claude. Возврат: 0 ок, 3 — ручной дрейф пропущен
-    (записан не весь рендер — часть ключей с ручными правками на диске сохранена как есть)."""
+    """Drift-aware сборка ~/.codex из канона ~/.claude.
+
+    `dry_run` ничего не пишет. `force` разрешает выбранные drift-ключи или `all`.
+    Возврат: 0 — полный успех; 3 — ручной drift частично пропущен; 4 — build-error
+    имеет приоритет над drift и сохраняет прежний файл/manifest hash проблемного ключа.
+    """
     force = set(force or ())
     claude, codex = home / ".claude", home / ".codex"
     if not codex.exists():
         print("[codex_sync] ~/.codex отсутствует — синк пропущен")
         return 0
-    rendered = render_all(home)
-    st = check(home)
+    context = _load_sync_context(home)
+    rendered = render_all(home, context=context)
+    st = check(home, expected=rendered, context=context)
     forced = set(rendered) if "all" in force else force
     to_write = [k for k in sorted(rendered)
                 if k in st["canon-newer"] or (k in st["manual-drift"] and k in forced)]
     skipped = [k for k in st["manual-drift"] if k not in forced]
-    manifest = json.loads((claude / "codex-layer" / "skills-manifest.json").read_text(encoding="utf-8"))
+    manifest = context["skills_manifest"]
     enabled_skills = [n for n in manifest.get("enable", []) if (claude / "skills" / n / "SKILL.md").exists()]
     if dry_run:
         print(f"AGENTS.md: {len(rendered['AGENTS.md'].encode('utf-8'))} байт; "
@@ -749,7 +767,7 @@ def sync(home: Path, force=None, dry_run: bool = False) -> int:
     unwritten = set(skipped) | ({"config.toml#managed"} if build_error else set())
     outputs = {k: (_sha(rendered[k]) if k not in unwritten else old.get(k, ""))
                for k in rendered}
-    save_manifest(home, collect_inputs(home), outputs)
+    save_manifest(home, collect_inputs(home, context=context), outputs)
     for k in skipped:
         print(f"[codex_sync] manual-drift пропущен: {k} (занеси в канон или sync --force-overwrite {k})")
     return 4 if build_error else (3 if skipped else 0)
@@ -757,8 +775,9 @@ def sync(home: Path, force=None, dry_run: bool = False) -> int:
 def diff_cmd(home: Path) -> int:
     """Unified diff всех manual-drift ключей: ожидание из канона vs факт на диске. Всегда 0."""
     import difflib
-    expected = render_all(home)
-    st = check(home)
+    context = _load_sync_context(home)
+    expected = render_all(home, context=context)
+    st = check(home, expected=expected, context=context)
     for key in st["manual-drift"]:
         if key not in expected:
             print(f"manual-drift: {key} — локальный каталог не является junction на канон")

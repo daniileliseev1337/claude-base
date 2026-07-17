@@ -7,7 +7,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 $claudeDir = Join-Path $env:USERPROFILE '.claude'
 $logFile   = Join-Path $claudeDir 'auto-sync.log'
 function Write-SyncLog { param($msg)
-    "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] codex-autosync: $msg" | Add-Content -Path $logFile
+    "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] codex-autosync: $msg" | Add-Content -LiteralPath $logFile -Encoding UTF8
 }
 try {
     if (-not [Console]::IsInputRedirected) { exit 0 }

@@ -579,6 +579,17 @@ def test_base_collision_skipped_with_warn(make_canon, capsys):
     assert "[agents]" not in payload                                      # коллизия пропущена
     assert "[agents]" in capsys.readouterr().err                          # warn напечатан
 
+def test_base_collision_with_trailing_comment_is_skipped(make_canon, capsys):
+    from codex_sync import render_all
+    home = make_canon()
+    cfg = home / ".codex" / "config.toml"
+    cfg.write_text("x = 1\n[agents] # user override\nmax_threads = 2\n", encoding="utf-8")
+
+    payload = render_all(home)["config.toml#managed"]
+
+    assert "[agents]" not in payload
+    assert "[agents]" in capsys.readouterr().err
+
 def test_nested_user_table_does_not_suppress_parent_base_table(make_canon, capsys):
     import tomllib as _toml
     from codex_sync import apply_managed_block, render_base_tables

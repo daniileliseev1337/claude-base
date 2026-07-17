@@ -262,6 +262,15 @@ try {
     } else {
         Write-SyncLog "managed changes in: $($changedPaths -join ', ')"
 
+        # Индекс принадлежит текущей ручной операции. Обычный `git commit`
+        # захватил бы эти изменения вместе с whitelist hook-а, поэтому до
+        # следующего настоящего конца сессии только сохраняем их нетронутыми.
+        $preExistingStaged = @(& git diff --cached --name-only 2>$null)
+        if ($preExistingStaged.Count -gt 0) {
+            Write-SyncLog "skip: pre-existing staged changes ($($preExistingStaged -join ', ')) -- auto-commit deferred"
+            exit 0
+        }
+
         # Stage changes
         foreach ($path in $changedPaths) {
             & git add -- $path 2>&1 | Out-Null
