@@ -72,3 +72,10 @@
 - MCP/hooks/plugins не менялись; Word/PDF claims не расширялись; Epic 6 не начат.
 - VS Code GUI-checklist, отдельные CLI/VS Code hook-smoke и daily soak остаются OPEN.
 - Полный release verdict: **NOT PASS**.
+
+## Epic 1–3 safety continuation — 2026-07-17
+
+- `~/.claude` commit `2efaccd` закрывает автономные Minor Epic 1–2: UTF-8 cleanup log, один render/diagnostics, одно чтение skills-manifest, diagnostic provenance manifest `inputs`, точную base-table collision и safety skip auto-push при pre-existing staged index.
+- Независимый повторный audit = **PASSED**: 78 Python tests, 7 targeted regressions, `git diff --check`, Python/PowerShell parse и изолированный реальный Git/PowerShell test подтверждают сохранность index и отсутствие auto-commit.
+- Вложенный `revit-mcp-python` commit `597c566` фиксирует единый install-contract `mcp[cli]==1.23.0` в `requirements.txt`, `pyproject.toml`, `uv.lock`. Новый чистый venv прошёл install, `pip check`, import; после штатного CRLF patch `mcp_handshake_smoke.py` подтвердил LF-clean initialize.
+- Не закрыты: orphan outputs Epic 2; overlay/parser/CLI/patcher хвосты Epic 3; GUI checklist, отдельные CLI/VS Code hook-smoke и daily soak. Выпуск остаётся **NOT PASS**; Epic 6 не начат.
